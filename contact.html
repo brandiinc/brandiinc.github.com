@@ -1,0 +1,68 @@
+---
+title: Contact
+layout: map
+permalink: "/typography/"
+cover: "/assets/office.jpg"
+permaltitle: 브랜디 R&D본부
+APIKEY: AIzaSyDu1kiJUnsuUGcgEyfx7EN9Gq4XPL6UkSc
+lat: 37.495922
+lng: 127.038903
+gnav: 4
+---
+
+<h3 class="margin-top-3em">Head Office</h3>
+서울 강남구 논현로 401 청송빌딩 403호<br/>
+#403, Cheongsong B/D, 401, Nonhyeon-ro, Gangnam-gu, Seoul, Republic of Korea<br/><br/>
+Tel.070-7605-2120 <br/>
+Info.janggw@brandi.co.kr <br/>
+
+
+<h3 class="margin-top-3em">Brandi App Download</h3>
+<section class="applink">
+  {% for appinfo in site.applink %}
+	    {% if appinfo.name == "Android" and appinfo.share == true %}
+      <a href="{{appinfo.url}}" title="{{appinfo.desc}}"><img src="{{ site.url }}{{ site.baseurl }}{{ appinfo.img}}"></a>
+    {% endif %}
+	    {% if appinfo.name == "iOS" and appinfo.share == true %}
+      <a href="{{appinfo.url}}" title="{{appinfo.desc}}"><img src="{{ site.url }}{{ site.baseurl }}{{ appinfo.img}}"></a>
+    {% endif %}
+
+	{% endfor %}
+</section>
+
+
+<h3 class="margin-top-3em">Web Service</h3>
+<section>
+<a href="https://www.brandi.co.kr" title="브랜디"><img src="{{ site.url }}{{ site.baseurl }}/assets/bis/banner_brandi.png" class="bi brandi"> </a>
+<a href="http://partner.brandi.co.kr/" title="브랜드 FBB"><img src="{{ site.url }}{{ site.baseurl }}/assets/bis/banner_fbb.png" class="bi fbb"></a>
+<a href="http://www.ztreet.com/" title="지트리트"><img src="{{ site.url }}{{ site.baseurl }}/assets/bis/banner_ztreet.png" class="bi ztreet"> </a>
+<a href="https://www.colabo.kr/" title="콜라보"><img src="{{ site.url }}{{ site.baseurl }}/assets/bis/banner_colabo.png" class="bi colabo"> </a>
+</section>
+
+
+<h3 class="margin-top-3em">Social Media</h3>
+
+<section class="share">
+  {% for social in site.social %}
+    {% capture full_url %}{{ site.url }}{{ site.baseurl }}{{ page.url }}{% endcapture %}
+    {% if social.name == "Twitter" and social.share == true %}
+      <a href="//twitter.com/share?text={{ page.title | cgi_escape }}&url={{ full_url | cgi_escape}}&via={{social.username}}"
+        onclick="window.open(this.href, '{{ social.icon }}-share', 'width=550,height=255');return false;">
+        <i class="fa fa-{{ social.icon | remove_first: '-square' }}-square fa-lg"></i>
+				{{social.name}}
+      </a><br/>
+    {% endif %}
+    {% if social.name == "Facebook" and social.share == true %}
+      <a href="{{social.url}}">
+        <i class="fa fa-{{ social.icon | remove_first: '-square' }}-square fa-lg"></i>
+				{{social.name}}
+      </a><br/>
+    {% endif %}
+    {% if social.name == "Instagram" and social.share == true %}
+      <a href="{{social.url}}">
+        <i class="fa fa-{{ social.icon | remove_first: '-square' }} fa-lg"></i>
+				{{social.name}}
+      </a><br/>
+    {% endif %}
+  {% endfor %}
+</section>

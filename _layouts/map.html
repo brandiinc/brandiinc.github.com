@@ -1,0 +1,47 @@
+---
+layout: default
+---
+
+<div class="post-header-container {% if page.cover %}has-cover{% endif %}" {% if page.cover %}style="background-image: url({{ page.cover | prepend: site.baseurl }});"{% endif %}>
+  <div class="scrim {% if page.cover %}has-cover{% endif %}">
+    <header class="post-header">
+      <h1 class="title">{% if page.permaltitle %} {{ page.permaltitle }} {% else %}{{ page.title }}{% endif %}</h1>
+      <p class="info">&nbsp;{{ page.subtitle }}&nbsp;</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrapper">
+<div class="page">
+
+	{% unless page.cover %}
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title }}</h1>
+  </header>
+  {% include page_divider.html %}
+  {% endunless %}
+
+
+  <article class="post-content">
+    {{ content }}
+  </article>
+
+</div>
+</div>
+
+<div id="map"></div>
+<script type="text/javascript">
+      function initMap() {
+        var uluru = {lat: {{page.lat}}, lng: {{page.lng}}};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: uluru
+        });
+        var marker = new google.maps.Marker({
+          position: uluru,
+          map: map
+        });
+      }
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{page.APIKEY}}&callback=initMap">
+</script>

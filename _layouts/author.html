@@ -1,0 +1,80 @@
+---
+layout: default
+---
+
+<div class="post-header-container author {% if page.cover %}has-cover{% endif %}" {% if page.cover %}style="background-image: url({{ page.cover | prepend: site.baseurl }});"{% endif %}>
+  <div class="scrim {% if page.cover %}has-cover{% endif %}">
+    <header class="post-header">
+
+      {% if page.author %}
+        {% for author in site.data.authors %}
+          {% if page.author == author.name %}
+          <div class="profile-img" {% if author.img %}style="background-image: url({{ author.img | prepend: site.baseurl }});"{% endif %}></div>
+          {% break %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <h1 class="title">{{page.title}}</h1>
+      <p class="info">
+        {{ page.subtitle }}
+        <!-- email, 페이스북, 인스타, 저서 -->
+        <!--
+        <i class="fa fa-envelope-o" aria-hidden="true"></i>
+        <i class="fa fa-facebook-square" aria-hidden="true"></i>
+        <i class="fa fa-instagram" aria-hidden="true"></i>
+        <i class="fa fa-book" aria-hidden="true"></i>
+        -->
+      </p>
+    </header>
+  </div>
+</div>
+
+
+<div class="wrapper">
+<div class="page">
+
+
+<!--
+  <article class="post-content">
+    <ul class="posts-list">
+      {% for post in page.posts %}
+      <li><strong><a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></strong><span class="post-date"> - {{ post.date | date: "%Y-%m-%d" }}</span></li>
+      {% endfor %}
+    </ul>
+  </article>
+-->
+  <ul class="post-list">
+    {% for post in site.posts %}
+    {% if post.author == page.author %}
+    <li>
+      <h2>
+        <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
+      </h2>
+      <section class="post-excerpt" itemprop="description">
+        <p>{{ post.content | strip_html | truncatewords: 50 }}</p>
+      </section>
+      <section class="post-meta">
+        <div class="post-date">{{ post.date | date: "%Y-%m-%d" }}</div>
+        <div class="post-categories">
+          {% if post.author %}
+            {% for author in site.data.authors %}
+              {% if post.author == author.name %}
+              <a href="{{ site.baseurl }}/authors/{{ post.author }}">{{author.koname}}</a>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+      </section>
+    </li>
+    {% if forloop.last == false %}
+    <hr>
+    {% endif %}
+
+    {% endif %}
+    {% endfor %}
+  </ul>
+
+</div>
+</div>
+<br>
