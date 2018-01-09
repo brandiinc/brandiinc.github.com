@@ -18,7 +18,7 @@ layout: default
           {% if page.author %}
             {% for author in site.data.authors %}
               {% if page.author == author.name %}
-                <div class="profile-img" {% if author.img %}style="background-image: url({{ author.img | prepend: site.baseurl }});"{% endif %}></div>
+                <span class="profile-img" {% if author.img %}style="background-image: url({{ author.img | prepend: site.baseurl }});"{% endif %}></span>
                 <a href="{{ site.baseurl }}/authors/{{page.author}}">{{author.koname}}</a>
                 {% break %}
               {% endif %}
@@ -26,7 +26,7 @@ layout: default
           {% endif %}
         {% endif %}
         <br/>
-        {{ page.date | date: "%Y-%m-%d" }}
+        <span class="post-date">{{ page.date | date: "%Y-%m-%d" }}</span>
       </p>
     </header>
   </div>
@@ -118,6 +118,8 @@ layout: default
             title: '{{page.title}}',
             //description: '#케익 #딸기 #삼평동 #카페 #분위기 #소개팅',
             imageUrl: 'http://labs.brandi.co.kr/assets/logo.png',
+            imageWidth: 118,
+            imageHeight: 40,
             link: {
               mobileWebUrl: '{{full_url}}',
               webUrl: '{{full_url}}'

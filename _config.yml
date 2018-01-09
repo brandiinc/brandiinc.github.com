@@ -223,6 +223,7 @@ defaults:
   values:
     #permalink: "/blog/:title/"
     layout: post
+    cover: /assets/default.jpg
     author:
 - scope:
     path: ''
