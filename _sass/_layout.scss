@@ -73,8 +73,48 @@ pre code.hljs {
 		a {
 			color:#FFF;
 		}
+		h1 {
+			font-size: 1.5em !important;
+			margin: 0;
+		}
+		.subtitle {
+			font-size: 0.9em !important;
+		}
+		.profile-img {
+			display: inline-block;
+			vertical-align: middle;
+			width: 2em;
+			height: 2em;
+			margin: 0 auto;
+			-webkit-border-radius: 100px;
+			-moz-border-radius: 100px;
+			border-radius: 100px;
+			background-size: 120%;
+			background-position: 50% 50%;
+		}
+
 	}
 }
+.home {
+	.post-header{
+		h1 {
+			font-size: 1.5em !important;
+			margin: 0;
+		}
+		.subtitle {
+			font-size: 0.9em !important;
+		}
+	}
+}
+
+h1 {
+	font-size: 1.5em !important;
+	margin: 0;
+}
+.subtitle {
+	font-size: 0.9em !important;
+}
+
 .author.has-cover {
 	.post-header{
 		.profile-img {
@@ -92,7 +132,7 @@ pre code.hljs {
 			margin: 0;
 		}
 		.scrim.has-cover {
-			padding: 8.4em 1em !important;			
+			padding: 8.4em 1em !important;
 		}
 	}
 }

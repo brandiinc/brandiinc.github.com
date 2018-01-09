@@ -5,6 +5,7 @@ author: chunbs
 date: '2015-04-18 17:43:59 +0900'
 tags: jekyll welcome
 cover: "/assets/instacode.png"
+subtitle: 노예 12년
 ---
 
 ## 안녕하세요

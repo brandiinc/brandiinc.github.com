@@ -10,21 +10,23 @@ layout: default
       <h1 class="title">{% if page.permaltitle %} {{ page.permaltitle }} {% else %}{{ page.title }}{% endif %}</h1>
       <p class="info">
         {% if page.subtitle %}
-          {{ page.subtitle }}
-        {% else %}
-          by
-          {{ page.author }}
-          {% if page.categories.size > 0 %}
-            {% for cat in page.categories %}
-              {% if site.jekyll-archives %}
-              <a href="{{ site.baseurl }}/category/{{ cat }}">{{ cat | capitalize }}</a>{% if forloop.last == false %}, {% endif %}
-              {% else %}
-              <a href="{{ site.baseurl }}/posts/#{{ cat }}">{{ cat | capitalize }}</a>{% if forloop.last == false %}, {% endif %}
+          <span class="subtitle">{{ page.subtitle }}</span>
+        {% endif %}
+        <br/>
+        <br/>
+        {% if page.author %}
+          {% if page.author %}
+            {% for author in site.data.authors %}
+              {% if page.author == author.name %}
+                <div class="profile-img" {% if author.img %}style="background-image: url({{ author.img | prepend: site.baseurl }});"{% endif %}></div>
+                <a href="{{ site.baseurl }}/authors/{{page.author}}">{{author.koname}}</a>
+                {% break %}
               {% endif %}
-              {%break %}
             {% endfor %}
           {% endif %}
         {% endif %}
+        <br/>
+        {{ page.date | date: "%Y-%m-%d" }}
       </p>
     </header>
   </div>
@@ -34,13 +36,14 @@ layout: default
 
 {% unless page.cover %} {% include page_divider.html %} {% endunless %}
 
+{% comment %}
 <section class="post-meta">
   <div class="post-date">{{ page.date | date: "%Y-%m-%d" }}</div>
 </section>
+{% endcomment %}
 
 <article class="post-content">
   {{ content }}
-
   <div class="name-card">
     <strong>글</strong><br/>
     {% if page.author %}
@@ -101,23 +104,23 @@ layout: default
     {% if social.name == "Kakao" and social.share == true %}
 
          <!--<img src="{{ site.url }}{{ site.baseurl }}{{ social.img }}" class="icon">-->
-         <a id="kakao-link-btn"></a>
+         <a id="kakao-link-btn"><img src="{{ site.url }}{{ site.baseurl }}{{ social.img }}" class="icon"></a>
 
       <script src="//developers.kakao.com/sdk/js/kakao.min.js"></script>
       <script type='text/javascript'>
         // 사용할 앱의 JavaScript 키를 설정해 주세요.
-        Kakao.init('07f1b12eb75efccd0e8d48db1b65a333');
+        Kakao.init('{{site.kakao_api_key}}');
         // 카카오 로그인 버튼을 생성합니다.
         Kakao.Link.createDefaultButton({
           container: '#kakao-link-btn',
           objectType: 'feed',
           content: {
-            title: '딸기 치즈 케익',
-            description: '#케익 #딸기 #삼평동 #카페 #분위기 #소개팅',
-            imageUrl: 'http://mud-kage.kakao.co.kr/dn/Q2iNx/btqgeRgV54P/VLdBs9cvyn8BJXB3o7N8UK/kakaolink40_original.png',
+            title: '{{page.title}}',
+            //description: '#케익 #딸기 #삼평동 #카페 #분위기 #소개팅',
+            imageUrl: 'http://labs.brandi.co.kr/assets/logo.png',
             link: {
-              mobileWebUrl: 'https://developers.kakao.com',
-              webUrl: 'https://developers.kakao.com'
+              mobileWebUrl: '{{full_url}}',
+              webUrl: '{{full_url}}'
             }
           },
           social: {
@@ -129,15 +132,8 @@ layout: default
             {
               title: '웹으로 보기',
               link: {
-                mobileWebUrl: 'https://developers.kakao.com',
-                webUrl: 'https://developers.kakao.com'
-              }
-            },
-            {
-              title: '앱으로 보기',
-              link: {
-                mobileWebUrl: 'https://developers.kakao.com',
-                webUrl: 'https://developers.kakao.com'
+                mobileWebUrl: '{{full_url}}',
+                webUrl: '{{full_url}}'
               }
             }
           ]
@@ -146,7 +142,7 @@ layout: default
         </script>
     {% endif %}
     {% if social.name == "Line" and social.share == true %}
-      <div class="line-it-button" data-lang="ko" data-type="share-c" data-url="http://192.168.1.180:1234" style="display: none;"></div>
+      <div class="line-it-button" data-lang="ko" data-type="share-c" data-url="{{full_url}}" style="display: none;"></div>
       <script src="https://d.line-scdn.net/r/web/social-plugin/js/thirdparty/loader.min.js" async="async" defer="defer"></script>
     {% endif %}
   {% endfor %}

@@ -23,6 +23,7 @@ baseurl: "" # the subpath of your site, e.g. /blog/
 url: "http://labs.brandi.co.kr/" # the base hostname & protocol for your site
 cover: "/assets/header_image.jpg"
 logo: "/assets/logo.png"
+kakao_api_key: "07f1b12eb75efccd0e8d48db1b65a333"
 
 # Build settings
 markdown: kramdown
