@@ -116,7 +116,7 @@ layout: default
           objectType: 'feed',
           content: {
             title: '{{page.title}}',
-            //description: '#케익 #딸기 #삼평동 #카페 #분위기 #소개팅',
+            description: '{{kakao_description}}',  {%comment%}'{{ page.content | strip_html | truncatewords: 25 }}',{%endcomment%}
             imageUrl: 'http://labs.brandi.co.kr/assets/logo.png',
             imageWidth: 118,
             imageHeight: 40,
