@@ -49,7 +49,7 @@ layout: default
     {% if page.author %}
       {% for author in site.data.authors %}
         {% if page.author == author.name %}
-          {{author.koname}}<br/>
+          {{author.koname}} | 
           {{author.position}}<br>
           {{author.email}}
           {% break %}

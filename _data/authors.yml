@@ -1,14 +1,14 @@
   - name: chunbs
-    koname: 천보성
+    koname: 천보성 팀장
     email: chunbs@brandi.co.kr
-    position: R&D 개발 2팀
+    position: R&D 개발2팀
     img: /assets/profile/chunbs.jpg
   - name: kangww
-    koname: 강원우
+    koname: 강원우 과장
     email: kangww@brandi.co.kr
-    position: R&D 개발 2팀
+    position: R&D 개발2팀
   - name: kimcy
-    koname: 김치영
+    koname: 김치영 주임
     email: kimcy@brandi.co.kr
     position: R&D 서비스팀
     img: /assets/profile/kimcy.jpg
