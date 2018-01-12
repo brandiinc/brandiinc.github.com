@@ -1,10 +1,10 @@
 ---
 title: 브랜디 22차 QA를 진행하며
 layout: post
+cover: "/assets/timeline.jpg"
 author: kimcy
 date: '2015-04-18 17:43:59 +0900'
-cover: "/assets/timeline.jpg"
-subtitle: QA는 박세요
+subtitle: 뫼비우스의 QA
 ---
 
 QA담당으로 입사하자마자 12월 21일, 22차 업데이트를 위한 앱 QA를 진행했습니다. QA는 이전 직장에서도 꾸준히 했는데도 아직까지 적응하기  어렵습니다. 그렇게 확인을 많이 하는데 오류는 왜 배포 후에 보이는 걸까요.
