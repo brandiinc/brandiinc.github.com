@@ -1,0 +1,52 @@
+{% if paginator.total_pages > 1 %}
+<nav class="pagination" role="navigation">
+
+  {% if paginator.previous_page %}
+    {% if paginator.page == 2 %}
+    <a class="newer-posts page" href="{% if site.baseurl %}{{ site.baseurl }}{% endif %}/">
+      <i class="fa fa-chevron-left" aria-hidden="true"></i>
+    </a>
+    {% else %}
+    <a class="newer-posts page" href="{% if site.baseurl %}{{ site.baseurl }}{% endif %}/">
+      <i class="fa fa-chevron-left" aria-hidden="true"></i>
+    </a>
+    {% endif %}
+  {% else %}
+  {% endif %}
+
+
+    {% assign page_start = paginator.page | minus: 2 %}
+
+    {% if page_start < 1 %}
+      {% assign page_start = 1 %}
+    {% endif %}
+
+    {% assign p = 0 %}
+    {% for index in (page_start..paginator.total_pages) %}
+
+      {% if paginator.page == index %}
+        <strong class="current-page page">{{index}}</strong>
+      {% else %}
+        {% if index == 1 %}
+          <a href="{{ site.url }}" class="page">{{index}}</a>
+        {% else %}
+          <a href="{{ site.url }}/page{{ index }}/" class="page">{{index}}</a>
+        {% endif %}
+      {% endif %}
+
+      {% assign p = p | plus: 1 %}
+      {% if p >= 5 %}
+        {%break%}
+      {% endif %}
+
+    {% endfor %}
+
+
+    {% if paginator.next_page %}
+    <a class="newer-posts page" href="{{ site.baseurl }}/page{{paginator.next_page}}">
+      <i class="fa fa-chevron-right" aria-hidden="true"></i>
+    </a>
+		{% else %}
+		{% endif %}
+</nav>
+{% endif %}

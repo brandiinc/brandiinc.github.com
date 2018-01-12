@@ -38,6 +38,27 @@ pre code.hljs {
 	font-size: modular-scale(-1);
 }
 
+figure {
+	margin: 1em auto;
+}
+figure.percent100 { width: 100%; }
+figure.percent90 { width: 90%;}
+figure.percent80 { width: 80%;}
+figure.percent70 { width: 70%;}
+figure.percent60 { width: 60%;}
+figure.percent50 { width: 50%;}
+figure.percent40 { width: 40%;}
+figure.percent30 { width: 30%;}
+figure.percent20 { width: 20%;}
+figure.percent15 { width: 15%;}
+figure.percent10 { width: 10%;}
+figure.percent5 { width: 5%;}
+figcaption {
+	text-align: center;
+	font-weight: bold;
+	color:#999;
+}
+
 .page-divider {
 	$divider-color: $light-gray;
   display: block;
@@ -327,6 +348,20 @@ h1 {
     a.newer-posts {
       text-decoration: none;
     }
+		.page {
+			margin: 0;
+			padding: 1em;
+			&:hover {
+				background: #f1f1f1;
+			}
+		}
+		strong.page {
+			color: #333;
+			font-weight: bold;
+		}
+		a.page {
+			color: #999;
+		}
 	}
 	.site-header-container {
 		color: $white;
@@ -379,8 +414,13 @@ h1 {
 			word-wrap: break-word;
 			text-align: justify;
 			letter-spacing: -0.02em;
-			line-height: 1.7em;
+			line-height: 1.9em;
 			-webkit-font-smoothing: antialiased;
+
+			a {
+				color:#ff4c42;
+
+			}
 
 			.name-card {
 
@@ -397,6 +437,10 @@ h1 {
 					height: 3em;
 					width: auto;
 					margin-top: 0.5em;
+				}
+				img.per50 {
+					width: 50%;
+					height: auto;
 				}
 			}
 		}
@@ -524,6 +568,9 @@ h1 {
 	padding: 1em 1em 2em 1em;
 	background-color: $highlight-color;
 	color: $white;
+ 	h3 {
+		font-size: 1em;
+	}
 	a {
 	  color: $link-color;
 	  &:active,
@@ -611,6 +658,6 @@ h1 {
 }
 @media screen and (min-width: 768px) {
 	.page-content .post .post-content {
-		line-height: 1.8em;
+		line-height: 2em;
 	}
 }
