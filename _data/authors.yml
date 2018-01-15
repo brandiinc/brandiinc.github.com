@@ -7,6 +7,7 @@
     koname: 강원우 과장
     email: kangww@brandi.co.kr
     position: R&D 개발2팀
+    img: /assets/profile/kangww.jpg
   - name: kimcy
     koname: 김치영 주임
     email: kimcy@brandi.co.kr
@@ -22,3 +23,6 @@
     email: janggw@brandi.co.kr
     position: R&D 서비스팀
     img: /assets/profile/janggw.jpg
+    facebook: https://www.facebook.com/geunwoo.jang
+    instagram: https://www.instagram.com/gw.jang/
+    book: http://book.naver.com/bookdb/book_detail.nhn?bid=12805980

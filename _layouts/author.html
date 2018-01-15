@@ -17,14 +17,20 @@ layout: default
       {% endif %}
 
       <p class="info">
-        {{ page.subtitle }}
+        {{ page.subtitle }}<br/>
         <!-- email, 페이스북, 인스타, 저서 -->
-        <!--
-        <i class="fa fa-envelope-o" aria-hidden="true"></i>
-        <i class="fa fa-facebook-square" aria-hidden="true"></i>
-        <i class="fa fa-instagram" aria-hidden="true"></i>
-        <i class="fa fa-book" aria-hidden="true"></i>
-        -->
+        {% if page.author %}
+          {% for author in site.data.authors %}
+            {% if page.author == author.name %}
+
+              &nbsp;
+              {% if author.email %}<a href="mailto:{{author.email}}"><i class="fa fa-envelope-o" aria-hidden="true"></i></a> &nbsp;{% endif %}
+              {% if author.facebook %}<a href="{{author.facebook}}"><i class="fa fa-facebook-square" aria-hidden="true"></i></a> &nbsp;{% endif %}
+              {% if author.instagram %}<a href="{{author.instagram}}"><i class="fa fa-instagram" aria-hidden="true"></i></a> &nbsp;{% endif %}
+              {% if author.book %}<a href="{{author.book}}"><i class="fa fa-book" aria-hidden="true"></i></a> &nbsp;{% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
       </p>
     </header>
   </div>
