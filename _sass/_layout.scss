@@ -424,6 +424,9 @@ h1 {
 				color:#ff4c42;
 
 			}
+			iframe {
+				width: 100%;
+			}
 
 			.name-card {
 
@@ -662,5 +665,11 @@ h1 {
 @media screen and (min-width: 768px) {
 	.page-content .post .post-content {
 		line-height: 2em;
+	}
+}
+
+@media screen and (max-width: 768px) {
+	.page-content .post iframe{
+		height: auto;
 	}
 }
