@@ -13,6 +13,18 @@ layout: default
 </div>
 
 <div class="wrapper">
+
+  <!-- HTML elements for search -->
+  <div id="search-container">
+    <input type="text" id="search-input" placeholder="search...">
+    <div class="find-icon">
+      <i class="fa fa-search" aria-hidden="true"></i>
+    </div>
+
+    <ul id="results-container"></ul>
+  </div>
+
+
 <ul class="post-list">
   {% for post in paginator.posts %}
   <li>

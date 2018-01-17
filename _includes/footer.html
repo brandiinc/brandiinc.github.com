@@ -70,7 +70,7 @@
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/js/lightbox.min.js"></script>
-<script src="{{site.baseurl}}/js/simple-jekyll-search.min.js"></script>
+<script src="{{site.baseurl}}/js/simple-jekyll-search.js"></script>
 
 <script type="text/javascript">
 $(document).ready(function() {
@@ -89,11 +89,22 @@ $(document).ready(function() {
     });
   });
 
-  SimpleJekyllSearch({
-    searchInput: document.getElementById('search-input'),
-    resultsContainer: document.getElementById('results-container'),
-    json: '/search.json'
-  })
+  if ($('#search-input').length > 0) {
+    SimpleJekyllSearch({
+      searchInput: document.getElementById('search-input'),
+      resultsContainer: document.getElementById('results-container'),
+      noResultsText: 'has no result',
+      json: '/search.json'
+    })
+
+    $('.find-icon').click(function(){
+      $('#search-input').toggle();
+      if ($('#search-input:visible').length > 0)
+        ;
+      else
+        $('#results-container').hide();
+    });
+  }
 
 });
 
