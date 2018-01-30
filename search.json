@@ -12,7 +12,7 @@
       "email"  : "{{author.email}}",
       {% endif %}{% endfor %}{% endif %}
       "date"     : "{{ post.date }}",
-      "content"  : "{{ post.content | strip_html | replace: '"', '\"' | replace: '	',' ' | replace: '
+      "content"  : "{{ post.content | strip_html | replace: "\", '' |  replace: '"', '\"' | replace: '	',' ' | replace: '
 ', ' ' }}"
     } {% unless forloop.last %},{% endunless %}
   {% endfor %}
