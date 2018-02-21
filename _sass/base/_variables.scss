@@ -1,6 +1,16 @@
 // Google Fonts
 @import url(//fonts.googleapis.com/css?family=Roboto+Slab:400,700,300|Roboto:400,700,300|Open+Sans:300italic,400italic,600italic,700italic,800italic,400,800,700,600,300);
 
+$gray-1: #f9f9f9 !default;
+$gray-2: #e5e5e5 !default;
+$gray-3: #ccc !default;
+$gray-4: #767676 !default;
+$gray-5: #515151 !default;
+$gray-6: #313131 !default;
+
+$border-color: $gray-2 !default;
+$border-radius: 300px !default;
+
 // Typography
 $base-font-family: "Nanum Gothic", "Open Sans", "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif; // $helvetica;
 $heading-font-family: "Nanum Gothic", "Roboto Slab", "Helvetica Neue", "Helvetica", "Arial", sans-serif; // $base-font-family;
