@@ -53,6 +53,11 @@
     img: /assets/profile/leesg.jpg
   - name: kimjh
     koname: 김주희 사원
-    email: kimjh@brandi.co.kr
+    email: kimjh3@brandi.co.kr
     position: R&D 개발1팀
     img: /assets/profile/kimjh.jpg
+  - name: ohyj
+    koname: 오연주 사원
+    email: ohyj@brandi.co.kr
+    position: R&D 개발2팀
+    img: /assets/profile/ohyj.jpg
