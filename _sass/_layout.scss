@@ -152,6 +152,9 @@ h1 {
 	font-size: 1.5em !important;
 	margin: 0;
 }
+h2, h3 {
+    margin: 0;
+}
 .subtitle {
 	/*font-size: 0.9em !important;*/
 }
@@ -320,9 +323,9 @@ h1 {
 			word-wrap: break-word;
 			text-align: justify;
 		}
-		.post-link {
+		/*.post-link {
 			font-size: 0.7em;
-		}
+		}*/
 		@extend %default-ul;
 	}
 	.post-meta {
@@ -396,6 +399,12 @@ h1 {
 	img.logo {
 		width: 40%;
 	}
+    h2 {
+        font-size: 1.3em;
+    }    
+    h3 {
+        font-size: 1.2em;
+    }
 	/*
 	*	Posts
 	*/
