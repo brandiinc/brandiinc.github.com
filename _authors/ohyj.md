@@ -6,4 +6,4 @@ subtitle: 개발을 연주합니다.
 author: ohyj
 ---
 
-dd
+브랜디 R&D본부 개발2팀

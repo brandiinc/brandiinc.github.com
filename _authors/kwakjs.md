@@ -6,4 +6,4 @@ subtitle: 무아지경 웹프론트
 author: kwakjs
 ---
 
-x
+브랜디 R&D본부 개발1팀

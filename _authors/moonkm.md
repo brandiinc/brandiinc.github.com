@@ -6,4 +6,4 @@ subtitle: R&D 본부의 대소사를 관리하는 PM입니다!
 author: moonkm
 ---
 
-dd
+브랜디 R&D본부 PM팀장

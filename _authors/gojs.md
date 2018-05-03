@@ -6,4 +6,4 @@ subtitle: 개발1팀
 author: gojs
 ---
 
-dd
+브랜디 R&D본부 개발1팀

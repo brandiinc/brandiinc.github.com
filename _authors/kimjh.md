@@ -6,4 +6,4 @@ subtitle: Create something, craft well.
 author: kimjh
 ---
 
-dd
+브랜디 R&D본부 개발1팀
