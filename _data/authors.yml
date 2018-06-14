@@ -11,7 +11,7 @@
   - name: kimcy
     koname: 김치영 대리
     email: kimcy@brandi.co.kr
-    position: R&D 서비스팀
+    position: R&D PM팀
     img: /assets/profile/kimcy.jpg
   - name: leejh
     koname: 이정환 과장
@@ -21,15 +21,15 @@
   - name: janggw
     koname: 장근우 대리
     email: janggw@brandi.co.kr
-    position: R&D 서비스팀
+    position: HR매니저
     img: /assets/profile/janggw.jpg
     facebook: https://www.facebook.com/geunwoo.jang
     instagram: https://www.instagram.com/gw.jang/
     book: http://book.naver.com/bookdb/book_detail.nhn?bid=12805980
   - name: moonkm
-    koname: 문경민 차장
+    koname: 문경민 팀장
     email: moonkm@brandi.co.kr
-    position: R&D 서비스팀
+    position: R&D PM팀
     img: /assets/profile/moonkm.jpg
   - name: kwakjs
     koname: 곽정섭 과장
@@ -71,3 +71,8 @@
     email: gojs@brandi.co.kr
     position: R&D 개발1팀
     img: /assets/profile/gojs.jpeg
+  - name: kimby
+    koname: 김보예 사원
+    email: kimby@brandi.co.kr
+    position: R&D 개발1팀
+    img: /assets/profile/kimby.jpg
