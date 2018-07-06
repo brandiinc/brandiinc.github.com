@@ -117,7 +117,7 @@ layout: default
           content: {
             title: '{{page.title}}',
             description: '{{site.kakao_description}}',  {%comment%}'{{ page.content | strip_html | truncatewords: 25 }}',{%endcomment%}
-            imageUrl: 'http://labs.brandi.co.kr/assets/kakao_log.png',
+            imageUrl: '{{ site.url }}{{ page.facebookImg }}',
             imageWidth: 800,
             imageHeight: 400,
             link: {
