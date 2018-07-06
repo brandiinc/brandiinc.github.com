@@ -43,7 +43,7 @@
   <meta property="og:site_name" content="{{ site.title }}" />
   <meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="{{ site.url }}{{ page.facebookImg }}" />
+  <meta property="og:image" content="{% if page.facebookImg %}{{ site.url }}{{ page.facebookImg }}{% else %}{{ site.url }}{{ site.protocols.fb_image }}{% endif %}" />
   <meta property="og:image:type" content="{{ site.protocols.fb_image_type }}" />
   <meta property="og:image:width" content="{{ site.protocols.fb_image_width }}" />
   <meta property="og:image:height" content="{{ site.protocols.fb_image_height }}" />
