@@ -150,7 +150,7 @@ figcaption {
 }
 
 h1 {
-	font-size: 1.5em !important;
+	font-size: 2.5em !important;
 	margin: 0;
 }
 h2, h3 {
@@ -722,6 +722,22 @@ h2, h3 {
 }
 
 @media screen and (max-width: 768px) {
+    h1 {
+    	font-size: 1.5em !important;
+    }
+    /*
+    *	Body
+    */
+    .page-content {
+    	.site-header-container {
+    		.site-header{
+    			.subtitle {
+    				font-size: 0.9em;
+    			}
+    		}
+    	}
+	}
+    
 	.page-content .post iframe{
 		height: auto;
 	}
