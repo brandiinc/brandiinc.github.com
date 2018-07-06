@@ -116,7 +116,7 @@ layout: default
           objectType: 'feed',
           content: {
             title: '{{page.title}}',
-            description: '{{site.kakao_description}}',  {%comment%}'{{ page.content | strip_html | truncatewords: 25 }}',{%endcomment%}
+            description: '{% if page.excerpt %}{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}{% else %}{{ site.description }}{% endif %}',  {%comment%}'{{ page.content | strip_html | truncatewords: 25 }}',{%endcomment%}
             imageUrl: '{{ site.url }}{{ page.facebookImg }}',
             imageWidth: 800,
             imageHeight: 400,
