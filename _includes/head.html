@@ -54,8 +54,8 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
   <meta name="twitter:description" content="{% if page.excerpt %}{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}{% else %}{{ site.description }}{% endif %}">
-  <meta name="twitter:image" content="{{ site.protocols.fb_image | prepend: site.baseurl | prepend: site.url }}">
-  <meta name="twitter:url" content="{{ site.url }}">
+  <meta name="twitter:image" content="{{ site.url }}{{ page.facebookImg }}">
+  <meta name="twitter:url" content="{{ site.url }}{{ page.url }}">
   {% endif %}
 
   {% if protocols.os_repo and protocols.os_rcs_type and protocols.os_src %}
