@@ -225,6 +225,7 @@ defaults:
     #permalink: "/blog/:title/"
     layout: post
     cover: /assets/default.jpg
+    facebookImg: /assets/kakao_log.png
     author:
 - scope:
     path: ''
