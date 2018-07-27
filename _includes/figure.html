@@ -1,4 +1,4 @@
 <figure {% if include.width == 'fitcontent' %} class="fitcontent" {% elsif include.width %} class="percent{{include.width}}" {% endif %}>
   <img src="{{site.url}}/{{ include.file }}" alt="{{include.alt}}" {% if include.border%} style="border:1px solid #ccc;" {%endif%}>
-  <figcaption>{{include.caption}}</figcaption>
 </figure>
+<figcaption>{{include.caption}}</figcaption>
