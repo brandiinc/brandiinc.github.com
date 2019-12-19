@@ -65,6 +65,20 @@ figcaption {
 	color:#999;
 }
 
+.annotation {
+	font-weight: bold;
+	color:#999;
+}
+
+.indent {
+	margin-left: 20px;
+}
+
+.bottom-spacing {
+	margin-bottom: 10px;
+}
+
+
 .page-divider {
 	$divider-color: $light-gray;
   display: block;
