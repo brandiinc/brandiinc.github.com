@@ -71,7 +71,13 @@ figcaption {
 }
 
 .indent {
+	display: block;
 	margin-left: 20px;
+}
+
+.indent2 {
+	display: block;
+	margin-left: 40px;
 }
 
 .bottom-spacing {
