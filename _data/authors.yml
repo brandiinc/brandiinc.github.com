@@ -1,45 +1,45 @@
   - name: chunbs
-    koname: 천보성 팀장
+    koname: 천보성
     email: chunbs@brandi.co.kr
-    position: R&D 개발2팀
+    position: 커머스 개발팀
     img: /assets/profile/chunbs.jpg
   - name: kangww
-    koname: 강원우 과장
+    koname: 강원우
     email: kangww@brandi.co.kr
-    position: R&D 개발2팀
+    position: 커머스 개발팀
     img: /assets/profile/kangww.jpg
   - name: kimcy
-    koname: 김치영 대리
+    koname: 김치영 팀장
     email: kimcy@brandi.co.kr
-    position: R&D DO실
+    position: QA팀
     img: /assets/profile/kimcy.jpg
   - name: leejh
-    koname: 이정환 과장
+    koname: 이정환
     email: leejh@brandi.co.kr
-    position: R&D 개발MA팀
+    position: MA팀
     img: /assets/profile/leejh.jpg
   - name: janggw
     koname: 장근우 대리
     email: janggw@brandi.co.kr
-    position: Brand Manager 
+    position: Brand Manager
     img: /assets/profile/janggw.jpg
     facebook: https://www.facebook.com/geunwoo.jang
     instagram: https://www.instagram.com/gw.jang/
     book: http://book.naver.com/bookdb/book_detail.nhn?bid=12805980
   - name: moonkm
-    koname: 문경민 팀장
+    koname: 문경민
     email: moonkm@brandi.co.kr
-    position: R&D PM팀
+    position: 커머스 개발팀
     img: /assets/profile/moonkm.jpg
   - name: kwakjs
-    koname: 곽정섭 과장
+    koname: 곽정섭
     email: kwakjs@brandi.co.kr
-    position: R&D 개발1팀
+    position: 커머스 개발팀
     img: /assets/profile/kwakjs.jpg
   - name: hansj
-    koname: 한석종 부장
+    koname: 한석종 팀장
     email: hansj@brandi.co.kr
-    position: R&D 데이터팀
+    position: 데이터팀
     img: /assets/profile/hansj.jpg
   - name: yunsh
     koname: 윤석호 이사
@@ -49,45 +49,45 @@
   - name: leesg
     koname: 이상근 실장
     email: leesg@brandi.co.kr
-    position: R&D DO실
+    position: 랩스 2실
     img: /assets/profile/leesg.jpg
   - name: kimjh
-    koname: 김주희 사원
+    koname: 김주희
     email: kimjh3@brandi.co.kr
-    position: R&D 개발MA팀
+    position: MA팀
     img: /assets/profile/kimjh.jpg
   - name: ohyj
-    koname: 오연주 사원
+    koname: 오연주
     email: ohyj@brandi.co.kr
-    position: R&D 개발2팀
+    position: 데브옵스팀
     img: /assets/profile/ohyj.jpg
   - name: kimwk
-    koname: 김우경 대리
+    koname: 김우경
     email: kimwk@brandi.co.kr
-    position: R&D 개발1팀
+    position: 커머스 개발팀
     img: /assets/profile/kimwk.jpg
   - name: gojs
     koname: 고재성 팀장
     email: gojs@brandi.co.kr
-    position: R&D 개발MA팀
+    position: MA팀
     img: /assets/profile/gojs.jpeg
   - name: kimby
-    koname: 김보예 사원
+    koname: 김보예
     email: kimby@brandi.co.kr
-    position: R&D 개발MA팀
+    position: MA팀
     img: /assets/profile/kimby.jpg
   - name: janghj
     koname: 장현준 팀장
     email: janghj@brandi.co.kr
-    position: R&D 개발3팀
+    position: 풀필먼트 개발팀
     img: /assets/profile/janghj.png
   - name: yangjh
-    koname: 양정훈 사원
+    koname: 양정훈
     email: yangjh@brandi.co.kr
-    position: R&D 개발3팀
+    position: 풀필먼트 개발팀
     img: /assets/profile/yangjh.jpg
   - name: leekh
-    koname: 이경희 대리
+    koname: 이경희
     email: leekh@brandi.co.kr
-    position: R&D 개발3팀
+    position: 풀필먼트 개발팀
     img: /assets/profile/leekh.jpeg

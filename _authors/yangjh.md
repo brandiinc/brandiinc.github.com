@@ -6,4 +6,4 @@ author: yangjh
 title: 양정훈
 ---
 
-R&D본부 개발3팀
+브랜디 랩스(LABs) 풀필먼트 개발팀

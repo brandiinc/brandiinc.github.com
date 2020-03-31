@@ -6,4 +6,4 @@ subtitle: 개발1팀
 author: gojs
 ---
 
-브랜디 R&D본부 개발1팀
+브랜디 랩스(LABs) MA팀

@@ -10,12 +10,12 @@ exclude:
 
 # Site settings
 title: WE ARE BRANDI
-subtitle: "브랜디 R&D 본부 기술 블로그"
+subtitle: "브랜디 랩스 기술 블로그"
 buttomtitle: 브랜디 랩스(Brandi Labs)
 email: welcome.dev@brandi.co.kr
 phone_number: 02-6205-0303 (내선번호 7)
 name: Brandi Dev
-description: 브랜드(Brand)와 나(I)를 연결해주는 브랜디 R&D 본부 기술 블로그
+description: 브랜드(Brand)와 나(I)를 연결해주는 브랜디 랩스 기술 블로그
 # Base URL of site (i.e. /blog). It should always start with a slash,
 # and never end with a slash. Set it to a blank value if hosting at the
 # root of your server.

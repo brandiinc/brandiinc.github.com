@@ -6,4 +6,4 @@ author: leekh
 title: 이경희
 ---
 
-R&D본부 개발3팀
+브랜디 랩스(LABs) 풀필먼트 개발팀

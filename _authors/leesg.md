@@ -6,4 +6,4 @@ subtitle: 개발1팀 기둥
 author: leesg
 ---
 
-브랜디 R&D본부 개발1팀장
+브랜디 랩스(LABs) 2실
