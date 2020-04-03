@@ -2,7 +2,7 @@
 title: 오연주
 layout: author
 cover: "/assets/author.jpg"
-subtitle: 개발을 연주합니다.
+subtitle: 인프라 운영을 연주하고 있습니다.
 author: ohyj
 ---
 

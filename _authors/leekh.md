@@ -1,9 +1,9 @@
 ---
+title: 이경희
 layout: author
 cover: "/assets/author.jpg"
-subtitle: 개발3팀
+subtitle: 개발이 아직도 어려워요.
 author: leekh
-title: 이경희
 ---
 
 브랜디 랩스(LABs) 풀필먼트 개발팀

@@ -2,7 +2,7 @@
 title: 이상근
 layout: author
 cover: "/assets/author.jpg"
-subtitle: 개발1팀 기둥
+subtitle: 개발자 입니다.
 author: leesg
 ---
 

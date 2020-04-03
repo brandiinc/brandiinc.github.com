@@ -2,7 +2,7 @@
 title: 곽정섭
 layout: author
 cover: "/assets/author.jpg"
-subtitle: 무아지경 백엔드
+subtitle: 파주야생 개발자
 author: kwakjs
 ---
 
