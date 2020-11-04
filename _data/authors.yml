@@ -1,7 +1,7 @@
   - name: chunbs
-    koname: 천보성
+    koname: 천보성 팀장
     email: chunbs@brandi.co.kr
-    position: 커머스 개발팀
+    position: 혁신팀
     img: /assets/profile/chunbs.jpg
   - name: kangww
     koname: 강원우
@@ -39,7 +39,7 @@
   - name: hansj
     koname: 한석종 팀장
     email: hansj@brandi.co.kr
-    position: 데이터팀
+    position: 데이터A팀
     img: /assets/profile/hansj.jpg
   - name: yunsh
     koname: 윤석호 이사
@@ -96,3 +96,8 @@
     email: leejp@brandi.co.kr
     position: 커머스 개발팀
     img: /assets/profile/leejp.png
+  - name: bangdj
+    koname: 방대종 팀장
+    email: bangdj@brandi.co.kr
+    position: 퍼블리싱팀
+    img: /assets/profile/bangdj.png
