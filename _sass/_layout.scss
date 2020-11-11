@@ -57,7 +57,7 @@ figure.percent5 { width: 5%;}
 figure.fitcontent { width: fit-content;}
 figure.fullwidth {
 	img { width: 100% !important; }
-} 
+}
 
 figcaption {
 	text-align: center;
@@ -91,8 +91,22 @@ figcaption {
 	margin-bottom: 10px;
 }
 
+// color
 .gray {
 	color: $medium-gray !important;
+}
+.blue {
+	color: #5e92b9 !important;
+}
+.green {
+	color: #62a294 !important;
+}
+.red {
+	color: #ff4c42 !important;
+}
+
+.test {
+	list-style-type: disc;
 }
 
 
@@ -444,7 +458,7 @@ h2, h3 {
     }
     h2 {
         font-size: 1.3em;
-    }    
+    }
     h3 {
         font-size: 1.2em;
     }
@@ -779,7 +793,7 @@ h2, h3 {
     		}
     	}
 	}
-    
+
 	.page-content .post iframe{
 		height: auto;
 	}
