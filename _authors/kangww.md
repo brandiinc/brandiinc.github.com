@@ -6,4 +6,4 @@ subtitle: TOO_FAR_AWAY_HOME_EXCEPTION
 author: kangww
 ---
 
-브랜디 랩스(LABs) 커머스 개발팀
+브랜디 랩스(LABs) 커머스개발팀

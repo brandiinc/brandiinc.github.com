@@ -6,4 +6,4 @@ subtitle: 커머스개발팀에서 성장중
 author: leejp
 ---
 
-브랜디 랩스(LABs) 커머스 개발팀
+브랜디 랩스(LABs) 커머스개발팀

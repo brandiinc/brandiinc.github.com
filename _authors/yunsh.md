@@ -6,4 +6,4 @@ subtitle: 브랜디 CTO
 author: yunsh
 ---
 
-브랜디 랩스(LABs) CTO
+브랜디 랩스(LABs)

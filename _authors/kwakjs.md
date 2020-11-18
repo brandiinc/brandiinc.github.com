@@ -6,4 +6,4 @@ subtitle: 파주야생 개발자
 author: kwakjs
 ---
 
-브랜디 랩스(LABs) 커머스 개발팀
+브랜디 랩스(LABs) 커머스개발팀

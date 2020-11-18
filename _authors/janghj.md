@@ -6,4 +6,4 @@ author: janghj
 title: 장현준
 ---
 
-장현준
+브랜디 랩스(LABs) 풀필먼트개발팀
