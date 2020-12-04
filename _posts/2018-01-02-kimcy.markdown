@@ -11,7 +11,7 @@ subtitle: 입사 후 첫 QA 퀘스트 극복기
 QA담당으로 입사하자마자 12월 21일, 22차 업데이트를 위한 앱 QA를 진행했습니다. QA는 이전 직장에서도 꾸준히 했는데도 아직까지 적응하기  어렵습니다. 그렇게 확인을 많이 하는데 오류는 왜 배포 후에 보이는 걸까요.
 <br><br>
 
-{% include figure.html file="/assets/20180102/01.jpg" alt="분노" caption="분노를 느끼는 중" width="60" %}
+{% include figure.html file="/assets/2018/20180102/01.jpg" alt="분노" caption="분노를 느끼는 중" width="60" %}
 
 
 
@@ -19,14 +19,14 @@ QA담당으로 입사하자마자 12월 21일, 22차 업데이트를 위한 앱 
 
 # 22차 QA 한줄 요약: 뫼비우스의 QA
 <br>
-{% include figure.html file="/assets/20180102/02.png" alt="TC" caption="TC 수정 중" %}
+{% include figure.html file="/assets/2018/20180102/02.png" alt="TC" caption="TC 수정 중" %}
 
 <br>
 
-QA담당자의 카운트다운은 기획이 완료된 SB를 참고하여 TC를 수정하는 것부터 시작됩니다. 물론 이전의 다른 과정들도 중요합니다만 이때부터는 마음속에 폭풍전야의 전운이 돌기 시작합니다. TC를 수정하는 순간 시트를 통째로 머릿속에 외워야 합니다. Depth 구성이나 QA해야할 내용을 담당자가 미리 파악하지 못한다면 테스트 도중 쏟아지는 문의사항들을 감당하지 못하기 때문이지요. 
+QA담당자의 카운트다운은 기획이 완료된 SB를 참고하여 TC를 수정하는 것부터 시작됩니다. 물론 이전의 다른 과정들도 중요합니다만 이때부터는 마음속에 폭풍전야의 전운이 돌기 시작합니다. TC를 수정하는 순간 시트를 통째로 머릿속에 외워야 합니다. Depth 구성이나 QA해야할 내용을 담당자가 미리 파악하지 못한다면 테스트 도중 쏟아지는 문의사항들을 감당하지 못하기 때문이지요.
 
 <br><br>
-{% include figure.html file="/assets/20180102/03.png" alt="뫼비우스의 QA" caption="뫼비우스의 QA..." border="true" %}
+{% include figure.html file="/assets/2018/20180102/03.png" alt="뫼비우스의 QA" caption="뫼비우스의 QA..." border="true" %}
 
 <br>
 
@@ -36,19 +36,19 @@ QA담당자의 카운트다운은 기획이 완료된 SB를 참고하여 TC를 �
 “꼭 이래야만 할까요?” <br>
 “이상한 것 같은데요.” <br><br><br>
 
-{% include figure.html file="/assets/20180102/04.jpg" alt="나니고레" caption="????????" width="50" %}
+{% include figure.html file="/assets/2018/20180102/04.jpg" alt="나니고레" caption="????????" width="50" %}
 
 <br>
 
-그러나, QA담당의 책무를 다하기 위해 이를 꽉 무는 일이 있더라도 친절하게 답변합니다. 좋은 앱을 위해 모두가 노력하는 거니까요. 게다가 QA전문 회사에 다니면서 여러 프로젝트를 경험해봤지만, 회사 직원 전체가 배포 전에 테스트하는 게 굉장히 좋은 과정이라고 느껴졌습니다. 개발자가 아닌 고객의 관점에서 품질을 높이겠다는 회사의 방향을 엿볼 수 있었기 때문입니다. 
+그러나, QA담당의 책무를 다하기 위해 이를 꽉 무는 일이 있더라도 친절하게 답변합니다. 좋은 앱을 위해 모두가 노력하는 거니까요. 게다가 QA전문 회사에 다니면서 여러 프로젝트를 경험해봤지만, 회사 직원 전체가 배포 전에 테스트하는 게 굉장히 좋은 과정이라고 느껴졌습니다. 개발자가 아닌 고객의 관점에서 품질을 높이겠다는 회사의 방향을 엿볼 수 있었기 때문입니다.
 
 <br><br>
-{% include figure.html file="/assets/20180102/05.png" alt="QA android" caption="Android QA sheet중 일부" border="true" %}
+{% include figure.html file="/assets/2018/20180102/05.png" alt="QA android" caption="Android QA sheet중 일부" border="true" %}
 <br>
-{% include figure.html file="/assets/20180102/06.png" alt="QA iOS" caption="iOS QA sheet중 일부" border="true" %}
+{% include figure.html file="/assets/2018/20180102/06.png" alt="QA iOS" caption="iOS QA sheet중 일부" border="true" %}
 <br>
 
-사실 이렇게 꼼꼼한 과정을 거쳐도 완벽한 테스트는 없습니다. QA담당은 지속적으로 테스트를 해야 합니다. 그렇기 때문에 입사 후 처음으로 경험했던 브랜디의 QA테스트는 무사히 마쳤지만 아직도 현재진행형이기도 합니다. 내부, 외부 테스트 때 나온 결함을 Android와 iOS개발자에게 직접 전하고, 다시 테스트를 진행하고 있습니다.  
+사실 이렇게 꼼꼼한 과정을 거쳐도 완벽한 테스트는 없습니다. QA담당은 지속적으로 테스트를 해야 합니다. 그렇기 때문에 입사 후 처음으로 경험했던 브랜디의 QA테스트는 무사히 마쳤지만 아직도 현재진행형이기도 합니다. 내부, 외부 테스트 때 나온 결함을 Android와 iOS개발자에게 직접 전하고, 다시 테스트를 진행하고 있습니다.
 <br><br>
 
 # Conclusion
