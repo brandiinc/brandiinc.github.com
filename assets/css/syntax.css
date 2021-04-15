@@ -12,9 +12,12 @@
   color: #a8e1fe;
   font-weight: bold;
 }
-.highlight .c, .highlight .cd, .highlight .cm, .highlight .c1, .highlight .cs {
+.highlight .c, .highlight .cd, .highlight .cm, .highlight .c1 {
   color: #6c8b9f;
   font-style: italic;
+}
+.highlight .cs {
+  color: #6c8b9f;
 }
 .highlight .cp {
   color: #b2fd6d;
