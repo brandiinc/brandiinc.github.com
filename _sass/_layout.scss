@@ -463,6 +463,9 @@ h2, h3 {
     }
     h2 {
         font-size: 1.3em;
+        &+ hr {
+        	margin-top: 0.4em;
+        }
     }
     h3 {
         font-size: 1.2em;
