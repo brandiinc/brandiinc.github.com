@@ -809,3 +809,18 @@ h2, h3 {
 		width: 100% !important;
 	}
 }
+
+
+.half {
+    width: 50%;
+    float: left;
+}
+.clear-both {
+    clear: both;
+}
+
+@media screen and (max-width: 768px) {
+    .half {
+        width: 100%;
+    }
+}
