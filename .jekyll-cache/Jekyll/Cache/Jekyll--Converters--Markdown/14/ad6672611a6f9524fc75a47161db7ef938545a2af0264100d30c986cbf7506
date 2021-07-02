@@ -1,0 +1,419 @@
+I"~<h2 id="overview">Overview</h2>
+
+<p><strong>오늘은 브랜디에서 이미 소개된 기술들을 간단한 미션을 통해 활용하는 시간을 가져볼까 합니다.</strong></p>
+
+<p>브랜디는 상품 주문 또는 취소, 배송 상태 등에 따라 사용자에게 카카오톡 메시지, SMS 등 고객에게 알림 서비스를 제공하고 있습니다. 하지만, 국내 정보통신망법에 따라 야간 시간대(오후 9시 ~ 오전 8시 사이)에는 메시지를 보내지 않아야 하며, 메시지를 보내기 위해서는 별도의 동의가 필요합니다. <a href="#link1" class="blue">[1]</a></p>
+
+<p>그렇다면 당장 해야 할 미션에 대해 짐작이 가시나요?</p>
+
+<p><span class="blue">동의를 받지 못한 알림 서비스는 야간 시간대를 피해 전달하라.</span></p>
+
+<p><span class="green">[시스템] 지령을 습득하였습니다.</span></p>
+
+<p><span class="red">응?!?!</span></p>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201111/01.png" alt="sqs" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<h2 id="think">Think</h2>
+
+<ol>
+  <li>
+    <p>대량 메시지 발송을 위해 서버 부하를 고려하지 않을 수 없습니다. 이를 순차적으로 보내기 위한 저장소와 실행자가 필요합니다.</p>
+
+    <p>✔️  SQS + Lambda 포스팅 참고 <a href="#link2" class="blue">[2]</a></p>
+  </li>
+  <li>
+    <p>야간 시간대에 보낸 메시지 저장소와 이 메시지들을 저장하기 위한 실행자가 필요합니다.</p>
+
+    <p>✔️  이것도 SQS + Lambda 포스팅 참고 <a href="#link2" class="blue">[2]</a></p>
+  </li>
+  <li>
+    <p>야간 시간대에 모여진 메시지들을, 매일 해당 시간대를 피해 전송하기 위해 쉬지 않는 기계와 메시지 전송을 위한 실행자가 필요합니다.</p>
+
+    <p>✔️ CloudWatch 포스팅 참고 <a href="#link3" class="blue">[3]</a></p>
+  </li>
+</ol>
+
+<p><strong>포스팅을 참조하여 기본적으로 요소를 구성 했다면 그림을 그리며 퍼즐을 맞추어 봅시다.</strong>
+<br /><br /></p>
+
+<h2 id="architecturescedule-message-sqs">Architecture(Scedule Message SQS)</h2>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201111/02.jpg" alt="sqs" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>미션은 야간 시간대를 피해 대량으로 메시지를 전송해야 하며, 이미 브랜디 알림 서비스에서 존재하는 단일 전송, 일괄 전송 기능에 최대한 영향을 주지 않도록 해야 합니다.</li>
+  <li>이에 별도 SQS(Schedule Message SQS)를 구성하여 기존 SQS를 분리 전송합시다.
+<br /><br /></li>
+</ul>
+
+<h2 id="architecturewait-message-sqs">Architecture(Wait Message SQS)</h2>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201111/03.jpg" alt="sqs" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>야간 시간대에 보낸 메시지는 별도 저장소에 저장합니다.</li>
+  <li>저장소는 SQS 외 Redis, Mongo DB 등을 이용해도 좋습니다.</li>
+  <li>다만, 필자의 경우 SQS가 웹 UI 설정으로 사용하기 간편하며 메시지 처리 오류 처리 등을 손쉽게 설정 가능하며, 메시지 보관 등을 비중 있게 생각하여 선택했으니 상황에 맞게 선택하시면 됩니다. 🙂
+<br /><br /></li>
+</ul>
+
+<h2 id="architecturescheduling-sqs-messages">Architecture(Scheduling SQS messages)</h2>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201111/04.jpg" alt="sqs" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>앞서 구성한 기계(Cloud Watch)와 실행자(Schedule Lambda)로 SQS에 쌓인 메시지들을 조금씩 가져와 Schedule Message SQS에 메시지들을 전달합니다.</li>
+  <li>하나의 SQS를 구성하여 메시지 전송을 해도 되고, 메시지 전송 속도를 높이기 위해 기존 SQS를 사용하거나 별도의 SQS를 구성하는 것도 좋을 것 같습니다.</li>
+</ul>
+
+<p><strong>퍼즐을 맞추었다면 이제 코드를 만들어 봅시다.</strong>
+<br /><br /></p>
+
+<h2 id="code">Code</h2>
+
+<ul>
+  <li>scedule_manager/main.py : 스케줄러 메인</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+# from module.order_message import OrderMessage
+# from module.refund_message import RefundMessage
+# from module.delivery_message import DeliveryMessage
+</span><span class="kn">from</span> <span class="nn">module.wait_message</span> <span class="kn">import</span> <span class="n">WaitMessage</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">sqs_list</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># OrderMessage(),
+</span>    <span class="c1"># RefundMessage(),
+</span>    <span class="c1"># DeliveryMessage()
+</span>    <span class="n">WaitMessage</span><span class="p">()</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">handle</span><span class="p">():</span>
+
+    <span class="n">send_result_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">sqs</span> <span class="ow">in</span> <span class="n">sqs_list</span><span class="p">:</span>
+        <span class="n">send_result_map</span><span class="p">[</span><span class="n">sqs</span><span class="p">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">sqs</span><span class="p">.</span><span class="n">send</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">send_result_map</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<ul>
+  <li>scedule_manager/test.py : 테스트를 위해 서버 구동</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+</span><span class="s">"""
+Examples:
+    # 서버 구동
+    python ./test.py
+    # 테스트 메세지 전송
+    http://localhost:5000/send 에 POST로 SQS에 넣을 메세지 전송
+"""</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span>
+<span class="kn">import</span> <span class="nn">main</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="o">@</span><span class="n">app</span><span class="p">.</span><span class="n">route</span><span class="p">(</span><span class="s">'/test'</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s">'GET'</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">send</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">main</span><span class="p">.</span><span class="n">handle</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">'__main__'</span><span class="p">:</span>
+    <span class="n">app</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5000</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<ul>
+  <li>scedule_manager/requirements.txt : install 항목</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pymysql
+jinja2
+pytz
+requests
+slacker
+boto3
+Flask
+</code></pre></div></div>
+<p><br /></p>
+
+<ul>
+  <li>공통
+<span class="indent">- scedule_manager/common/constant.py : 전역변수</span></li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: utf-8 -*-
+# 스케줄러 메시지 일괄 전송 SQS
+</span><span class="n">SQS_QUEUE_URL_SCEDULE</span> <span class="o">=</span> <span class="s">'https://sqs.ap-northeast-1.amazonaws.com/9999999999/sqs_scedule_message'</span>
+<span class="c1"># 야간 시간대에 전송된 메시지 저장소 SQS
+</span><span class="n">SQS_QUEUE_URL_WAIT</span> <span class="o">=</span> <span class="s">'https://sqs.ap-northeast-1.amazonaws.com/9999999999/sqs_wait_message'</span>
+
+<span class="n">SLACK_TOKEN</span> <span class="o">=</span> <span class="s">'xoxp-9999999999-9999999999-9999999999-999999999999999999999999999999'</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<ul>
+  <li>모듈
+<span class="indent">- scedule_manager/module/wait_message.py : 대기 메시지 전송 SQS 모듈</span></li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+</span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">constant</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">schedule</span><span class="p">,</span> <span class="n">slack</span><span class="p">,</span> <span class="n">sqs</span>
+
+
+<span class="c1">#############################
+# 대기 메시지 전송 SQS 모듈
+#############################
+</span><span class="k">class</span> <span class="nc">WaitMessage</span><span class="p">:</span>
+    <span class="n">schedule</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'08:00'</span><span class="p">:</span> <span class="p">{</span><span class="s">'usePeriod'</span><span class="p">:</span> <span class="bp">True</span><span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1"># 이름
+</span>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">'WaitMessage SQS'</span>
+
+    <span class="c1"># 전송
+</span>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'='</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'WaitMessage SQS Send Message!'</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'='</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+
+        <span class="c1"># 스케줄 시간 확인
+</span>        <span class="n">schedule_info</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">.</span><span class="n">get_schedule_info</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">schedule</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">schedule_info</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'result'</span><span class="p">):</span>
+
+            <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># 재전송 SQS에 큐가 비워질때까지 꺼내고 SQS 메세지 전송 후 메세지 삭제
+</span>                <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">sqs</span><span class="p">.</span><span class="n">receive_after_delete</span><span class="p">(</span><span class="n">constant</span><span class="p">.</span><span class="n">SQS_QUEUE_URL_WAIT</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s">'Body'</span><span class="p">]:</span>
+                        <span class="n">sqs</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">constant</span><span class="p">.</span><span class="n">SQS_QUEUE_URL_SCEDULE</span><span class="p">,</span> <span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s">'Body'</span><span class="p">])))</span>
+                        <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">"SQS Fail : {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="n">slack</span><span class="p">.</span><span class="n">send_slack_message</span><span class="p">(</span><span class="s">'Exception: {}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)),</span> <span class="s">'SQS Fail!'</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s">'result'</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">'total'</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># 실패시 실패 메시지 리턴
+</span>            <span class="k">return</span> <span class="n">schedule_info</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'message'</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<ul>
+  <li>유틸
+<span class="indent">- scedule_manager/utils/schedule.py : Util Schedule</span></li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+</span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">pytz</span> <span class="kn">import</span> <span class="n">timezone</span>
+
+
+<span class="k">def</span> <span class="nf">get_schedule_info</span><span class="p">(</span><span class="n">schedule</span><span class="p">):</span>
+    <span class="s">"""슬랙 메세지 전송
+
+    Args:
+        schedule: json
+
+    Returns:
+        json
+
+    """</span>
+    <span class="c1"># now_date = datetime.datetime.now(timezone('Asia/Seoul'))  # 현재시간
+</span>    <span class="n">now_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 테스트 시간설정
+</span>
+    <span class="n">refine_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">now_date</span><span class="p">.</span><span class="n">year</span><span class="p">,</span> <span class="n">now_date</span><span class="p">.</span><span class="n">month</span><span class="p">,</span> <span class="n">now_date</span><span class="p">.</span><span class="n">day</span><span class="p">,</span> <span class="n">now_date</span><span class="p">.</span><span class="n">hour</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 정리된 시간
+</span>    <span class="n">limit_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">now_date</span><span class="p">.</span><span class="n">year</span><span class="p">,</span> <span class="n">now_date</span><span class="p">.</span><span class="n">month</span><span class="p">,</span> <span class="n">now_date</span><span class="p">.</span><span class="n">day</span><span class="p">,</span> <span class="n">now_date</span><span class="p">.</span><span class="n">hour</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 유효 시간
+</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">"now_date"</span><span class="p">:</span> <span class="n">now_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">),</span>
+        <span class="s">"refine_date"</span><span class="p">:</span> <span class="n">refine_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">),</span>
+        <span class="s">"limit_date"</span><span class="p">:</span> <span class="n">limit_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="c1"># 유효 시간 넘어가면
+</span>    <span class="k">if</span> <span class="n">now_date</span><span class="p">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">limit_date</span><span class="p">.</span><span class="n">time</span><span class="p">():</span>
+        <span class="n">startTime</span> <span class="o">=</span> <span class="n">refine_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">)</span>
+        <span class="n">endTime</span> <span class="o">=</span> <span class="n">limit_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">.</span><span class="n">update</span><span class="p">({</span><span class="s">"result"</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">"message"</span><span class="p">:</span> <span class="s">"유효시간 범위 ["</span> <span class="o">+</span> <span class="n">startTime</span> <span class="o">+</span> <span class="s">" ~ "</span> <span class="o">+</span> <span class="n">endTime</span> <span class="o">+</span> <span class="s">"] 초과"</span><span class="p">})</span>
+    <span class="c1"># 유효 시간 정보가 없으면
+</span>    <span class="k">elif</span> <span class="n">schedule</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">refine_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%H:%M"</span><span class="p">))</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">.</span><span class="n">update</span><span class="p">({</span><span class="s">"result"</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">"message"</span><span class="p">:</span> <span class="s">"no match schedule"</span><span class="p">})</span>
+    <span class="c1"># 성공
+</span>    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">.</span><span class="n">update</span><span class="p">({</span><span class="s">"result"</span><span class="p">:</span> <span class="bp">True</span><span class="p">})</span>
+
+        <span class="k">if</span> <span class="n">schedule</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"usePeriod"</span><span class="p">):</span>
+            <span class="n">schedule_info</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">refine_date</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%H:%M"</span><span class="p">))</span>
+            <span class="n">result</span><span class="p">.</span><span class="n">update</span><span class="p">({</span><span class="s">"result"</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">"info"</span><span class="p">:</span> <span class="n">schedule_info</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p><span class="indent2">- scedule_manager/utils/slack.py : Util Slack</span></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+</span><span class="kn">from</span> <span class="nn">slacker</span> <span class="kn">import</span> <span class="n">Slacker</span>
+<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">constant</span>
+
+
+<span class="k">def</span> <span class="nf">send_slack_message</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">incoming_webhook_url</span><span class="o">=</span><span class="s">'https://hooks.slack.com/services/TEST'</span><span class="p">):</span>
+    <span class="s">"""슬랙 메세지 전송
+
+    Args:
+        incoming_webhook_url: slack webhook url
+        message: 전달할 메세지
+        title: 메시지 타이틀 이름
+
+    Returns:
+        response or False
+
+    """</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">constant</span><span class="p">.</span><span class="n">SLACK_TOKEN</span>
+
+    <span class="n">slack</span> <span class="o">=</span> <span class="n">Slacker</span><span class="p">(</span>
+        <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">incoming_webhook_url</span><span class="o">=</span><span class="n">incoming_webhook_url</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">300</span>
+    <span class="p">)</span>
+    <span class="n">attachments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">attachment</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'title'</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+        <span class="s">'fields'</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s">'value'</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
+                <span class="s">'short'</span><span class="p">:</span> <span class="bp">False</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="s">'mrkdwn_in'</span><span class="p">:</span> <span class="p">[</span><span class="s">'text'</span><span class="p">,</span> <span class="s">'title'</span><span class="p">,</span> <span class="s">'fields'</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">attachments</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+    <span class="n">slack_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'attachments'</span><span class="p">:</span> <span class="n">attachments</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">slack</span><span class="p">.</span><span class="n">incomingwebhook</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="n">slack_data</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p><span class="indent2">- scedule_manager/utils/sqs.py : Util SQS</span></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+</span><span class="kn">import</span> <span class="nn">boto3</span>
+
+<span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="n">queue_url</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+    <span class="s">"""SQS 메세지 전송
+
+    Args:
+        queue_url: SQS URL
+        body : 전달할 SQS Body
+
+    Returns:
+        response or False
+    """</span>
+    <span class="n">sqs_client</span> <span class="o">=</span> <span class="n">boto3</span><span class="p">.</span><span class="n">client</span><span class="p">(</span><span class="s">'sqs'</span><span class="p">,</span> <span class="s">'ap-northeast-1'</span><span class="p">)</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">sqs_client</span><span class="p">.</span><span class="n">send_message</span><span class="p">(</span>
+        <span class="n">QueueUrl</span><span class="o">=</span><span class="n">queue_url</span><span class="p">,</span>
+        <span class="n">MessageBody</span><span class="o">=</span><span class="n">body</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span>
+
+
+<span class="k">def</span> <span class="nf">receive_after_delete</span><span class="p">(</span><span class="n">queue_url</span><span class="p">):</span>
+    <span class="s">"""재전송 SQS에 큐가 비워질때까지 꺼내고 메세지 삭제
+
+    Args:
+        queue_url: SQS URL
+
+    Returns:
+        response or False
+    """</span>
+
+    <span class="n">sqs_client</span> <span class="o">=</span> <span class="n">boto3</span><span class="p">.</span><span class="n">client</span><span class="p">(</span><span class="s">'sqs'</span><span class="p">,</span> <span class="s">'ap-northeast-1'</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">sqs_client</span><span class="p">.</span><span class="n">receive_message</span><span class="p">(</span>
+            <span class="n">QueueUrl</span><span class="o">=</span><span class="n">queue_url</span><span class="p">,</span>
+            <span class="n">AttributeNames</span><span class="o">=</span><span class="p">[</span><span class="s">'All'</span><span class="p">],</span>
+            <span class="n">MaxNumberOfMessages</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="k">from</span> <span class="n">resp</span><span class="p">[</span><span class="s">'Messages'</span><span class="p">]</span>
+        <span class="k">except</span> <span class="nb">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s">'Id'</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s">'MessageId'</span><span class="p">],</span> <span class="s">'ReceiptHandle'</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s">'ReceiptHandle'</span><span class="p">]}</span>
+            <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">[</span><span class="s">'Messages'</span><span class="p">]</span>
+        <span class="p">]</span>
+
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">sqs_client</span><span class="p">.</span><span class="n">delete_message_batch</span><span class="p">(</span>
+            <span class="n">QueueUrl</span><span class="o">=</span><span class="n">queue_url</span><span class="p">,</span> <span class="n">Entries</span><span class="o">=</span><span class="n">entries</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">resp</span><span class="p">[</span><span class="s">'Successful'</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="nb">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s">"Failed to delete messages: entries=</span><span class="si">{</span><span class="n">entries</span><span class="err">!</span><span class="n">r</span><span class="si">}</span><span class="s"> resp=</span><span class="si">{</span><span class="n">resp</span><span class="err">!</span><span class="n">r</span><span class="si">}</span><span class="s">"</span>
+            <span class="p">)</span>
+</code></pre></div></div>
+<p><br /><br /></p>
+
+<p><strong>여기서 잠깐! 추가로 풀어나가야 할 과제가 남아 있습니다!</strong></p>
+
+<p>서비스를 이용하는 고객이 많아지면 한번에 전송해야 하는 Wait Message SQS도 그만큼 늘어나게 됩니다. 물론 Schedule Lambda 제한 시간 안에 완료된다면 문제가 없으나, 초과할 경우 남아 있는 Message는 어떻게 할지에 대한 고민하게 됩니다. 글 중간에 메시지 전송 속도에 대해 언급하여 그러한 일이 발생하지 않도록 SQS 추가 구성에 대해 말씀드렸는데요. ‘나는 제한 시간에 얽매이는 게 싫다!’ 하시는 분들은 Batch 구성을 한다면 좋을 것 같습니다.
+<br /><br /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>이번 시간에는 Scheduling을 통해 SQS 메시지를 모았다가 다른 SQS로 메시지를 전달해보았습니다. 아직 고민해야 할 사항들은 존재하지만, 특정 일자에 전달해야 하는 데이터를 쉽고 빠르게, 더불어 유지보수도 편하도록 개발해야 할 때 Amazon SQS를 이용한 Scheduling 방법을 추천해드립니다.🙂
+<br /><br /></p>
+
+<h2 id="reference">Reference</h2>
+
+<p><a name="link1"></a>
+1. 불법스팸대응센터 - 야간시간대에 광고성 정보를 전송할 수 있는지?<br />
+<a href="https://spam.kisa.or.kr/customer/sub3_R.do?idx=8" class="indent">https://spam.kisa.or.kr/customer/sub3_R.do?idx=8</a></p>
+
+<p><a name="link2"></a>
+2. SQS + Lambda - 이상근 실장님 작성 글<br />
+<a href="http://labs.brandi.co.kr/2018/02/16/leesg.html" class="indent">http://labs.brandi.co.kr/2018/02/16/leesg.html</a></p>
+
+<p><a name="link3"></a>
+3. CloudWatch에 대하여 - 곽정섭님 작성 글<br />
+<a href="http://labs.brandi.co.kr/2019/05/30/kwakjs.html" class="indent">http://labs.brandi.co.kr/2019/05/30/kwakjs.html</a></p>
+:ET

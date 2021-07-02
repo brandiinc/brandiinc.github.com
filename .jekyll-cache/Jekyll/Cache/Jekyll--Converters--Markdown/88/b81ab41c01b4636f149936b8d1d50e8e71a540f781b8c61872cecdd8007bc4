@@ -1,0 +1,316 @@
+I"�[<p><span><a class="gray" href="#link1">Overview</a></span><br />
+<span><a class="gray" href="#link2">TDD와 Mock</a></span>
+<span class="indent"><a class="gray" href="#link3">Mock?</a></span>
+<span class="indent"><a class="gray" href="#link4">DB Mock</a></span>
+<span class="indent"><a class="gray" href="#link5">AWS Mock?</a></span>
+<span><a class="gray" href="#link6">Moto</a></span>
+<span class="indent"><a class="gray" href="#link7">소개</a></span>
+<span class="indent"><a class="gray" href="#link8">사용</a></span>
+<span><a class="gray" href="#link9">Boto Mock</a></span>
+<span class="indent"><a class="gray" href="#link10">검토</a></span>
+<span class="indent2"><a class="gray" href="#link11">SQS</a></span>
+<span class="indent2"><a class="gray" href="#link12">S3</a></span>
+<span class="indent2"><a class="gray" href="#link13">Lambda</a></span>
+<span class="indent2"><a class="gray" href="#link14">CloudWatchLogs</a></span>
+<span class="indent"><a class="gray" href="#link15">구현</a></span>
+<span class="indent2"><a class="gray" href="#link16">BotoMock</a></span>
+<span class="indent2"><a class="gray" href="#link17">CloudWatchLogsMock</a></span>
+<span class="indent2"><a class="gray" href="#link18">filter_log_events</a></span>
+<span class="indent2"><a class="gray" href="#link19">create_log_stream</a></span>
+<span class="indent2"><a class="gray" href="#link20">Controller</a></span>
+<span class="indent2"><a class="gray" href="#link21">주입</a></span>
+<span class="indent2"><a class="gray" href="#link22">실행</a></span>
+<span><a class="gray" href="#link23">Conclusion</a></span></p>
+
+<p><a name="link1"></a></p>
+<h1 id="overview">Overview</h1>
+
+<p>지난 글(<a href="http://labs.brandi.co.kr/2020/01/07/yangjh.html">파이썬 프로젝트에 AOP 도입하기</a>)에서 소개했듯, 저희 브랜디 랩스(Brandi LABs)에서는 사내에서 사용할 파이썬 프레임워크의 개발이 한창 진행중입니다. 그동안 여러 번의 업데이트를 통해 많은 변화가 있었습니다.
+이번 글에서는 그중 AWS Mock 클래스를 구현하게 된 과정을 공유하고자 합니다.</p>
+
+<p><a name="link2"></a></p>
+<h1 id="tdd와-mock">TDD와 Mock</h1>
+
+<p><a name="link3"></a></p>
+<h2 id="mock">Mock?</h2>
+
+<p>모의 객체를 의미합니다. 실제로 구현되어 있는 객체와 일부 동일하게 동작하는 객체가 필요한 경우, 모든 기능의 구현은 불필요하게 됩니다. 또는 의미없는 환경 구축에 많은 시간이 소요되거나 구축이 어려운 경우가 있죠. 이런 경우 실제 객체의 구현 중, 필요한 기능만 동작하는 객체를 ‘모의’로 구현한 것을 Mock이라 칭합니다.</p>
+
+<p>주로 테스트 코드 작성 시 사용하게 됩니다. 테스트 코드는 실제 구현된 코드와 그 목적이 다릅니다. 해서 모든 로직의 동작이 불필요하거나 불가한 경우가 종종 있고, Mock 클래스로 대체할 경우 이런 애로 사항들이 깔끔하게 해결됩니다.</p>
+
+<p><a name="link4"></a></p>
+<h2 id="db-mock">DB Mock</h2>
+
+<p>브랜디 프레임워크 또한 TDD 관련 기능을 지원함에 있어, Mock 클래스를 적극 사용 중에 있습니다.<br />
+대표적으로 DB를 사용하는 기능이 그러합니다. 테스트 코드를 구동할 때마다 모든 조회 쿼리가 동작하거나 데이터가 삽입, 수정, 삭제된다면 굉장히 곤란한 일이 벌어지게 됩니다. DB 객체를 Mock 클래스로 대체시킬 필요가 있습니다.</p>
+
+<p>DB Mock에 대한 글이 아니므로 간략하게 소개만 하고 넘어가도록 하겠습니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># my_controller.py
+</span><span class="k">def</span> <span class="nf">get_products</span><span class="p">():</span>
+    <span class="c1"># models/products/get_products.sql를 사용
+</span>    <span class="k">print</span><span class="p">(</span><span class="n">db</span><span class="p">.</span><span class="n">select_list</span><span class="p">(</span><span class="s">'products/get_products'</span><span class="p">))</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># test.py
+</span><span class="o">@</span><span class="n">DBMock</span><span class="p">.</span><span class="n">inject</span><span class="p">(</span><span class="s">'my_controller'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_my_controller</span><span class="p">():</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">'GET'</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="s">'/products?offset=0&amp;limit=10'</span><span class="p">)</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">assertIn</span><span class="p">(...)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># tests/mock/products/get_products.mock
+[
+    {'PRODUCT_NO': 1, 'PRODUCT_NAME': '청바지'},
+    {'PRODUCT_NO': 23, 'PRODUCT_NAME': '티셔츠'}
+]
+</code></pre></div></div>
+
+<p>테스트 메소드에 데코레이터를 정의해, 컨트롤러에 DBMock 클래스를 주입시켜 줍니다. 실제 쿼리를 실행시키는 대신, mock 파일에 미리 작성해놓은 결과 데이터를 반환하게 됩니다.</p>
+
+<p><a name="link5"></a></p>
+<h2 id="aws-mock">AWS Mock?</h2>
+
+<p>문제는 AWS 관련 로직이 들어가는 경우였습니다. 파이썬에서는 boto3라는 AWS SDK를 제공하죠. SQS에 메시지를 보내거나, S3에 접근하거나, AWS 콘솔에서 제공하는 거의 대부분의 기능을 지원하고 있습니다. 하지만 여기서도 마찬가지입니다. 테스트 코드를 구동시킬 때마다 S3 버킷에 파일을 업로드 한다거나, SQS에 메시지를 보낸다면 아주 곤란해집니다. 이번에도 Mock 클래스를 검토할 때입니다.</p>
+
+<p><a name="link6"></a></p>
+<h1 id="moto">Moto</h1>
+
+<p><a name="link7"></a></p>
+<h2 id="소개">소개</h2>
+
+<p>사실 <a href="https://github.com/spulec/moto">moto</a>라는 아주 좋은 라이브러리가 이미 나와 있습니다. Cloudwatch부터 SES, IoT까지 아주 방대한 범위를 지원하고 있습니다. 손쉽게 AWS 서비스 Mock 클래스를 사용할 수 있죠.</p>
+
+<p><a name="link8"></a></p>
+<h2 id="사용">사용</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">moto</span> <span class="kn">import</span> <span class="n">mock_sqs</span>
+
+<span class="o">@</span><span class="n">mock_sqs</span>
+<span class="k">def</span> <span class="nf">test_my_controller</span><span class="p">():</span>
+    <span class="p">...</span>
+</code></pre></div></div>
+
+<p>동일하게 데코레이터를 사용해 Mock 클래스를 주입시켜주고 있습니다. 설계도 깔끔하고 사용법도 어렵지 않습니다.</p>
+
+<p>하지만 결과적으로 도입하지 않기로 했습니다. 가장 큰 이유는 너무 과하다는 생각 때문이었습니다.<br />
+우리에게 필요한 기능은 그리 거창하지 않습니다. 그저 몇가지 서비스, 몇가지 메소드들의 모의 구현이 필요할 뿐입니다. 닭 잡는데 소 잡는 칼을 쓸 필요는 없죠. moto는 boto의 거의 대부분의 기능을 지원하고 있어 굉장히 무거운 편에 속합니다. 또한 아직 모든 기능이 구현된 것은 아닙니다. 저도 기술 검토중, moto를 도입하기 위해 기존 코드를 수정해야 하는 경우가 발견하였습니다. 검증된 좋은 선택지 임에는 분명하지만 신중할 필요가 있습니다.</p>
+
+<p><a name="link9"></a></p>
+<h1 id="boto-mock">Boto Mock</h1>
+
+<p><a name="link10"></a></p>
+<h2 id="검토">검토</h2>
+
+<p>결국 직접 구현하기로 했습니다. 검증된 방법을 사용하지 않고 직접 만들어야 하다니, 문득 안정성의 문제가 떠올랐지만 이미 말씀드렸듯이 우리는 그리 거창한 기능이 필요하지 않습니다.</p>
+
+<p>우선 사용 중인 서비스를 나열해 보았습니다.</p>
+
+<ul>
+  <li>SQS</li>
+  <li>S3</li>
+  <li>Lambda</li>
+  <li>CloudWatchLogs</li>
+</ul>
+
+<p>그리 많지 않네요? 사용 중인 메소드도 적습니다.</p>
+
+<p><a name="link11"></a></p>
+<h3 id="sqs">SQS</h3>
+
+<ul>
+  <li>send_message</li>
+</ul>
+
+<p><a name="link12"></a></p>
+<h3 id="s3">S3</h3>
+
+<ul>
+  <li>get_object</li>
+  <li>put_object</li>
+</ul>
+
+<p><a name="link13"></a></p>
+<h3 id="lambda">Lambda</h3>
+
+<ul>
+  <li>get_layer_version_by_arn</li>
+  <li>list_layer_versions</li>
+  <li>invoke</li>
+</ul>
+
+<p><a name="link14"></a></p>
+<h3 id="cloudwatchlogs">CloudWatchLogs</h3>
+
+<ul>
+  <li>filter_log_events</li>
+  <li>create_log_stream</li>
+  <li>describe_log_streams</li>
+  <li>put_log_events</li>
+</ul>
+
+<p>열 개 밖에 안되는 메소드의 모의 구현이 필요할 뿐입니다. 빠르게 만들어 보겠습니다!</p>
+
+<p><a name="link15"></a></p>
+<h2 id="구현">구현</h2>
+
+<p>이 중 CloudWatchLogs의 Mock 객체를 구현해보겠습니다.</p>
+
+<p><a name="link16"></a></p>
+<h3 id="botomock">BotoMock</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># boto_mock.py
+</span>
+<span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
+<span class="kn">from</span> <span class="nn">sqs_mock</span> <span class="kn">import</span> <span class="n">SqsMock</span>
+<span class="kn">from</span> <span class="nn">s3_mock</span> <span class="kn">import</span> <span class="n">S3Mock</span>
+<span class="kn">from</span> <span class="nn">lambda_mock</span> <span class="kn">import</span> <span class="n">LambdaMock</span>
+<span class="kn">from</span> <span class="nn">cloudwatchlogs_mock</span> <span class="kn">import</span> <span class="n">CloudWatchLogsMock</span>
+
+<span class="k">class</span> <span class="nc">BotoMock</span><span class="p">:</span>
+    <span class="o">@</span><span class="nb">staticmethod</span>
+    <span class="k">def</span> <span class="nf">inject</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">patch</span><span class="p">(</span><span class="s">'boto3.client'</span><span class="p">,</span> <span class="n">BotoMock</span><span class="p">.</span><span class="n">client</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">args_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">kwargs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'service_name'</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="s">'sqs'</span> <span class="ow">in</span> <span class="n">args_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SqsMock</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="s">'s3'</span> <span class="ow">in</span> <span class="n">args_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">S3Mock</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="s">'lambda'</span> <span class="ow">in</span> <span class="n">args_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">LambdaMock</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="s">'logs'</span> <span class="ow">in</span> <span class="n">args_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">CloudWatchLogsMock</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>boto mock 클래스입니다. boto client를 생성하는 메소드를 목업하는 메소드를 구현했습니다. inject 메소드 실행 시 boto3의 client 메소드를 BotoMock client 메소드로 대체하게 됩니다.</p>
+
+<p><a name="link17"></a></p>
+<h3 id="cloudwatchlogsmock">CloudWatchLogsMock</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># cloudwatchlogs_mock
+</span>
+<span class="k">class</span> <span class="nc">CloudWatchLogsMock</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">filter_log_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">create_log_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">describe_log_streams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">put_log_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
+</code></pre></div></div>
+
+<p>CloudWatchLogs Mock 클래스입니다. 사용 중인 메소드들만 정의해 둔 상태입니다. 구현해보도록 하겠습니다.</p>
+
+<p><a name="link18"></a></p>
+<h3 id="filter_log_events">filter_log_events</h3>
+
+<p><a href="https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs.html#CloudWatchLogs.Client.filter_log_events">boto3 documentation</a></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">filter_log_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'filter_log_events!'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s">'events'</span><span class="p">:</span> <span class="p">[{</span>
+            <span class="s">'logStreamName'</span><span class="p">:</span> <span class="s">'brandi-web'</span><span class="p">,</span>
+            <span class="s">'timestamp'</span><span class="p">:</span> <span class="mi">1571882181000</span><span class="p">,</span>
+            <span class="s">'message'</span><span class="p">:</span> <span class="s">'ERROR'</span><span class="p">,</span>
+            <span class="s">'ingestionTime'</span><span class="p">:</span> <span class="mi">1571882181000</span><span class="p">,</span>
+            <span class="s">'eventId'</span><span class="p">:</span> <span class="s">'350543001058079836545455250207777384754958369038298546176'</span>
+        <span class="p">}],</span>
+        <span class="s">'searchedLogStreams'</span><span class="p">:</span> <span class="p">[{</span>
+            <span class="s">'logStreamName'</span><span class="p">:</span> <span class="s">'brandi-web'</span><span class="p">,</span>
+            <span class="s">'searchedCompletely'</span><span class="p">:</span> <span class="bp">True</span>
+        <span class="p">}],</span>
+        <span class="s">'nextToken'</span><span class="p">:</span> <span class="s">'fdsfhewuif'</span><span class="p">,</span>
+        <span class="s">'ResponseMetadata'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">'RequestId'</span><span class="p">:</span> <span class="s">'4543534-545d435-fdsf'</span><span class="p">,</span>
+            <span class="s">'HTTPStatusCode'</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+            <span class="s">'HTTPHeaders'</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">'x-amzn-requestid'</span><span class="p">:</span> <span class="s">'ddkk3534-545d435-fdeff'</span><span class="p">,</span>
+                <span class="s">'content-type'</span><span class="p">:</span> <span class="s">'application/x-amz-json-1.1'</span><span class="p">,</span>
+                <span class="s">'content-length'</span><span class="p">:</span> <span class="s">'34218'</span><span class="p">,</span>
+                <span class="s">'date'</span><span class="p">:</span> <span class="s">'Thu, 07 May 2010 11:09:00 GMT'</span>
+            <span class="p">},</span>
+            <span class="s">'RetryAttempts'</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>메소드 파라미터들이 모두 정확하게 구현될 필요가 있을까요? 파라미터를 사용한 무언가의 동작은 필요하지 않습니다. 우리는 그저 ‘똑같은 포맷 데이터의 반환 동작’이 필요할 뿐입니다. **kwargs로 한 번에 받아 key 에러만 발생하지 않게 하겠습니다. 리턴 포맷에 맞게 더미 데이터를 반환해줍니다.</p>
+
+<p><a name="link19"></a></p>
+<h3 id="create_log_stream">create_log_stream</h3>
+
+<p><a href="https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs.html#CloudWatchLogs.Client.create_log_stream">boto3 documentation</a></p>
+
+<p>조회 메소드를 구현했으니 생성 동작도 하나 구현해보겠습니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">create_log_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'create_log_stream!'</span><span class="p">)</span>
+    <span class="k">pass</span>
+</code></pre></div></div>
+
+<p>너무 간단한가요? 역시나 파라미터는 사용하지 않고 있고, 심지어 반환 값도 없습니다. 단순히 정상 호출만 되면 아무 문제 없습니다.</p>
+
+<p><a name="link20"></a></p>
+<h3 id="controller">Controller</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">boto3</span>
+
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">():</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">boto3</span><span class="p">.</span><span class="n">client</span><span class="p">(</span><span class="s">'logs'</span><span class="p">)</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">create_log_stream</span><span class="p">(</span>
+        <span class="n">logGroupName</span><span class="o">=</span><span class="s">'group-name'</span><span class="p">,</span>
+        <span class="n">logStreamName</span><span class="o">=</span><span class="s">'stream-name'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">filter_log_events</span><span class="p">(</span>
+        <span class="n">logGroupName</span><span class="o">=</span><span class="s">'group-name'</span><span class="p">,</span>
+        <span class="n">nextToken</span><span class="o">=</span><span class="s">'...'</span><span class="p">,</span>
+        <span class="n">filterPattern</span><span class="o">=</span><span class="s">'...'</span><span class="p">,</span>
+        <span class="p">...</span>
+    <span class="p">)</span>
+    <span class="p">...</span>
+
+</code></pre></div></div>
+
+<p>실제 컨트롤러입니다. boto를 사용하는 로직들이 많이 작성되어 있지만 역시나 테스트 구동 시 실행되면 곤란해 보입니다.</p>
+
+<p><a name="link21"></a></p>
+<h3 id="주입">주입</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># test_controller.py
+</span>
+<span class="o">@</span><span class="n">BotoMock</span><span class="p">.</span><span class="n">inject</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">test_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="p">...</span>
+</code></pre></div></div>
+
+<p>구현한 모의 객체를 테스트 코드에서 주입시켜 줄 차례입니다. 데코레이터 패턴을 사용했습니다. 위에서 구현한 inject 메소드를 통해 boto client 메소드가 BotoMock client 메소드로 대체됩니다.</p>
+
+<p><a name="link22"></a></p>
+<h3 id="실행">실행</h3>
+
+<pre><code class="language-cmd">python test_controller.py
+
+create_log_stream!
+filter_log_events!
+</code></pre>
+
+<p>BotoMock 클래스의 메소드들이 대신 실행되는 것을 볼 수 있습니다.</p>
+
+<p>사실 위 예시들이 완벽한 구현은 아닙니다. 잘못된 파라미터를 넘겨줄 경우의 예외 처리라든지 하는 부분들이 추가되어야 하고, 그때마다 boto와 동일한 에러 객체를 던져야 모의 객체의 역할을 정확하게 할 수 있겠죠. 높은 테스트 커버러지를 위해선 꽤 번거롭고 많은 작업이 필요합니다. 여기부터는 선택의 영역이라고 생각합니다. 모든 기능을 동일하게 모의 구현하려고 한다면, 위에서 언급한 moto를 사용하시는 것을 추천합니다. 쉽지 않은 작업입니다.</p>
+
+<p><a name="link23"></a></p>
+<h1 id="conclusion">Conclusion</h1>
+
+<p>boto를 사용하는 코드를 테스트 하겠다는 당장의 목적은 달성했지만 보완이 필요하고, 아직까지 많은 고민거리가 남아있는 작업입니다. 우선 테스트 커버리지의 한계점은 분명히 보입니다.</p>
+
+<p>그 다음의 문제는 유지보수의 어려움이겠죠. 현재 프레임워크는 객체들을 상속받아 사용하기 용이한 구조로 이루어져 있지만 사용하는 boto 서비스, 메소드가 추가된다면 그때마다 사용자에게 구현을 맡길 수는 없는 노릇입니다. 이전 글에서도 언급했던 ‘필요성에 집중한 적정 기준’이 어디까지인지 고민이 필요한 때입니다.</p>
+
+<p>우선의 한 발짝은 나아 갔으니 그다음 눈 앞에 놓인 숙제들을 하나씩 풀어나갈 차례입니다. 소스코드를 보면 개발자의 개성이 그대로 드러난다는 말이 생각나는 요즈음입니다. 저의 모습이 그려진 코드는 어떤 모양새를 이루게 될지 궁금해지네요.</p>
+:ET

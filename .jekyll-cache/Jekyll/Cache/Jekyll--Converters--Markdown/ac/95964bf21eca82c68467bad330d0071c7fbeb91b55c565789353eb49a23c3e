@@ -1,0 +1,271 @@
+I"�E<p><strong>편집자 주</strong> <br />
+2018년 6월 28일 R&amp;D본부 기술 블로그, 브랜디 랩스 분기발표회에서 천보성 팀장님이 발표한 내용입니다. 구어체로 서술되었으며 원본 포스팅을 보려면 <a href="http://labs.brandi.co.kr/2018/05/14/chunbs.html" target="_blank">여기</a>를 클릭하세요. 발표자료는 아래의 링크를 클릭하면 PDF파일로 다운로드 받을 수 있습니다. <br /><br /><br /></p>
+
+<p><a href="https://drive.google.com/file/d/1sJ36IDa056afWJE8SvQMw54dz_onf6Nj/view?usp=sharing" target="_blank">발표자료 다운로드</a><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/01.PNG" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>안녕하세요. 브랜디 랩스를 개발, 제작한 천보성 팀장입니다. 정확히  말하면 제작했다기보단 <a href="http://labs.brandi.co.kr/authors/janggw" target="_blank">근우</a>님에게 착취당했다는 표현이 맞을 듯합니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/02.PNG" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>GithubPage로 만들자는 의견과 jekyll을 이용하면 빠르고 쉽게 만들 수 있을 거란 의견이 있었습니다. 그리고 곧바로 제작에 참여했죠.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/03.PNG" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>참 쉽다는데.. 별로 공감하시는 분은 없을 겁니다. 지금까지 겪었던 개발 과정을 이번 발표에서 소개하겠습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/04.PNG" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>혹시 이 자리에서 GithubPage를 들어보신 분이 있나요? 개발자가 아니라면 접할 기회가 거의 없지만 Github이 최근에 MS에 인수되었다는 소식은 들어보셨을 겁니다.<br /><br /></p>
+
+<p>GithubPage는 Github에서 제공하는 무료 저장소 서비스라고 생각하면 쉽습니다. 개발에 관련된 가이드 문서나, API문서, 프로젝트 관련 문서 등을 올리고 공유하는 용도로 사용합니다. 무료라는 장점도 있지만, GithubPage를 사용하면 개발자 스멜이 풀풀 나죠. 국내에서 유명한 곳으로는 카카오 기술 블로그가 있습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/05.PNG" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>GithubPage를 구축하는 데에는 HEXO와 jekyll을 많이 사용합니다. 근우님은 jekyll 템플릿을 선호해서 그것을 선택했습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/06.PNG" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>이것은 jekyll 공식 홈페이지입니다. 단 몇 초면 가능하다고 하지만 실제로는 좀 더 걸립니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/07.PNG" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>bundler와 jekyll을 설치하면 됩니다. 설치가 완료되면 jekyll serve를 실행해 jekyll을 구동합니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/08.PNG" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>구동하면 localhost로 들어가서 확인할 수 있습니다. 위의 화면은 아무 작업도 하지 않은 jekyll의 모습입니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/09.PNG" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>설치까진 쉽게 되었지만 이제부터 무엇을 어떻게 해야 할까요? 블로그 작성에 대한 가이드도 없고 페이지나 이미지 추가 작업을 커맨드로만 해야 한다니 선뜻 시작하기가 어렵습니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/10.PNG" alt="10" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>jekyll admin plugin</figcaption>
+
+<p>그래서 검색을 해봤습니다. 관리자 기능이 어딘가 숨어있을 것 같았습니다. 다행히 공식사이트에 jekyll admin plugin이 있었습니다. plugin은 어떻게 건드려야 할까요?<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/11.PNG" alt="11" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>우연히 gemfile을 수정하라는 영문 설명을 찾았습니다. gemfile을 열어서 수정하고, bundler install을 하니 설치되었습니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/12.PNG" alt="12" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>jekyll을 다시 구동하니 드디어 관리자 페이지가 제 local에서 모습을 드러냈습니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/13.PNG" alt="13" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>작성을 해보려고 했는데 뭔가 이상했습니다. 위지웍에디터도 아닌 textarea만 덩그러니 있었기 때문입니다. 다시 구글링을 해야 했습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/14.PNG" alt="14" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>markdown 넌 누구?</figcaption>
+
+<p>이번엔 markdown이군요. markdown은 wiki나 github에서 가이드 문서를 쓸 때 많이 사용합니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/15.PNG" alt="15" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>markdown으로 프로그램 코드를 작성하면 코드 블럭처리가 되는데, jekyll에서 신텍스하이라이트가 기능을 지원해줍니다. jekyll을 선택하고 처음으로 따봉을 날린 순간이였습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/16.PNG" alt="16" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>커스터마이징 과정을 설명하기 전, jekyll의 구성부터 소개하겠습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/17.PNG" alt="17" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>jekyll의 구성요소는 Posts, Pages, Static Files, Data Files로 총 네 가지입니다. 각 파트별로 간략하게 살펴볼까요?<br /><br /><br /><br /></p>
+
+<p>Posts는 게시글 목록입니다. Post는 게시글 하나를 지칭합니다. 블로그의 글 단위와 같은 개념입니다. 주로 Posts에  새로운 글을 게재하는 방식으로 사용합니다.<br /><br /></p>
+
+<p>Pages는 Posts와 다르게 고정 페이지를 작성할 때 사용합니다. About이나 채용, 회사 소개 등을 Post와 분리해 작성할 때 유용합니다.<br /><br /></p>
+
+<p>Static Files는 정적 리소스를 올리는 기능입니다. 이미지라고 생각하시면 쉬운데요. 이미지를 업로드해서 글에 추가할 때 주로 사용합니다.<br /><br /></p>
+
+<p>Data Files는 정적 데이터를 올리는 기능입니다. 저자 관리 정보 등을 공통 변수에 담아 사용하면 편리합니다. 저자 기능은 나중에 자세히 설명하겠습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/18.PNG" alt="18" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>이제 본격적으로 브랜디 기술블로그를 커스터마이징한 과정을 소개하겠습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/19.PNG" alt="19" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>먼저 Title을 바꾸겠습니다. Title은 브라우저탭에 나오는 페이지 제목입니다. 검색하면 <code class="language-plaintext highlighter-rouge">_config.yml</code> 에 있는 걸 확인할 수 있습니다. <br /><br /></p>
+
+<p><code class="language-plaintext highlighter-rouge">_config.yml</code> 에는 Title 말고도 각종 설정이 있습니다. 그중에 필요한 문구들을 찾아 고칩니다. jekyll을 재시작하면 반영되어 있을 겁니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/20.PNG" alt="20" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>멋진 테마를 적용하려고 jekyll을 선택했으니 실제로 테마를 적용해야겠죠? 테마는 플러그인이 아닌 완성된 프로젝트를 받는 형식입니다. 그저 테마 사이트에서 마음에 드는 테마를 받은 후 실행하면 됩니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/21.PNG" alt="21" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>이미지도 markdown 문법으로 넣습니다. 원하는 위치에 markdown 이미지 코드를 적으면 되는데요. 이때 이미지 파일은 <em>assets</em> 폴더 하위로 넣으면 됩니다. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/22.PNG" alt="22" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>야인슈타인 메롱!</figcaption>
+
+<p>제대로 했다면 이미지가 나올 겁니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/23.PNG" alt="23" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>Gnav 변경부터는 진짜 커스터마이징입니다. jekyll 프로젝트 구조를 뜯어고쳐야 하기 때문입니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/24.PNG" alt="24" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>완성된 Gnav 모습입니다. Posting, Recuring, Timeline, Contact 로 구성되어있습니다. 4개의 페이지는 pages에 작성되었습니다. 센스가 있다면 공통영역 코드니 공통 폴더에 있다고 유추하실 겁니다. 프로젝트를 뒤져보니 <em>_includes</em> 라는 폴더가 있었습니다.<br /><br /></p>
+
+<p><code class="language-plaintext highlighter-rouge">header.html</code><br /><br /></p>
+
+<p>맞는 것 같죠? 열어봤더니 또 새로운 것이 나왔습니다. 또 열심히 구글링을 했습니다. 찾아보니 jekyll은 Liquid템플릿 엔진을 사용한다고 합니다. Liquid도 생소해서 또 또 열심히 구글링을 했습니다. 제가 알고 있는 템플릿 엔진 mustash와 비슷했는데요. python jinja 엔진하고 문법이 거의 같아보였습니다. Liquid 공식 사이트를 열어두고 문법을 보면서 수정을 했습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/25.PNG" alt="25" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>문제는 정렬이였습니다. 근우님은 꼭 순서를 맞추면 좋겠다고 했습니다. Liquid 사이트를 여러 번 읽어보았지만 정렬 기능은 없었습니다. 어쩔 수 없이 꼼수를 사용했는데요. 1~10까지 for문을 돌리고 정렬값이 일치하는 페이지를 출력하게 만든 것이죠. <br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/26.PNG" alt="26" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>정렬값은 POST에 meta정보로 작성할 수 있습니다. POST meta정보는 글의 레이아웃, 카테고리 등을 지정할 때 사용합니다. 원하는 정보를 추가할 수도 있습니다. 약간 이상하지만 딱히 방법이 없었습니다. 그래도 정렬은 되었으니 다행입니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/27.PNG" alt="27" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>다른 것도 많이 고쳤지만, 끝판왕을 소개하겠습니다. 저자 기능은 완전 새로운 기능이라 꽤 오랜 시간을 들여서 작업했습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/28.PNG" alt="28" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>이것은 완성된 저자 메인 페이지입니다. 저자에 대한 소개와 저자가 작성한 글 목록이 보입니다. 각 게시글의 글쓴이 이름을 클릭하면 볼 수 있습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/29.PNG" alt="29" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>저자마다 메인 페이지가 있어야 하기 때문에 컬렉션을 추가했습니다. 컬렉션은 글 묶음을 만드는 기능이라고 생각하시면 됩니다. 알고 보면 Posts, Pages도 컬렉션이라 볼 수 있습니다. 저자의 페이지를 관리하기 위해서 Authors라는 컬렉션을 추가했습니다.<br /><br /></p>
+
+<p><code class="language-plaintext highlighter-rouge">_config.yml</code> 설정에 <em>collections</em>를 추가하고  다시 시작하면 관리자에서도 Authors를 확인할 수 있습니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/30.PNG" alt="30" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>저자마다 페이지를 만듭니다. 저자 페이지 내용을 직접 사용하지 않기 때문에 내용에는 간략한 저자 소개를 적어두면 됩니다. 저자 페이지를 추가하면 저자 메인 페이지가 generate됩니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/31.PNG" alt="31" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>글마다 이름을 넣고, 클릭하면 저자 메인 페이지로 이동시키려고 했습니다. Authros의 컬렉션 내용을 참고해서 데이터를 가져오기 어렵기 때문에 리스트에서 사용할 저자 정보를 데이터 파일에 넣었습니다. 앞서 설명한 Data Files 기능을 이용했습니다.<br /><br /></p>
+
+<p><code class="language-plaintext highlighter-rouge">_config.yml</code>에도 넣을 수 있었지만, 수시로 변경하는 정보이므로 매번 jekyll을 재시동하기 싫다면 Data Files에 넣는 게 훨씬 편리합니다.<br /><br /></p>
+
+<p>저자의 한글 이름(koname), 이메일(email), 부서(position), 프로필 이미지(img) 정보를 넣어줍니다. name에 있는 영어 이름은 Post에서 연결할 때 키로 사용할 것입니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/32.PNG" alt="32" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>Post 글 목록이 나오는 템플릿 코드입니다. Post에 meta정보로 Author로 지정된 영문키를 넣고, 저자 정보를 출력도록 변경했습니다. 여기서도 딱히 방법이 없기 때문에 for문을 돌리고 저자가 일치할 때 정보를 출력하게 했습니다. 마지막으로 링크에 <code class="language-plaintext highlighter-rouge">authors/[저자영문명]</code>으로 이동할 수 있게 추가하였습니다. 예를 들어, 저의 페이지는 아래와 같습니다.<br /><br /></p>
+
+<p>http://labs.brandi.co.kr/authors/chunbs<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/33.PNG" alt="33" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>마지막으로 저자 메인을 구성했습니다. 저자용 layout을 따로 만들었는데요. 저자 페이지는 기본적으로 layout이 author로 되어있습니다. <code class="language-plaintext highlighter-rouge">site.posts</code>  전체 글의 for문을 돌며 저자의 이름과 일치하는 글을 필터링합니다. 그리고 Post 리스트 템플릿을 가져와 약간만 수정했습니다. 이렇게 되면 저자 프로필 영역 아래에 저자가 작성한 글이 나옵니다.<br /><br /><br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180703/34.PNG" alt="34" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>마치겠습니다. 위의 이미지는 기술 블로그를 커스터마이징할 때 사용한 기술들입니다. 참 쉽다고 해서 시작한 기술 블로그 작업은 생각보다 많은 변수와 어려움이 있었습니다. 약 두 달간의 점심시간을 바쳐 개발을 완료했습니다.<br /><br /></p>
+
+<p>여기에서 소개하진 않았지만 jekyll admin 버그를 고치는 작업이나, 카카오톡/페이스북/라인 공유 기능 추가, 인스타그램 API 연동 등 여러 경험들이 떠오릅니다. 하지만 최적화된 jekyll 검색 엔진, 브랜디 R&amp;D 본부 개발자분들의 콘텐츠로 블로그가 성장하는 모습을 보면서 여전히 즐겁고, 설레는 기분을 느끼고 있습니다. <br /><br /></p>
+
+<p>긴 발표를 들어주셔서 감사합니다.<br /><br /></p>
+:ET

@@ -1,0 +1,165 @@
+I"Xb<h1 id="overview">Overview</h1>
+
+<p>브랜디 iOS 파트에서 사용하고 있는 MVVM 패턴에 대하여 소개하고자 합니다.<br />
+저희는 VIPER로 시작하였지만 RxSwift를 조금 더 쉽게 적용하기 위해 MVVM으로 전환하였습니다.<br />
+MVVM으로 전환하면서 화면 전환 관련된 부분은 Coordinator 패턴을 사용하였습니다.<br />
+Coordinator 패턴은 기존에 게재된 글(<a href="http://labs.brandi.co.kr/2020/06/16/kimjh.html">화면 전환을 해결해 준 Coordinator 패턴</a>)을 참조 부탁드리고, 이 글에서는 MVVM, 특히 ViewModel 사용에 대하여 다루겠습니다.
+<br /><br /></p>
+
+<h1 id="mvvm-coordinator--collectionviewadapter">MVVM +Coordinator + CollectionViewAdapter</h1>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201204/01.png" alt="mvvm" />
+</figure>
+<figcaption></figcaption>
+
+<p>각 부분에 대하여 간단히 설명하겠습니다.</p>
+
+<ul>
+  <li>Model: 데이터 모델</li>
+  <li>View: UIViewContoller, UIView의 서브 클래스들</li>
+  <li>ViewModel: Model의 변경을 감지하고, View가 사용할 수 있는 데이터로 변환. UI관련 코드는 없음.</li>
+  <li>CollectionViewAdapter: UICollectionViewDelegate, UICollectionViewDataSource, Layout 관련된 코드를 관리</li>
+  <li>Coordinator: 화면전환 관리
+<br /><br /></li>
+</ul>
+
+<h1 id="viewmodel과-collectionviewadapter">ViewModel과 CollectionViewAdapter</h1>
+
+<p>브랜디는 리스트 구현 시 유동적으로 셀을 구성할 수 있는 UICollectionView만 사용하고 있습니다.<br />
+UICollectionView 관련 코드는 CollectionViewAdapter 클래스를 만들어 분리하여 관리합니다.<br />
+아래 이미지는 ‘찜’ 화면을 구성하는 파일들의 구조입니다.</p>
+
+<figure class="percent70">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201204/02.png" alt="mvvm" />
+</figure>
+<figcaption></figcaption>
+
+<p>기본적으로 ViewController + ViewModel + CollectionViewAdapter + Coordinator + UICollectionViewCell + Cell의 ViewModel로 구성되어 있습니다.<br />
+CollectionViewAdapter는 MVVM에서 분류하자면 View에 해당합니다.<br />
+View 하나에 ViewModel을 쌍으로 가지고 있는 것이 기본입니다. 하지만 CollectionViewAdapter는<br />
+ViewController의 부담을 줄여주기 위해 Class를 분리한 것 일뿐 따로 ViewModel을 가지고 있지 않습니다.
+그러면 어떻게 CollectionViewAdapter에 데이터를 넘겨 주는지 코드를 통해 소개하겠습니다.</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">protocol</span> <span class="nx">BookmarkProductCollectionViewAdapterDataSource</span><span class="p">:</span> <span class="nx">AnyObject</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">numberOfItems</span><span class="p">:</span> <span class="nx">Int</span> <span class="p">{</span> <span class="kd">get</span> <span class="p">}</span>
+    <span class="nx">func</span> <span class="nx">fetchNextItemsIfNeeded</span><span class="p">(</span><span class="nx">_</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span>
+    <span class="nx">func</span> <span class="nx">product</span><span class="p">(</span><span class="nx">at</span> <span class="nx">index</span><span class="p">:</span> <span class="nx">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">ProductModelCV1</span><span class="p">?</span>
+<span class="p">}</span>
+
+<span class="nx">final</span> <span class="kd">class</span> <span class="nx">BookmarkProductCollectionViewAdapter</span><span class="p">:</span> <span class="nx">NSObject</span> <span class="p">{</span>
+    <span class="kr">private</span> <span class="kd">let</span> <span class="nx">itemHorizontalMargin</span><span class="p">:</span> <span class="nx">CGFloat</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="kr">private</span> <span class="kd">let</span> <span class="nx">itemHorizontalInset</span><span class="p">:</span> <span class="nx">CGFloat</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="kr">private</span> <span class="kd">let</span> <span class="nx">minimumLineSpacing</span><span class="p">:</span> <span class="nx">CGFloat</span> <span class="o">=</span> <span class="mi">20</span>
+
+    <span class="nx">weak</span> <span class="kd">var</span> <span class="nx">adapterDataSource</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewAdapterDataSource</span><span class="p">?</span>
+    <span class="nx">weak</span> <span class="kd">var</span> <span class="nx">delegate</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewAdapterDelegate</span><span class="p">?</span>
+
+    <span class="kr">private</span> <span class="kd">var</span> <span class="nx">sectionTopInset</span><span class="p">:</span> <span class="nx">CGFloat</span> <span class="o">=</span> <span class="p">.</span><span class="nx">zero</span>
+    <span class="kr">private</span> <span class="kd">var</span> <span class="nx">sectionInset</span><span class="p">:</span> <span class="nx">UIEdgeInsets</span> <span class="p">{</span> <span class="nx">UIEdgeInsets</span><span class="p">(</span><span class="nx">top</span><span class="p">:</span> <span class="nx">sectionTopInset</span><span class="p">,</span> <span class="nx">left</span><span class="p">:</span> <span class="nx">itemHorizontalMargin</span><span class="p">,</span> <span class="nx">bottom</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">right</span><span class="p">:</span> <span class="nx">itemHorizontalMargin</span><span class="p">)</span> <span class="p">}</span>
+
+    <span class="nx">init</span><span class="p">(</span><span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">adapterDataSource</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewAdapterDataSource</span><span class="p">?,</span> <span class="nx">delegate</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewAdapterDelegate</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nx">init</span><span class="p">()</span>
+
+        <span class="kd">let</span> <span class="nx">layout</span> <span class="o">=</span> <span class="nx">UICollectionViewFlowLayout</span><span class="p">()</span>
+        <span class="nx">layout</span><span class="p">.</span><span class="nx">scrollDirection</span> <span class="o">=</span> <span class="p">.</span><span class="nx">vertical</span>
+        <span class="nx">layout</span><span class="p">.</span><span class="nx">minimumInteritemSpacing</span> <span class="o">=</span> <span class="nx">itemHorizontalInset</span>
+        <span class="nx">layout</span><span class="p">.</span><span class="nx">minimumLineSpacing</span> <span class="o">=</span> <span class="nx">minimumLineSpacing</span>
+        <span class="nx">collectionView</span><span class="p">.</span><span class="nx">setCollectionViewLayout</span><span class="p">(</span><span class="nx">layout</span><span class="p">,</span> <span class="nx">animated</span><span class="p">:</span> <span class="kc">false</span><span class="p">)</span>
+        <span class="nx">collectionView</span><span class="p">.</span><span class="nx">delegate</span> <span class="o">=</span> <span class="nb">self</span>
+        <span class="nx">collectionView</span><span class="p">.</span><span class="nx">dataSource</span> <span class="o">=</span> <span class="nb">self</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">adapterDataSource</span> <span class="o">=</span> <span class="nx">adapterDataSource</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">delegate</span> <span class="o">=</span> <span class="nx">delegate</span>
+        <span class="nx">collectionView</span><span class="p">.</span><span class="nx">registerCellXib</span><span class="p">(</span><span class="nx">cellClass</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewCell</span><span class="p">.</span><span class="nb">self</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">extension</span> <span class="nx">BookmarkProductCollectionViewAdapter</span><span class="p">:</span> <span class="nx">UICollectionViewDataSource</span> <span class="p">{</span>
+    <span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">numberOfItemsInSection</span> <span class="nx">section</span><span class="p">:</span> <span class="nx">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">Int</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">adapterDataSource</span><span class="p">?.</span><span class="nx">numberOfItems</span> <span class="p">??</span> <span class="mi">0</span>
+    <span class="p">}</span>
+
+    <span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">cellForItemAt</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">UICollectionViewCell</span> <span class="p">{</span>
+        <span class="nx">guard</span> <span class="kd">let</span> <span class="nx">cell</span> <span class="o">=</span> <span class="nx">collectionView</span><span class="p">.</span><span class="nx">dequeueReusableCell</span><span class="p">(</span><span class="nx">withReuseIdentifier</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewCell</span><span class="p">.</span><span class="nx">className</span><span class="p">(),</span> <span class="k">for</span><span class="p">:</span> <span class="nx">indexPath</span><span class="p">)</span> <span class="k">as</span><span class="p">?</span> <span class="nx">BookmarkProductCollectionViewCell</span><span class="p">,</span>
+              <span class="kd">let</span> <span class="nx">product</span> <span class="o">=</span> <span class="nx">adapterDataSource</span><span class="p">?.</span><span class="nx">product</span><span class="p">(</span><span class="nx">at</span><span class="p">:</span> <span class="nx">indexPath</span><span class="p">.</span><span class="nx">item</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">.</span><span class="nx">init</span><span class="p">()</span> <span class="p">}</span>
+        <span class="nx">cell</span><span class="p">.</span><span class="nx">configure</span><span class="p">(.</span><span class="nx">init</span><span class="p">(</span><span class="nx">product</span><span class="p">:</span> <span class="nx">product</span><span class="p">),</span> <span class="nx">delegate</span><span class="p">:</span> <span class="nx">delegate</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">cell</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">extension</span> <span class="nx">BookmarkProductCollectionViewAdapter</span><span class="p">:</span> <span class="nx">UICollectionViewDelegate</span> <span class="p">{</span>
+    <span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">willDisplay</span> <span class="nx">cell</span><span class="p">:</span> <span class="nx">UICollectionViewCell</span><span class="p">,</span> <span class="nx">forItemAt</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">adapterDataSource</span><span class="p">?.</span><span class="nx">fetchNextItemsIfNeeded</span><span class="p">(</span><span class="nx">indexPath</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">didSelectItemAt</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">guard</span> <span class="kd">let</span> <span class="nx">productId</span> <span class="o">=</span> <span class="nx">adapterDataSource</span><span class="p">?.</span><span class="nx">product</span><span class="p">(</span><span class="nx">at</span><span class="p">:</span> <span class="nx">indexPath</span><span class="p">.</span><span class="nx">item</span><span class="p">)?.</span><span class="nx">id</span><span class="p">,</span> <span class="kd">let</span> <span class="nx">product</span> <span class="o">=</span> <span class="nx">adapterDataSource</span><span class="p">?.</span><span class="nx">product</span><span class="p">(</span><span class="nx">at</span><span class="p">:</span> <span class="nx">indexPath</span><span class="p">.</span><span class="nx">item</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">}</span>
+        <span class="nx">delegate</span><span class="p">?.</span><span class="nx">productTapped</span><span class="p">(</span><span class="nx">productId</span><span class="p">,</span> <span class="nx">product</span><span class="p">:</span> <span class="nx">product</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">extension</span> <span class="nx">BookmarkProductCollectionViewAdapter</span><span class="p">:</span> <span class="nx">UICollectionViewDelegateFlowLayout</span> <span class="p">{</span>
+    <span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">layout</span> <span class="nx">collectionViewLayout</span><span class="p">:</span> <span class="nx">UICollectionViewLayout</span><span class="p">,</span> <span class="nx">sizeForItemAt</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">CGSize</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">BRBookmarkProductCollectionViewCell</span><span class="p">.</span><span class="nx">fittingSize</span><span class="p">(</span><span class="nx">collectionView</span><span class="p">,</span> <span class="nx">itemHorizontalMargin</span><span class="p">:</span> <span class="nx">itemHorizontalMargin</span><span class="p">,</span> <span class="nx">itemHorizontalInset</span><span class="p">:</span> <span class="nx">itemHorizontalInset</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">layout</span> <span class="nx">collectionViewLayout</span><span class="p">:</span> <span class="nx">UICollectionViewLayout</span><span class="p">,</span> <span class="nx">insetForSectionAt</span> <span class="nx">section</span><span class="p">:</span> <span class="nx">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">UIEdgeInsets</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">sectionInset</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>위 코드가 CollectionViewAdapter의 끝입니다.<br />
+물론 셀 종류를 여러 개 사용하는 것 외, 필요에 따라서 코드가 더 추가되겠지만 기본적인 구조는 위의 코드입니다.
+제가 CollectionViewAdapter를 개발할 때 고려한 것은 ‘ViewController의 ViewModel 객체나 데이터 Array 혹은 관련 로직을 중복해서 가지고 있지 말자’였습니다. CollectionViewAdapter에는 데이터 Array나 로직이 전혀 없습니다. 필요한 데이터는 CollectionViewAdapterDataSource Protocol을 통해 모두 가져옵니다. 데이터 페이징 처리까지 말이죠.</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">final</span> <span class="kd">class</span> <span class="nx">BookmarkProductViewModel</span> <span class="p">{</span>
+    <span class="c1">// MARK: - BookmarkProductCollectionViewAdapterDataSource</span>
+    <span class="kd">var</span> <span class="nx">numberOfItems</span><span class="p">:</span> <span class="nx">Int</span> <span class="p">{</span> <span class="nx">products</span><span class="p">.</span><span class="nx">count</span> <span class="p">}</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="nx">extension</span> <span class="nx">BookmarkProductViewModel</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewAdapterDataSource</span> <span class="p">{</span>
+    <span class="nx">func</span> <span class="nx">fetchNextItemsIfNeeded</span><span class="p">(</span><span class="nx">_</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">guard</span> <span class="o">!</span><span class="nx">isFinishedPaging</span><span class="p">,</span> <span class="nx">indexPath</span><span class="p">.</span><span class="nx">row</span> <span class="o">==</span> <span class="nx">numberOfItems</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">}</span>
+        <span class="nx">fetchBookmarkedProducts</span><span class="p">(</span><span class="nx">numberOfItems</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="nx">func</span> <span class="nx">product</span><span class="p">(</span><span class="nx">at</span> <span class="nx">index</span><span class="p">:</span> <span class="nx">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">ProductModelCV1</span><span class="p">?</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">products</span><span class="p">[</span><span class="na">safe</span><span class="p">:</span> <span class="nx">index</span><span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>BookmarkProductCollectionViewAdapterDataSource를 채택한 곳은 ViewController가 가지고 있는 ViewModel입니다. 위와 같이 ViewModel에서 CollectionViewAdapter DataSource 이벤트를 받아 모든 로직을 관리합니다.</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">final</span> <span class="kd">class</span> <span class="nx">BookmarkProductViewController</span><span class="p">:</span> <span class="nx">UIViewController</span> <span class="p">{</span>
+    <span class="kr">private</span> <span class="kd">let</span> <span class="nx">viewModel</span><span class="p">:</span> <span class="nx">BookmarkProductViewModel</span> <span class="o">=</span>  <span class="nx">BookmarkProductViewModel</span><span class="p">()</span>
+    <span class="kr">private</span> <span class="nx">lazy</span> <span class="kd">var</span> <span class="nx">adapter</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewAdapter</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="kd">let</span> <span class="nx">adapter</span> <span class="o">=</span> <span class="nx">BookmarkProductCollectionViewAdapter</span><span class="p">(</span><span class="na">collectionView</span><span class="p">:</span> <span class="nx">collectionView</span><span class="p">,</span> <span class="na">adapterDataSource</span><span class="p">:</span> <span class="nx">viewModel</span><span class="p">,</span> <span class="na">delegate</span><span class="p">:</span> <span class="nb">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">adapter</span>
+    <span class="p">}()</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>UICollectionView에서 발생하는 이벤트 delegate는 ViewController에서 CollectionViewAdapter를 생성할 때 연결합니다. CollectionViewAdapter는 delegate 이벤트를 직접 받지 않고, ViewController로 바로 넘겨주게 됩니다.</p>
+
+<p>ViewController, CollectionViewAdapter, ViewModel이 역할을 분리함으로써 View의 코드는 상당히 간소화됩니다.<br />
+CollectionViewAdapter의 경우 뷰에 종속적이지 않습니다. ViewModel에서 CollectionViewAdapterDataSource Protocol만 채택한다면 여러 개의 뷰에서 사용 가능합니다.</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">func</span> <span class="nx">collectionView</span><span class="p">(</span><span class="nx">_</span> <span class="nx">collectionView</span><span class="p">:</span> <span class="nx">UICollectionView</span><span class="p">,</span> <span class="nx">cellForItemAt</span> <span class="nx">indexPath</span><span class="p">:</span> <span class="nx">IndexPath</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nx">UICollectionViewCell</span> <span class="p">{</span>
+    <span class="nx">guard</span> <span class="kd">let</span> <span class="nx">cell</span> <span class="o">=</span> <span class="nx">collectionView</span><span class="p">.</span><span class="nx">dequeueReusableCell</span><span class="p">(</span><span class="nx">withReuseIdentifier</span><span class="p">:</span> <span class="nx">BookmarkProductCollectionViewCell</span><span class="p">.</span><span class="nx">className</span><span class="p">(),</span> <span class="k">for</span><span class="p">:</span> <span class="nx">indexPath</span><span class="p">)</span> <span class="k">as</span><span class="p">?</span> <span class="nx">BookmarkProductCollectionViewCell</span><span class="p">,</span>
+          <span class="kd">let</span> <span class="nx">product</span> <span class="o">=</span> <span class="nx">adapterDataSource</span><span class="p">?.</span><span class="nx">product</span><span class="p">(</span><span class="nx">at</span><span class="p">:</span> <span class="nx">indexPath</span><span class="p">.</span><span class="nx">item</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">.</span><span class="nx">init</span><span class="p">()</span> <span class="p">}</span>
+    <span class="nx">cell</span><span class="p">.</span><span class="nx">configure</span><span class="p">(.</span><span class="nx">init</span><span class="p">(</span><span class="nx">product</span><span class="p">:</span> <span class="nx">product</span><span class="p">),</span> <span class="nx">delegate</span><span class="p">:</span> <span class="nx">delegate</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">cell</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Cell의 경우 각자 ViewModel을 가지고 있기 때문에 CollectionViewAdapterDataSource에서 Cell의 ViewModel을 생성하여 넘겨줍니다.
+<br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>View의 코드를 최대한 간소화하고, ViewModel에 집중하여 개발하는 것을 목표로 위와 같은 패턴을 사용하게 되었습니다. 읽기 쉽고, 테스트와 유지 보수에 용이하도록 코드를 줄이는 것은 개발자들의 공통과제입니다. (코드리뷰 시간이 줄어드는 것은 덤이죠~) 앞서 말씀드린 부분은 결국 퀄리티와 이어집니다. 앞으로도 사용자분들께 보다 나은 앱을 제공할 수 있도록 노력하는 브랜디가 되겠습니다.</p>
+:ET

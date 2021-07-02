@@ -1,0 +1,155 @@
+I"�<h1 id="overview">Overview</h1>
+
+<p>현재 브랜디 내 제가 소속되어 있는 팀은 최상의 풀필먼트 서비스를 제공해주기 위해 다양한 기술을 학습하고 해당 모델을 실서비스에 접목시키려고 많은 시도를 하고 있습니다. 그 중에서 풀필먼트 시스템을 사용하는 분들에게 주문 및 전반적인 물류와 관련하여 다양한 통계지표를 제공해 드려야 했습니다.</p>
+
+<p>기존 통계지표를 얻기 위해서는 실서비스에 최대한 영향을 끼치지 않도록 실서비스 DB를 복제하여 주기적으로 배치파일을 실행 후 과거 데이터에 대한 통계지표를 얻을 수 있었습니다.</p>
+
+<p>이에 좀 더 가볍고 접근성이 좋으며 실서비스에 영향을 끼치지 않고 실시간으로 통계정보를 제공해 줄 수 있는 방법을 찾게 되었고 그 해답은 AWS Athena를 활용하는 것이었습니다.</p>
+
+<p>해당 내용은 AWS Athena를 활용하여 가상의 로그성 샘플파일을 통해 간단한 통계 정보를 출력시키는 과정을 담았습니다.
+<br /><br /></p>
+
+<h1 id="contents">Contents</h1>
+
+<ol>
+  <li>AWS Athena 소개</li>
+  <li>프로젝트 아키텍처 설명</li>
+  <li>AWS Athena 활용</li>
+  <li>마무리
+<br /><br /></li>
+</ol>
+
+<h3 id="1-aws-athena-소개">1. AWS Athena 소개</h3>
+
+<hr />
+
+<p>AWS Athena는 AWS S3 내 데이터 파일을 기반으로 표준 SQL문을 사용하여 직접 데이터를</p>
+
+<p>쿼리할 수 있는 서비스입니다. 그리고 AWS Athena는 서버리스 서비스이므로 따로 뭔가 설정하거나 인프라를 관리할 필요가 없습니다.</p>
+
+<p>비용에 대해서는 각 쿼리에서 스캔한 데이터 양에 따라 요금이 부과되며, 현재 서울리전 기준 1TB당 5.00 USD로 책정되어 있습니다. 그러므로 해당 서비스를 활용하면 여타 빅데이터 분석 관련 서비스에 비해 금전적, 시간적 소모가 훨씬 줄어들게 됩니다.
+<br /><br /></p>
+
+<h3 id="2-프로젝트-아키텍처-설명">2. 프로젝트 아키텍처 설명</h3>
+
+<hr />
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/01.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<p>풀필먼트 서비스 내 페이지 진입 시 관련 백엔드 프로세스를 실행하고 로그 데이터를 JSON형식 변환하여 AWS SQS로 보냅니다.</p>
+
+<p>SQS를 트리거하고 있는 Lambda에서 로그 데이터를 받은 후 가공하여 AWS Athena에 지정되어 있는 S3경로로 파일을 업로드 합니다.</p>
+
+<p>사용자가 풀필먼트 서비스 내 통계성 페이지 진입 시 백엔드 프로세스에서 AWS Athena로 관련 쿼리를 요청 후 해당 통계정보를 응답 받습니다.
+<br /><br /></p>
+
+<h3 id="3-aws-athena-활용">3. AWS Athena 활용</h3>
+
+<hr />
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/02.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>AWS Athena에 접속 후 Database를 생성합니다.</li>
+</ul>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/03.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>Table 생성 시 파티션 컬럼과 AWS Athena에서 분석을 위해 가져오게 될 원본 데이터 파일의 경로를 지정합니다.</li>
+</ul>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/04.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>파티션 컬럼만 지정했을 뿐 실제 파티션 맵핑은 이뤄지지 않았기 때문에 여기서는 수동으로 파티션 맵핑을 해줍니다.</li>
+  <li>파티션 맵핑에는 자동맵핑도 있으나 기존 파티셔닝된 맵핑정보도 매번 다시 등록되며 파티션이 많아졌을 경우 성능 이슈가 발생 할 수 있습니다.</li>
+  <li>파티셔닝 대상(year, month, day)은 따로 정해진 것은 없으며 편의에 맞게 설정해주면 됩니다.</li>
+  <li>AWS Athena에서 파티셔닝을 지정하지 않았을 시 쿼리 요청을 하게 되면 기본적으로 지정된 S3경로 내 모든 파일을 스캔하게 됩니다.</li>
+  <li>만약 해당 경로 내에 큰 사이즈의 파일들이 많다면 그만큼 성능저하와 비용증가가 발생하게 됩니다.</li>
+  <li>파티셔닝을 하게 되면 AWS Athena는 쿼리 조건 내 파티션 컬럼값에 따라 해당 경로에 있는 파일들만 스캔하게 됩니다.</li>
+</ul>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/05.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>성공적으로 파티셔닝이 된 것을 확인 할 수 있습니다.</li>
+</ul>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/06.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>샘플 파일은 총 100,000건 기준으로 서울 시 구 단위 지역, 배송타입, 상품명, 주문일자로 구성하였습니다.</li>
+  <li>나머지 배송타입 및 상품명 또한 정상적으로 집계가 완료되었습니다.</li>
+  <li>여기서 파일 압축, 적절한 데이터 분할을 하게 되면 더 효율적인 성능 및 비용이 나오게 됩니다.</li>
+</ul>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/07.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>SQS에서 로그 데이터를 받은 후 해당 Lambda에서 S3로 파티션에 맞게 업로드 해줍니다.</li>
+  <li>AWS Athena에서 파티셔닝 할 때의 단점은 파티셔닝 대상을 날짜로 하게 되었을 때 매번 자동맵핑 명령어나 수동으로 파티션 등록 쿼리를 요청해야 한다는 점입니다.</li>
+  <li>하지만 이 부분은 약간의 비용을 더 들여서 AWS Glue Crawler를 통해 자동화 할 수 있습니다.</li>
+</ul>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/08.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>Lambda 내 AWS Athena를 통해 간단한 통계 정보를 가져오는 샘플파일입니다.</li>
+  <li>아쉬운 점은 쿼리에 대한 최종 결과값까지 가져오는데 스탭이 많이 들어가는 것과 AWS Athena에서는 결국 요청한 쿼리에 대한 결과를 내보낼 준비가 될 때 까지 계속 상태를 체크해야 한다는 점입니다.</li>
+</ul>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2021/0203/09.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>AWS Athena를 활용하여 최종 집계정보를 출력한 결과입니다.
+<br /><br /></li>
+</ul>
+
+<h3 id="4-마무리">4. 마무리</h3>
+
+<hr />
+
+<p>AWS Athena 서비스는 빅데이터 활용을 통한 서비스가 당연한 일이 되고 있는 추세에서 접근성을 좋게 하고, 저렴한 비용으로 효율적인 성능을 낼 수 있게끔 마련된 서비스입니다.</p>
+
+<p>앞으로 해당 서비스가 조금 더 고도화되어 더욱 사용하기 편할 수 있었으면 좋겠고 이번 글을 통해 개인적으로 데이터 분석에 대한 흥미도가 향상된 것 같습니다.</p>
+
+<p>다음에는 더욱 유익한 글로 찾아 오겠습니다.</p>
+
+<p>읽어주셔서 감사합니다.
+<br /><br /></p>
+
+<h3 id="참고자료">참고자료</h3>
+
+<ol>
+  <li>AWS Athena 문서<br />
+ <a href="https://docs.aws.amazon.com/athena/latest/ug/what-is.html">https://docs.aws.amazon.com/athena/latest/ug/what-is.html</a></li>
+</ol>
+:ET

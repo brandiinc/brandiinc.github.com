@@ -1,0 +1,11 @@
+I"x<p><strong>목차</strong><br />
+<a href="#link1">1.</a> INTRO<br />
+<a href="#link2">2.</a> CHAPTER 1<br />
+<span class="indent"><a href="#link3">1.</a> The Recommendation Problem</span>
+<span class="indent"><a href="#link4">2.</a> 명시적 점수(Explicit Rating)</span>
+<span class="indent"><a href="#link5">3.</a> 암묵적 피드백(Implicit Feedback)</span>
+<span class="indent"><a href="#link6">4.</a> 브랜디 서비스 속 명시적 점수와 암묵적 피드백</span>
+<a href="#link7">3.</a> CHAPTER 2<br />
+<span class="indent"><a href="#link8">1.</a> 예제 실습</span>
+<a href="#link9">4.</a> CONCLUSION<br /></p>
+:ET

@@ -1,0 +1,446 @@
+I"�<p><span><a class="gray" href="#link1">Overview</a></span><br />
+<span class="indent"><a class="gray" href="#link2">Kotlin Native</a></span>
+<span class="inden2"><a class="gray" href="#link3">예제 Hello (Platform)!</a></span><br />
+<span class="inden2"><a class="gray" href="#link4">예제 Networking and Data Storage</a></span><br />
+<span><a class="gray" href="#link5">Conclusion</a></span><br />
+<span class="indent"><a class="gray" href="#link6">참고</a></span><br /></p>
+
+<p><a name="link1"></a></p>
+<h1 id="overview">Overview</h1>
+
+<p>Kotlin의 경우 현재 Android 개발에 많이 쓰이고 있습니다. Kotlin 언어 가이드에 따르면 현재<br />
+아래와 같은 플랫폼을 지원한다고 안내하고 있습니다.</p>
+
+<ul>
+  <li>iOS (arm32, arm64, simulator x86_64)</li>
+  <li>macOS (x86_64)</li>
+  <li>watchOS (arm32, arm64, x86)</li>
+  <li>tvOS (arm64, x86_64)</li>
+  <li>Android (arm32, arm64, x86, x86_64)</li>
+  <li>Windows (mingw x86_64, x86)</li>
+  <li>Linux (x86_64, arm32, arm64, MIPS, MIPS little endian)</li>
+  <li>WebAssembly (wasm32)</li>
+</ul>
+
+<p>지원 목록 중에 눈에 띄는 iOS에 대하여 Kotlin으로 어느 정도까지 iOS App 개발이 가능하며, 어떤 방식으로 개발이 가능 한지 알아보기 위해, 아래 공식 문서에서 제공하는 샘플을 먼저 살펴 보았습니다.
+<br /><br /></p>
+
+<p><a name="link2"></a></p>
+<h2 id="kotlin-native">Kotlin Native</h2>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/01.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<p>멀티 플랫폼은 아직은  Alpha 버전이어서 자주 바뀔 수 있음을 경고하고 있습니다.</p>
+
+<figure class="percent70">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/02.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<figcaption>출처 : <a class="gray" href="http://kotlinlang.org/">kotlinlang.org</a></figcaption>
+<p><br /></p>
+
+<p>Kotlin 공통 코드를 사용하여 같은 라이브러리 지원을 받고, 플랫폼을 지원하는 컴파일러 위에서 코드를 작성하는 것임을 알 수 있습니다.</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/03.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/04.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<p>Android와 iOS 구현시 common에 expected class를 정의하고, 각 플랫폼별 actual class 를 통하여 실제 구현을 하도록 합니다.</p>
+
+<p>Kotlin으로 전체 코드를 작성하는 것으로 예상 하였으나, 공식문서를 대략적으로 파악해보니 공통의</p>
+
+<p>코드를 정의하고 상세 코드의 경우 개별적 작성을 하는 방식임을 알 수 있습니다.
+<br /><br /></p>
+
+<p><a name="link3"></a></p>
+<h3 id="예제-hello-platform">예제 Hello (Platform)!</h3>
+
+<p>대략적인 흐름은 파악 하였으니, 이제 예제를 기반으로 실제 구현된  모습을 살펴 보겠습니다.</p>
+
+<p>일반적으로 프로그래밍 언어를 배울 때 가장 처음으로 해보는 것은 역시나 hello world이기 때문에</p>
+
+<p>가이드에서 제공하는 hello world 프로젝트를 우선 분석해 보겠습니다.</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/05.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<p>Android Studio 최신 업데이트 이후, 프로젝트 생성 시 아래 쪽에 멀티플랫폼을 지원하는 Template이 추가되었음을 확인할 수 있습니다.</p>
+
+<figure class="percent70">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/06.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<p>프로젝트 생성 시  AndroidApp, commonMain, iOSMain의 3개로 구분된 프로젝트가 생성됩니다.<br />
+더불어 hello를 출력하기 위한 기본 코드 역시 생성되어 있습니다.</p>
+
+<p>commonMain의 Platform</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">expect</span> <span class="kd">class</span> <span class="nc">Platform</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">platform</span><span class="p">:</span> <span class="nc">String</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>androidMain의 Platform</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">actual</span> <span class="kd">class</span> <span class="nc">Platform</span> <span class="n">actual</span> <span class="k">constructor</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">actual</span> <span class="kd">val</span> <span class="py">platform</span><span class="p">:</span> <span class="nc">String</span> <span class="p">=</span> <span class="s">"Android ${android.os.Build.VERSION.SDK_INT}"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>iosMain의 Platform</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">actual</span> <span class="kd">class</span> <span class="nc">Platform</span> <span class="n">actual</span> <span class="k">constructor</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">actual</span> <span class="kd">val</span> <span class="py">platform</span><span class="p">:</span> <span class="nc">String</span> <span class="p">=</span> <span class="nc">UIDevice</span><span class="p">.</span><span class="n">currentDevice</span><span class="p">.</span><span class="nf">systemName</span><span class="p">()</span> <span class="p">+</span> <span class="s">" "</span> <span class="p">+</span> <span class="nc">UIDevice</span><span class="p">.</span><span class="n">currentDevice</span><span class="p">.</span><span class="n">systemVersion</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>commonMain의 expect class를 각 플랫폼별 Main에서 actual class 형태로 구현 되어 있습니다.</p>
+
+<p>androidApp의 MainActivity</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">androidx.appcompat.app.AppCompatActivity</span>
+<span class="k">import</span> <span class="nn">android.os.Bundle</span>
+<span class="k">import</span> <span class="nn">com.example.demo.shared.Greeting</span>
+<span class="k">import</span> <span class="nn">android.widget.TextView</span>
+
+<span class="k">fun</span> <span class="nf">greet</span><span class="p">():</span> <span class="nc">String</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nc">Greeting</span><span class="p">().</span><span class="nf">greeting</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">MainActivity</span> <span class="p">:</span> <span class="nc">AppCompatActivity</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onCreate</span><span class="p">(</span><span class="n">savedInstanceState</span><span class="p">:</span> <span class="nc">Bundle</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nf">onCreate</span><span class="p">(</span><span class="n">savedInstanceState</span><span class="p">)</span>
+        <span class="nf">setContentView</span><span class="p">(</span><span class="nc">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">activity_main</span><span class="p">)</span>
+
+        <span class="kd">val</span> <span class="py">tv</span><span class="p">:</span> <span class="nc">TextView</span> <span class="p">=</span> <span class="nf">findViewById</span><span class="p">(</span><span class="nc">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">text_view</span><span class="p">)</span>
+        <span class="n">tv</span><span class="p">.</span><span class="n">text</span> <span class="p">=</span> <span class="nf">greet</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>iosApp의 ContentView</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">SwiftUI</span>
+<span class="kd">import</span> <span class="n">shared</span>
+
+<span class="kd">func</span> <span class="nf">greet</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="p">{</span>
+
+  <span class="k">return</span> <span class="kt">Greeting</span><span class="p">()</span><span class="o">.</span><span class="nf">greeting</span><span class="p">()</span>
+
+<span class="p">}</span>
+
+<span class="kd">struct</span> <span class="kt">ContentView</span><span class="p">:</span> <span class="kt">View</span> <span class="p">{</span>
+
+<span class="k">var</span> <span class="nv">body</span><span class="p">:</span><span class="kd">some</span> <span class="kt">View</span> <span class="p">{</span>
+
+     <span class="kt">Text</span><span class="p">(</span><span class="nf">greet</span><span class="p">())</span>
+
+   <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="kd">struct</span> <span class="kt">ContentView_Previews</span><span class="p">:</span> <span class="kt">PreviewProvider</span> <span class="p">{</span>
+
+<span class="kd">static</span> <span class="k">var</span> <span class="nv">previews</span><span class="p">:</span> <span class="kd">some</span> <span class="kt">View</span> <span class="p">{</span>
+
+      <span class="kt">ContentView</span><span class="p">()</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>각 플랫폼 별로 구현된 main을 모듈로 사용하는 app을 구현합니다. Android는 Kotlin을 사용하여 ios는 xcode로 swift를 사용하여 UI 표현 합니다.</p>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/07.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="percent50">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/08.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<p>이후 각 플랫폼 별 시뮬레이터 실행했을 때, 정상적으로 출력 되는 것을 확인할 수 있습니다.</p>
+
+<p>그동안 테스트 할 때 보았던 hello world가 아닌 hello + “플랫폼 정보” 이긴 하지만, Kotlin을 이용하여 ios 출력해볼 수 있다는 것이 굉장히 흥미로운 부분입니다.
+<br /><br /></p>
+
+<p><a name="link4"></a></p>
+<h3 id="예제-networking-and-data-storage">예제 Networking and Data Storage</h3>
+
+<p>단순 텍스트 출력인 hello 예제 외에 좀 더 본격적인 예제를 살펴 보았습니다. 이제 네트워크를 통하여 api 호출 후 list를 통하여 출력하는 예제를 보여드리겠습니다.</p>
+
+<p>commonMain의 DatabaseDriverFactory</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">com.squareup.sqldelight.db.SqlDriver</span>
+
+<span class="n">expect</span> <span class="kd">class</span> <span class="nc">DatabaseDriverFactory</span> <span class="p">{</span>
+    <span class="k">fun</span> <span class="nf">createDriver</span><span class="p">():</span> <span class="nc">SqlDriver</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>androidMain의 DatabaseDriverFactory</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">android.content.Context</span>
+<span class="k">import</span> <span class="nn">com.jetbrains.handson.kmm.shared.cache.AppDatabase</span>
+<span class="k">import</span> <span class="nn">com.squareup.sqldelight.android.AndroidSqliteDriver</span>
+<span class="k">import</span> <span class="nn">com.squareup.sqldelight.db.SqlDriver</span>
+
+<span class="n">actual</span> <span class="kd">class</span> <span class="nc">DatabaseDriverFactory</span><span class="p">(</span><span class="k">private</span> <span class="kd">val</span> <span class="py">context</span><span class="p">:</span> <span class="nc">Context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">actual</span> <span class="k">fun</span> <span class="nf">createDriver</span><span class="p">():</span> <span class="nc">SqlDriver</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nc">AndroidSqliteDriver</span><span class="p">(</span><span class="nc">AppDatabase</span><span class="p">.</span><span class="nc">Schema</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="s">"test.db"</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>iosMain의 DatabaseDriverFactory</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">com.squareup.sqldelight.db.SqlDriver</span>
+<span class="k">import</span> <span class="nn">com.squareup.sqldelight.drivers.native.NativeSqliteDriver</span>
+
+<span class="n">actual</span> <span class="kd">class</span> <span class="nc">DatabaseDriverFactory</span> <span class="p">{</span>
+    <span class="n">actual</span> <span class="k">fun</span> <span class="nf">createDriver</span><span class="p">():</span> <span class="nc">SqlDriver</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nc">NativeSqliteDriver</span><span class="p">(</span><span class="nc">AppDatabase</span><span class="p">.</span><span class="nc">Schema</span><span class="p">,</span> <span class="s">"test.db"</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>DatabaseDriverFactory class의 경우, 각 플랫폼별로 구현합니다.</p>
+
+<p>RocketLaunch Data class</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">kotlinx.serialization.SerialName</span>
+<span class="k">import</span> <span class="nn">kotlinx.serialization.Serializable</span>
+
+<span class="nd">@Serializable</span>
+<span class="kd">data class</span> <span class="nc">RocketLaunch</span><span class="p">(</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"flight_number"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">flightNumber</span><span class="p">:</span> <span class="nc">Int</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"mission_name"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">missionName</span><span class="p">:</span> <span class="nc">String</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"launch_year"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">launchYear</span><span class="p">:</span> <span class="nc">Int</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"launch_date_utc"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">launchDateUTC</span><span class="p">:</span> <span class="nc">String</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"rocket"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">rocket</span><span class="p">:</span> <span class="nc">Rocket</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"details"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">details</span><span class="p">:</span> <span class="nc">String</span><span class="p">?,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"launch_success"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">launchSuccess</span><span class="p">:</span> <span class="nc">Boolean</span><span class="p">?,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"links"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">links</span><span class="p">:</span> <span class="nc">Links</span>
+<span class="p">)</span>
+
+<span class="nd">@Serializable</span>
+<span class="kd">data class</span> <span class="nc">Rocket</span><span class="p">(</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"rocket_id"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">id</span><span class="p">:</span> <span class="nc">String</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"rocket_name"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">name</span><span class="p">:</span> <span class="nc">String</span><span class="p">,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"rocket_type"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">type</span><span class="p">:</span> <span class="nc">String</span>
+<span class="p">)</span>
+
+<span class="nd">@Serializable</span>
+<span class="kd">data class</span> <span class="nc">Links</span><span class="p">(</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"mission_patch"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">missionPatchUrl</span><span class="p">:</span> <span class="nc">String</span><span class="p">?,</span>
+    <span class="nd">@SerialName</span><span class="p">(</span><span class="s">"article_link"</span><span class="p">)</span>
+    <span class="kd">val</span> <span class="py">articleUrl</span><span class="p">:</span> <span class="nc">String</span><span class="p">?</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>data class를 비롯한 domain 관련 된 부분은 Kotlin으로 작성된 공용 코드를 사용하는 구조입니다.</p>
+
+<p>여기서 눈 여겨 볼 부분은, SqlDriver 라이브러리의 경우 Android는 AndroidSqliteDriver iOS는 NativeSqliteDriver를 사용하고 있다는 것입니다.</p>
+
+<p>androidApp의 MainActivity</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">androidx.appcompat.app.AppCompatActivity</span>
+<span class="k">import</span> <span class="nn">android.os.Bundle</span>
+<span class="k">import</span> <span class="nn">android.widget.FrameLayout</span>
+<span class="k">import</span> <span class="nn">android.widget.Toast</span>
+<span class="k">import</span> <span class="nn">androidx.recyclerview.widget.LinearLayoutManager</span>
+<span class="k">import</span> <span class="nn">androidx.recyclerview.widget.RecyclerView</span>
+<span class="k">import</span> <span class="nn">androidx.swiperefreshlayout.widget.SwipeRefreshLayout</span>
+<span class="k">import</span> <span class="nn">com.jetbrains.handson.kmm.shared.SpaceXSDK</span>
+<span class="k">import</span> <span class="nn">com.jetbrains.handson.kmm.shared.cache.DatabaseDriverFactory</span>
+<span class="k">import</span> <span class="nn">kotlinx.coroutines.MainScope</span>
+<span class="k">import</span> <span class="nn">kotlinx.coroutines.launch</span>
+<span class="k">import</span> <span class="nn">androidx.core.view.isVisible</span>
+<span class="k">import</span> <span class="nn">kotlinx.coroutines.cancel</span>
+
+<span class="kd">class</span> <span class="nc">MainActivity</span> <span class="p">:</span> <span class="nc">AppCompatActivity</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">mainScope</span> <span class="p">=</span> <span class="nc">MainScope</span><span class="p">()</span>
+
+    <span class="k">private</span> <span class="k">lateinit</span> <span class="kd">var</span> <span class="py">launchesRecyclerView</span><span class="p">:</span> <span class="nc">RecyclerView</span>
+    <span class="k">private</span> <span class="k">lateinit</span> <span class="kd">var</span> <span class="py">progressBarView</span><span class="p">:</span> <span class="nc">FrameLayout</span>
+    <span class="k">private</span> <span class="k">lateinit</span> <span class="kd">var</span> <span class="py">swipeRefreshLayout</span><span class="p">:</span> <span class="nc">SwipeRefreshLayout</span>
+
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">sdk</span> <span class="p">=</span> <span class="nc">SpaceXSDK</span><span class="p">(</span><span class="nc">DatabaseDriverFactory</span><span class="p">(</span><span class="k">this</span><span class="p">))</span>
+
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">launchesRvAdapter</span> <span class="p">=</span> <span class="nc">LaunchesRvAdapter</span><span class="p">(</span><span class="nf">listOf</span><span class="p">())</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onCreate</span><span class="p">(</span><span class="n">savedInstanceState</span><span class="p">:</span> <span class="nc">Bundle</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nf">onCreate</span><span class="p">(</span><span class="n">savedInstanceState</span><span class="p">)</span>
+        <span class="n">title</span> <span class="p">=</span> <span class="s">"SpaceX Launches"</span>
+        <span class="nf">setContentView</span><span class="p">(</span><span class="nc">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">activity_main</span><span class="p">)</span>
+
+        <span class="n">launchesRecyclerView</span> <span class="p">=</span> <span class="nf">findViewById</span><span class="p">(</span><span class="nc">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">launchesListRv</span><span class="p">)</span>
+        <span class="n">progressBarView</span> <span class="p">=</span> <span class="nf">findViewById</span><span class="p">(</span><span class="nc">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">progressBar</span><span class="p">)</span>
+        <span class="n">swipeRefreshLayout</span> <span class="p">=</span> <span class="nf">findViewById</span><span class="p">(</span><span class="nc">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">swipeContainer</span><span class="p">)</span>
+
+        <span class="n">launchesRecyclerView</span><span class="p">.</span><span class="n">adapter</span> <span class="p">=</span> <span class="n">launchesRvAdapter</span>
+        <span class="n">launchesRecyclerView</span><span class="p">.</span><span class="n">layoutManager</span> <span class="p">=</span> <span class="nc">LinearLayoutManager</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+
+        <span class="n">swipeRefreshLayout</span><span class="p">.</span><span class="nf">setOnRefreshListener</span> <span class="p">{</span>
+            <span class="n">swipeRefreshLayout</span><span class="p">.</span><span class="n">isRefreshing</span> <span class="p">=</span> <span class="k">false</span>
+            <span class="nf">displayLaunches</span><span class="p">(</span><span class="k">true</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="nf">displayLaunches</span><span class="p">(</span><span class="k">false</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onDestroy</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nf">onDestroy</span><span class="p">()</span>
+        <span class="n">mainScope</span><span class="p">.</span><span class="nf">cancel</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">fun</span> <span class="nf">displayLaunches</span><span class="p">(</span><span class="n">needReload</span><span class="p">:</span> <span class="nc">Boolean</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">progressBarView</span><span class="p">.</span><span class="n">isVisible</span> <span class="p">=</span> <span class="k">true</span>
+        <span class="n">mainScope</span><span class="p">.</span><span class="nf">launch</span> <span class="p">{</span>
+            <span class="n">kotlin</span><span class="p">.</span><span class="nf">runCatching</span> <span class="p">{</span>
+                <span class="n">sdk</span><span class="p">.</span><span class="nf">getLaunches</span><span class="p">(</span><span class="n">needReload</span><span class="p">)</span>
+            <span class="p">}.</span><span class="nf">onSuccess</span> <span class="p">{</span>
+                <span class="n">launchesRvAdapter</span><span class="p">.</span><span class="n">launches</span> <span class="p">=</span> <span class="n">it</span>
+                <span class="n">launchesRvAdapter</span><span class="p">.</span><span class="nf">notifyDataSetChanged</span><span class="p">()</span>
+            <span class="p">}.</span><span class="nf">onFailure</span> <span class="p">{</span>
+                <span class="nc">Toast</span><span class="p">.</span><span class="nf">makeText</span><span class="p">(</span><span class="k">this</span><span class="nd">@MainActivity</span><span class="p">,</span> <span class="n">it</span><span class="p">.</span><span class="n">localizedMessage</span><span class="p">,</span> <span class="nc">Toast</span><span class="p">.</span><span class="nc">LENGTH_SHORT</span><span class="p">).</span><span class="nf">show</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">progressBarView</span><span class="p">.</span><span class="n">isVisible</span> <span class="p">=</span> <span class="k">false</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>iosApp의 ContentView</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">SwiftUI</span>
+<span class="kd">import</span> <span class="n">shared</span>
+
+<span class="kd">struct</span> <span class="kt">ContentView</span><span class="p">:</span> <span class="kt">View</span> <span class="p">{</span>
+  <span class="kd">@ObservedObject</span> <span class="kd">private(set)</span> <span class="k">var</span> <span class="nv">viewModel</span><span class="p">:</span> <span class="kt">ViewModel</span>
+
+    <span class="k">var</span> <span class="nv">body</span><span class="p">:</span> <span class="kd">some</span> <span class="kt">View</span> <span class="p">{</span>
+        <span class="kt">NavigationView</span> <span class="p">{</span>
+            <span class="nf">listView</span><span class="p">()</span>
+            <span class="o">.</span><span class="nf">navigationBarTitle</span><span class="p">(</span><span class="s">"SpaceX Launches"</span><span class="p">)</span>
+            <span class="o">.</span><span class="nf">navigationBarItems</span><span class="p">(</span><span class="nv">trailing</span><span class="p">:</span>
+                <span class="kt">Button</span><span class="p">(</span><span class="s">"Reload"</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">self</span><span class="o">.</span><span class="n">viewModel</span><span class="o">.</span><span class="nf">loadLaunches</span><span class="p">(</span><span class="nv">forceReload</span><span class="p">:</span> <span class="kc">true</span><span class="p">)</span>
+            <span class="p">})</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="kd">private</span> <span class="kd">func</span> <span class="nf">listView</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">AnyView</span> <span class="p">{</span>
+        <span class="k">switch</span> <span class="n">viewModel</span><span class="o">.</span><span class="n">launches</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="o">.</span><span class="nv">loading</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kt">AnyView</span><span class="p">(</span><span class="kt">Text</span><span class="p">(</span><span class="s">"Loading..."</span><span class="p">)</span><span class="o">.</span><span class="nf">multilineTextAlignment</span><span class="p">(</span><span class="o">.</span><span class="n">center</span><span class="p">))</span>
+        <span class="k">case</span> <span class="o">.</span><span class="nf">result</span><span class="p">(</span><span class="k">let</span> <span class="nv">launches</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kt">AnyView</span><span class="p">(</span><span class="kt">List</span><span class="p">(</span><span class="n">launches</span><span class="p">)</span> <span class="p">{</span> <span class="n">launch</span> <span class="k">in</span>
+                <span class="kt">RocketLaunchRow</span><span class="p">(</span><span class="nv">rocketLaunch</span><span class="p">:</span> <span class="n">launch</span><span class="p">)</span>
+            <span class="p">})</span>
+        <span class="k">case</span> <span class="o">.</span><span class="nf">error</span><span class="p">(</span><span class="k">let</span> <span class="nv">description</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kt">AnyView</span><span class="p">(</span><span class="kt">Text</span><span class="p">(</span><span class="n">description</span><span class="p">)</span><span class="o">.</span><span class="nf">multilineTextAlignment</span><span class="p">(</span><span class="o">.</span><span class="n">center</span><span class="p">))</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">extension</span> <span class="kt">ContentView</span> <span class="p">{</span>
+
+    <span class="kd">enum</span> <span class="kt">LoadableLaunches</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="n">loading</span>
+        <span class="k">case</span> <span class="nf">result</span><span class="p">([</span><span class="kt">RocketLaunch</span><span class="p">])</span>
+        <span class="k">case</span> <span class="nf">error</span><span class="p">(</span><span class="kt">String</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="kd">class</span> <span class="kt">ViewModel</span><span class="p">:</span> <span class="kt">ObservableObject</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">sdk</span><span class="p">:</span> <span class="kt">SpaceXSDK</span>
+        <span class="kd">@Published</span> <span class="k">var</span> <span class="nv">launches</span> <span class="o">=</span> <span class="kt">LoadableLaunches</span><span class="o">.</span><span class="n">loading</span>
+
+        <span class="nf">init</span><span class="p">(</span><span class="nv">sdk</span><span class="p">:</span> <span class="kt">SpaceXSDK</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">self</span><span class="o">.</span><span class="n">sdk</span> <span class="o">=</span> <span class="n">sdk</span>
+            <span class="k">self</span><span class="o">.</span><span class="nf">loadLaunches</span><span class="p">(</span><span class="nv">forceReload</span><span class="p">:</span> <span class="kc">false</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="kd">func</span> <span class="nf">loadLaunches</span><span class="p">(</span><span class="nv">forceReload</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">self</span><span class="o">.</span><span class="n">launches</span> <span class="o">=</span> <span class="o">.</span><span class="n">loading</span>
+            <span class="n">sdk</span><span class="o">.</span><span class="nf">getLaunches</span><span class="p">(</span><span class="nv">forceReload</span><span class="p">:</span> <span class="n">forceReload</span><span class="p">,</span> <span class="nv">completionHandler</span><span class="p">:</span> <span class="p">{</span> <span class="n">launches</span><span class="p">,</span> <span class="n">error</span> <span class="k">in</span>
+                <span class="k">if</span> <span class="k">let</span> <span class="nv">launches</span> <span class="o">=</span> <span class="n">launches</span> <span class="p">{</span>
+                    <span class="k">self</span><span class="o">.</span><span class="n">launches</span> <span class="o">=</span> <span class="o">.</span><span class="nf">result</span><span class="p">(</span><span class="n">launches</span><span class="p">)</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="k">self</span><span class="o">.</span><span class="n">launches</span> <span class="o">=</span> <span class="o">.</span><span class="nf">error</span><span class="p">(</span><span class="n">error</span><span class="p">?</span><span class="o">.</span><span class="n">localizedDescription</span> <span class="p">??</span> <span class="s">"error"</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="p">})</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">extension</span> <span class="kt">RocketLaunch</span><span class="p">:</span> <span class="kt">Identifiable</span> <span class="p">{</span> <span class="p">}</span>
+
+<span class="kd">struct</span> <span class="kt">ContentView_Previews</span><span class="p">:</span> <span class="kt">PreviewProvider</span> <span class="p">{</span>
+    <span class="kd">static</span> <span class="k">var</span> <span class="nv">previews</span><span class="p">:</span> <span class="kd">some</span> <span class="kt">View</span> <span class="p">{</span>
+        <span class="cm">/*@START_MENU_TOKEN@*/</span><span class="kt">Text</span><span class="p">(</span><span class="s">"Hello, World!"</span><span class="p">)</span><span class="cm">/*@END_MENU_TOKEN@*/</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>hello 예제와 동일하게 각 플랫폼 별 list 라이브러리를 이용하여 ui를 표현해 줍니다.</p>
+
+<figure class="percent50">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/09.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201214/10.png" alt="kotlin" />
+</figure>
+<figcaption></figcaption>
+
+<p>실행 결과 각 플랫폼 별로 리스트가 출력됩니다.
+<br /><br /></p>
+
+<p><a name="link5"></a></p>
+<h1 id="conclusion">Conclusion</h1>
+
+<p>Reactive Native 와 flutter를 비롯한 멀티플랫폼의 경우 native에 비하여 느리거나 기존 native 개발자들이 새롭게 언어를 배워야 하는 문제가 있습니다. Kotlin의 경우 기존 Android 개발자가 추가 학습 없이 개발이 가능하기 때문에  쉽게 iOS App 개발이 가능하지 않을까, 라고 생각하였습니다.</p>
+
+<p>의문에 대한 답을 찾기 위해 가볍게 살펴 본 Kotlin Native는, 기존 생각과 달리 모든 부분을 Kotlin 으로 작성 하는 것은 아니었습니다.  Kotlin 개발자가 iOS 개발을 한다기보다는 공통 domain 영역을  Kotlin으로 작성하고, 이 부분을 라이브러리처럼 사용하면서 UI를 해당 플랫폼의 언어로  개발하는 형태입니다.</p>
+
+<p>대다수 Android와 iOS App을 병행 개발 한다고 할 때 domain 부분에 대한 처리를 양쪽이 동일한 형태로 만들 수 있는 장점이 있습니다. iOS쪽은 UI부분에 좀 더 집중할 수 있을 것이고요. 플랫폼 별 UI 구현 역시 native 속도  또한 잃지 않을 수 있습니다. 하지만 이것은 happy case에 대한 가정입니다. 현재 간단한 예제를 따라 만들어 보면 Kotlin Native는 아직 Alpha이기 때문이라는 점, 더불어 문서에 최신 tool의 내용이 미반영 되어 있다는 것, bug인지 알수 없는 tool상의 오류, ios의 경우 공통 영역의 디버깅이 어렵다는 점 등과 참고 자료 역시 충분하지 않다는 문제점이 보입니다.</p>
+
+<p>향후 정식 버전까지 문제점에 대하여 지속적인 수정과 보안이 이루어진다면 분명 Kotlin Native 역시 멀티 플랫폼의 한가지 대안이 될수 있다고 생각합니다. Swift 또한 단순히 iOS 개발만을 위한 언어가 아니기 때문에 ‘Swift로 Android 지원이 가능해진다면 어떨까?’하는 생각을 하며 Kotlin Native에 대한 글을  마무리 합니다.
+<br /><br /></p>
+
+<p><a name="link6"></a></p>
+<h3 id="참고">참고</h3>
+
+<p><a href="https://kotlinlang.org/docs">https://kotlinlang.org/docs</a><br />
+<a href="https://play.kotlinlang.org/hands-on/Networking%20and%20Data%20Storage%20with%20Kotlin%20Multiplatfrom%20Mobile/01_Introduction">https://play.kotlinlang.org/hands-on/Networking and Data Storage with Kotlin Multiplatfrom Mobile/01_Introduction</a><br />
+<a href="https://www.raywenderlich.com/7357-ios-app-with-kotlin-native-getting-started">https://www.raywenderlich.com/7357-ios-app-with-kotlin-native-getting-started</a></p>
+:ET

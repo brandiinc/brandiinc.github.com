@@ -1,0 +1,2 @@
+I"4<p>리액티브 프로그래밍(Reactive Programming)을 사용하기 위해, VIPER 패턴으로 되어 있는 앱 구조를 MVVM 패턴으로 변환하는 작업을 시작했을 때였습니다. MVVM 패턴을 사용해 보지 않았지만, VIPER 패턴의 Interactor와 Presenter의 코드들을 적절하게 View와 ViewModel로 분리하는 작업은 쉬웠습니다. 하지만 Router(Wireframe) 코드들을 단순하게 View에 넣기에는, View를 담당하는 <code class="language-plaintext highlighter-rouge">UIViewController</code>가 점점 하는 일이 많아지면서 코드들도 덩달아 많이 늘어나고 있었습니다. 비대해지는 뷰 컨트롤러(Massive View Controller)가 될 수 있어, 나중에 재사용 및 관리가 힘들어질 수 있기 때문에 고민이 되었습니다.</p>
+:ET

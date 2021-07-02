@@ -1,0 +1,3 @@
+I"�<h2 id="intro-the-navigation-controller">Intro: The Navigation Controller</h2>
+<p>예고했던 Navigation Controller와 TabBar Controller의 커스터마이즈 중, Navigation Controller의 구조와 간단한 커스텀 방법을 나누겠습니다. Navigation Controller(이하 내비게이션 컨트롤러)는 거의 모든 iOS 앱에서 사용된다고 해도 과언이 아닌 자주 사용되며, 간결하지만 막강한 기능을 가진 컨트롤러입니다. 앞선 글에서 소개했듯, TabBar Controller와 함께 iOS의 양대 컨트롤러라고 불러도 대부분의 iOS 개발자들이 동의하리라고 생각합니다.  이번 글에서는 내비게이션 컨트롤러를 커스텀하는 방법을 소개하겠습니다. <br /><br /></p>
+:ET

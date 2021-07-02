@@ -1,0 +1,365 @@
+I"�~<h1 id="overview">Overview</h1>
+
+<p>안드로이드 생태계에서 코틀린이 2011년 등장해서 2017년에 구글에서 공식 언어로 추가 한 이후에 매우 빠르게 안드로이드 개발자에게 전파되었습니다. Android Studio 3.0 부터 코틀린을 정식으로 지원하기 시작하였습니다. 2019 Google I/O에서 Kotlin first로 선언하였습니다. 공식 개발자 사이트에서도 코틀린 샘플이 먼저 문서화되기 시작하였습니다.</p>
+
+<ul>
+  <li><a href="https://developer.android.com/kotlin">https://developer.android.com/kotlin</a></li>
+  <li><a href="https://developer.android.com/kotlin/style-guide">코틀린 style guide</a></li>
+</ul>
+
+<p>코틀린은 출시한지 6년만에 플랫폼 공식 언어로 지정되어 현재는 신규 프로젝트의 경우 대부분 코틀린으로 진행되고 있습니다. 꾸준히 성장하는 코틀린은 2020년도 StackOverflow 개발자 설문조사에서는 프로그래밍 언어 인기 순위 13위에 랭크되기도 하였습니다.</p>
+
+<p>코틀린이 대세로 정해짐에 따라서 비동기 처리를 구현하는 방식이 AsyncTask, RxJava 등을 이용하는 방식에서 코틀린에서 제공해 주는 코루틴을 사용하는 것이 현재 개발자 사이에서 점차 전파되고 있습니다.</p>
+
+<p>현재 브랜디에서는 신규 코드 작성 시 90% 이상을 코틀린으로 작성하고 있습니다. 아직은 RxAndroid 등을 사용하고 있고, 추후에 코루틴을 검토하기 위해서 개발자들이 열심히 준비하고 있습니다. 이를 위해서 Coroutines 기본적인 내용을 정리하여 보았습니다.
+<br /><br /></p>
+
+<h1 id="코루틴이란">코루틴이란</h1>
+
+<p>코루틴을 코틀린을 통해서 처음 접하게 되는 경우는 코틀린에서 생긴 새로운 개념으로 생각하기 쉽지만, 코루틴은 파이썬, C#, Go, Javascript 등 여러 언어에서 지원하고 있는 개념입니다. 코루틴은 새로운 개념, 새로운 기술이 아니라 프로그래밍이 세상에 나온 초창기부터 존재하던 개념입니다.</p>
+
+<p>*코루틴은 서브 루틴을 일시 정지하고 재개할 수 있는 구성 요소를 말한다.</p>
+
+<p><strong>쉽게 말해 필요에 따라 일시 정지할 수 있는 함수를 말합니다.</strong></p>
+
+<h3 id="thread-vs-coroutine"><a href="https://stackoverflow.com/questions/43021816/difference-between-thread-and-coroutine-in-kotlin">Thread vs Coroutine</a></h3>
+
+<p>Thread</p>
+
+<ul>
+  <li>OS의 Native Thread에 직접 링크되어 동작하여 많은 시스템 자원을 사용한다.</li>
+  <li>Thread간 전환 시에도 CPU의 상태 체크가 필요하므로 그만큼의 비용이 발생한다.</li>
+</ul>
+
+<p>Coroutine</p>
+
+<ul>
+  <li>코루틴은 즉시 실행하는 게 아니며, Thread와 다르게 OS의 영향을 받지 않아 그만큼 비용이 들어가지 않는다.</li>
+  <li>코루틴 전환시 Context Switch가 일어나지 않는다.</li>
+  <li>개발자가 직접 루틴을 언제 실행할지, 언제 종료할지 모두 지정이 가능하다.</li>
+  <li>이렇게 생성한 루틴은 작업 전환 시에 시스템의 영향을 받지 않아 그에 따른 비용이 발생하지 않는다.
+<br /><br /></li>
+</ul>
+
+<h1 id="android의-kotlin-코루틴">Android의 Kotlin 코루틴</h1>
+
+<p>코루틴은 비동기적으로 실행되는 코드를 간소화하기 위해 Android에서 사용할 수 있는 동시 실행 설계 패턴입니다. 코루틴은 Kotlin 버전 1.3에 추가되었으며 다른 언어에서 확립된 개념을 기반으로 합니다.</p>
+
+<ul>
+  <li><strong>경량</strong>: 코루틴을 실행 중인 스레드를 차단하지 않는 <em><a href="https://kotlinlang.org/docs/reference/coroutines/basics.html">정지</a></em>를 지원하므로 단일 스레드에서 많은 코루틴을 실행할 수 있습니다. 정지는 많은 동시 작업을 지원하면서도 차단보다 메모리를 절약합니다.</li>
+  <li><strong>메모리 누수 감소</strong>: <em><a href="https://kotlinlang.org/docs/reference/coroutines/basics.html#structured-concurrency">구조화된 동시 실행</a></em>을 사용하여 범위 내에서 작업을 실행합니다.</li>
+  <li><strong>기본으로 제공되는 취소 지원</strong>: 실행 중인 코루틴 계층 구조를 통해 자동으로 <a href="https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html">취소</a>가 전달됩니다.</li>
+  <li><strong>Jetpack 통합</strong>: 많은 Jetpack 라이브러리에 코루틴을 완전히 지원하는 <a href="https://developer.android.com/kotlin/ktx?hl=ko">확장 프로그램</a>이 포함되어 있습니다. 일부 라이브러리는 구조화된 동시 실행에 사용할 수 있는 자체 <a href="https://developer.android.com/topic/libraries/architecture/coroutines?hl=ko">코루틴 범위</a>도 제공합니다.</li>
+</ul>
+
+<p>구글에서는 Jetpack을 통해서 여러가지 라이브러리를 제공해 주고 있습니다. Jetpack 예제 등을 보면 코루틴 등이 이미 광범위하게 사용되고 있습니다. Jetpack을 제대로 사용하기 위해서도 코루틴을 준비해야 될 것 같습니다.</p>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201209/01.png" alt="coroutines" />
+</figure>
+<figcaption></figcaption>
+
+<p>일반적으로 러닝커브는 RxJava에 비해 코루틴이 초기에는 더 쉽고, Channel 등을 활용하는 경우에는 러닝커브가 급속하게 늘어나는 것으로 알려져 있습니다.</p>
+
+<p>안드로이드에서 비동기를 처리하는 대표적인 AsyncTask / RxJava 와 실제 코드를 비교해 보시면 코루틴의 장점을 쉽게 확인해 보실 수 있습니다.</p>
+
+<h3 id="asynctask">AsyncTask</h3>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">val</span> <span class="py">asyncTask</span> <span class="p">=</span> <span class="kd">object</span> <span class="err">: </span><span class="nc">AsyncTask</span><span class="p">&lt;</span><span class="nc">Unit</span><span class="p">,</span> <span class="nc">Unit</span><span class="p">,</span> <span class="nc">String</span><span class="p">&gt;()</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">doInBackground</span><span class="p">(</span><span class="k">vararg</span> <span class="n">params</span><span class="p">:</span> <span class="nc">Unit</span><span class="p">?):</span> <span class="nc">String</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nf">load</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onPreExecute</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nf">onPreExecute</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onPostExecute</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="nc">String</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nf">onPostExecute</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="n">asyncTask</span><span class="p">.</span><span class="nf">execute</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h3 id="rxjava-20">RxJava 2.0</h3>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">load</span><span class="p">()</span>
+      <span class="p">.</span><span class="nf">subscribeOn</span><span class="p">(</span><span class="nc">Schedulers</span><span class="p">.</span><span class="nf">io</span><span class="p">())</span>
+      <span class="p">.</span><span class="nf">observeOn</span><span class="p">(</span><span class="nc">Schedulers</span><span class="p">.</span><span class="nf">io</span><span class="p">())</span>
+      <span class="p">.</span><span class="nf">observeOn</span><span class="p">(</span><span class="nc">AndroidSchedulers</span><span class="p">.</span><span class="nf">mainThread</span><span class="p">())</span>
+      <span class="p">.</span><span class="nf">subscribe</span> <span class="p">{</span>
+      <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="coroutine">Coroutine</h3>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">CoroutineScope</span><span class="p">(</span><span class="nc">Dispatchers</span><span class="p">.</span><span class="nc">Main</span><span class="p">).</span><span class="nf">launch</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="py">data</span> <span class="p">=</span> <span class="s">""</span>
+    <span class="nc">CoroutineScope</span><span class="p">(</span><span class="nc">Dispatchers</span><span class="p">.</span><span class="nc">Default</span><span class="p">).</span><span class="nf">async</span> <span class="p">{</span>
+        <span class="c1">// background thread</span>
+        <span class="n">data</span> <span class="p">=</span> <span class="nf">load</span><span class="p">()</span>
+    <span class="p">}.</span><span class="nf">await</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>코루틴을 사용하는 방법은 간단합니다.</p>
+
+<p>특정 Scope에 실행될 Dispatcher를 넘겨 주고 launch, async 등을 이용해서 이를 실행하면 됩니다. suspend 함수는 중지되거나 취소될 수 있기 때문에 코루틴 안에서 실행되어야 합니다. suspend 함수를 코루틴 밖에서 호출 시에는 에러가 발생하게 됩니다.
+<br /><br /></p>
+
+<h1 id="코루틴-빌더-launch--async">코루틴 빌더 Launch &amp; Async</h1>
+
+<p>launch와 async는 CoroutineScope의 확장함수이며, 넘겨 받은 코드 블록으로 코루틴을 만들고 실행해주는 코루틴 빌더 입니다.</p>
+
+<h3 id="공통점">공통점</h3>
+
+<ol>
+  <li>새로운 코루틴을 만든다.</li>
+  <li>하나의 <code class="language-plaintext highlighter-rouge">Dispatcher</code>를 가진다.</li>
+  <li>스코프 안에서 실행된다.</li>
+  <li><code class="language-plaintext highlighter-rouge">suspend</code> 함수가 아니다.
+    <ul>
+      <li>Launch – 현재 스레드를 차단하지 않고 새로운 코루틴을 싱행하고 코루틴을 제거하는데 사용 할 수 있는 작업으로 코루틴에 대한 참조를 반환합니다. Job을 리턴, 결과 값이 필요하지 않은 경우에 사용합니다.</li>
+      <li>Async – 새로운 코루틴을 실행하고 지연후 결과를 반환합니다. async()는 Deferred라는 객체를 반환합니다. 그리고 await()를 호출하면 그때 async() 블록이 실행되고 그 실행의 결과를 반환하게 됩니다.</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="지연-실행">지연 실행</h3>
+
+<p>launch 코루틴 블록과 async 코루틴 블록은 모두 처리 시점을 뒤로 미룰수 있습니다.</p>
+
+<p>각 코루틴 블록 함수의 start 인자에 CoroutineStart.LAZY 를 사용하면 해당 코루틴 블록은 지연 되어 실행됩니다. launch 코루틴 블록을 지연 실행 시킬 경우 Job 클래스 의 start() 함수 를 호출하거나 join() 함수를 호출하는 시점에 launch 코드 블록이 수행됩니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">val</span> <span class="py">job</span> <span class="p">=</span> <span class="nf">launch</span> <span class="p">(</span><span class="n">start</span> <span class="p">=</span> <span class="nc">CoroutineStart</span><span class="p">.</span><span class="nc">LAZY</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">..</span><span class="p">.</span>
+<span class="p">}</span>
+<span class="err">또는</span>
+<span class="kd">val</span> <span class="py">deferred</span> <span class="p">=</span> <span class="nf">async</span> <span class="p">(</span><span class="n">start</span> <span class="p">=</span> <span class="nc">CoroutineStart</span><span class="p">.</span><span class="nc">LAZY</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">..</span><span class="p">.</span>
+<span class="p">}</span>
+<span class="n">job</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span> <span class="p">,</span> <span class="n">deferred</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
+<span class="err">또는</span>
+<span class="n">job</span><span class="p">.</span><span class="nf">join</span><span class="p">()</span> <span class="p">,</span> <span class="n">deferred</span><span class="p">.</span><span class="nf">await</span><span class="p">()</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h1 id="dispatchers"><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/index.html">Dispatchers</a></h1>
+
+<p>CoroutineContext 을 상속받아 어떤 스레드를 이용해서 어떻게 동작할것인지를 미리 정의해 두었습니다. 코루틴의 Dispatcher는 Dispatchers.IO를 포함하여 총 4가지가 있습니다.</p>
+
+<p>Dispatchers.Main / Dispatchers.IO /Dispatchers.Default / Dispatchers.Unconfined</p>
+
+<p>IO는 네트워크나 디스크 작업 즉, Input/Output 작업에 최적화되어있습니다.</p>
+
+<p>Default는 CPU를 많이 사용하는 작업에 사용합니다. ex) 리스트 정렬</p>
+
+<p>Unconfined는 다른 Dispatcher 와는 달리 특정 스레드 또는 특정 스레드 풀을 지정하지 않습니다. 일반적으로는 사용하지 않으며 특정 목적을 위해서만 사용됩니다.</p>
+
+<p>마지막으로 Main은 UI 작업이나, 쓰레드를 막지 않고 빨리 실행되는 작업에 사용합니다.
+<br /><br /></p>
+
+<h1 id="scope">Scope</h1>
+
+<p>스코프는 그 스코프에서 생성된 코루틴을 계속해서 주시하면서 실행을 취소하거나, 실패 시 예외를 처리할 수 있게 해줍니다.</p>
+
+<p>구글에서는 Jetpack에서 코루틴을 쉽게 사용할 수 있도록 컴포넌트 별로 생명주기에 따른 Scope를 아래와 같이 제공해줍니다.</p>
+
+<ul>
+  <li>Activity, Fragment — <strong><code class="language-plaintext highlighter-rouge">lifecycleScope</code></strong></li>
+  <li>View (in ⍺)— <strong><code class="language-plaintext highlighter-rouge">ViewTreeLifecycleOwner</code></strong> + <strong><code class="language-plaintext highlighter-rouge">lifecycleScope</code></strong></li>
+  <li>ViewModel — <strong><code class="language-plaintext highlighter-rouge">viewModelScope</code></strong></li>
+  <li>Service — <strong><code class="language-plaintext highlighter-rouge">LifecycleService</code></strong> + <strong><code class="language-plaintext highlighter-rouge">lifecycleScope</code></strong></li>
+  <li>Application — <strong><code class="language-plaintext highlighter-rouge">ProcessLifecycleOwner</code></strong> + <strong><code class="language-plaintext highlighter-rouge">lifecycleScope</code></strong></li>
+</ul>
+
+<p>일반적으로 제일 많이 사용하는 케이스인 ViewModel에서 viewModelScope를 제공해주고 있어서 RxJava에서 처럼 Disposable를 추가적으로 하지 않아도 됩니다.</p>
+
+<p>실제로 가장 많이 사용하는 retrofit과 연동하여서 API를 호출하는 부분을 살펴 봅니다.</p>
+
+<p>retrofit 2.6.0 부터는 공식적으로 suspend 를 지원합니다. 내부에서 백그라운드에서 안전하게 처리되도록 되어 있습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@GET</span><span class="p">(</span><span class="s">"users/{id}"</span><span class="p">)</span>
+<span class="k">suspend</span> <span class="k">fun</span> <span class="nf">user</span><span class="p">(</span><span class="nd">@Path</span><span class="p">(</span><span class="s">"id"</span><span class="p">)</span> <span class="n">id</span><span class="p">:</span> <span class="nc">Long</span><span class="p">):</span> <span class="nc">User</span>
+</code></pre></div></div>
+
+<p>리턴 타입도 Response<User>에서 User로 Response로 싸여진 형태가 아닌 직접적으로 모델데이터를 전달 받을 수 있습니다.</User></p>
+
+<p>retrofit이나 room을 사용하는 경우에 Dispatchers를 별도로 코루틴 Scope에 전달하지 않아도 내부에서 Dispatchers.IO로 처리를 해 줍니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">ActivityViewModel</span><span class="p">:</span> <span class="nc">ViewModel</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="k">fun</span> <span class="nf">getMarsRealEstateProperties</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">viewModelScope</span><span class="p">.</span><span class="nf">launch</span> <span class="p">{</span>
+            <span class="k">try</span> <span class="p">{</span>
+                <span class="kd">val</span> <span class="py">listResult</span> <span class="p">=</span> <span class="nc">MarsApi</span><span class="p">.</span><span class="n">retrofitService</span><span class="p">.</span><span class="nf">getProperties</span><span class="p">()</span>
+                <span class="n">_response</span><span class="p">.</span><span class="n">value</span> <span class="p">=</span> <span class="s">"Success: ${listResult.size} Mars properties retrieved"</span>
+            <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nc">Exception</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">_response</span><span class="p">.</span><span class="n">value</span> <span class="p">=</span> <span class="s">"Failure: ${e.message}"</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h1 id="job">Job</h1>
+
+<p>Coroutines을 컨트롤하기 위해서 job을 제공해줍니다. 이러한 Job을 바탕으로 코루틴의 상태를 확인할 수 있고, 제어할 수 있다. 명시적으로 코루틴의 작업이 완료되는 것을 기다릴때는 join()함수를, 작업을 취소할때는 cancel()함수를 이용할 수 있습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">val</span> <span class="py">job</span> <span class="p">=</span> <span class="nf">launch</span> <span class="p">{</span>
+    <span class="nf">repeat</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="p">{</span> <span class="n">i</span> <span class="p">-&gt;</span>
+        <span class="nf">println</span><span class="p">(</span><span class="s">"job: I'm sleeping $i ..."</span><span class="p">)</span>
+        <span class="nf">delay</span><span class="p">(</span><span class="mi">500L</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nf">delay</span><span class="p">(</span><span class="mi">1300L</span><span class="p">)</span> <span class="c1">// delay a bit</span>
+<span class="nf">println</span><span class="p">(</span><span class="s">"main: I'm tired of waiting!"</span><span class="p">)</span>
+<span class="n">job</span><span class="p">.</span><span class="nf">cancel</span><span class="p">()</span> <span class="c1">// cancels the job</span>
+<span class="n">job</span><span class="p">.</span><span class="nf">join</span><span class="p">()</span> <span class="c1">// waits for job's completion</span>
+<span class="nf">println</span><span class="p">(</span><span class="s">"main: Now I can quit."</span><span class="p">)</span>
+
+<span class="c1">// 실행 결과</span>
+<span class="n">job</span><span class="p">:</span> <span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">sleeping</span> <span class="mi">0</span> <span class="o">..</span><span class="p">.</span>
+<span class="n">job</span><span class="p">:</span> <span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">sleeping</span> <span class="mi">1</span> <span class="o">..</span><span class="p">.</span>
+<span class="n">job</span><span class="p">:</span> <span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">sleeping</span> <span class="mi">2</span> <span class="o">..</span><span class="p">.</span>
+<span class="n">main</span><span class="p">:</span> <span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">tired</span> <span class="n">of</span> <span class="n">waiting</span><span class="p">!</span>
+<span class="n">main</span><span class="p">:</span> <span class="nc">Now</span> <span class="nc">I</span> <span class="n">can</span> <span class="n">quit</span><span class="p">.</span>
+</code></pre></div></div>
+
+<p>취소가 가능한 코루틴 블록 만들기 -  job.cancel()을 호출한다 해도 반드시 취소가 되는 것은 아닙니다.</p>
+
+<p>아래와 같이 연속된 계산작업인 경우에는 취소되지 않습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">val</span> <span class="py">startTime</span> <span class="p">=</span> <span class="nc">System</span><span class="p">.</span><span class="nf">currentTimeMillis</span><span class="p">()</span>
+<span class="kd">val</span> <span class="py">job</span> <span class="p">=</span> <span class="nf">launch</span><span class="p">(</span><span class="nc">Dispatchers</span><span class="p">.</span><span class="nc">Default</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="py">nextPrintTime</span> <span class="p">=</span> <span class="n">startTime</span>
+    <span class="kd">var</span> <span class="py">i</span> <span class="p">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="mi">5</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// computation loop, just wastes CPU</span>
+				<span class="c1">// yield() //여기에 추가하면 정상적으로 취소된다</span>
+        <span class="c1">// print a message twice a second</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nc">System</span><span class="p">.</span><span class="nf">currentTimeMillis</span><span class="p">()</span> <span class="p">&gt;=</span> <span class="n">nextPrintTime</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nf">println</span><span class="p">(</span><span class="s">"job: I'm sleeping ${i++} ..."</span><span class="p">)</span>
+            <span class="n">nextPrintTime</span> <span class="p">+=</span> <span class="mi">500L</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nf">delay</span><span class="p">(</span><span class="mi">1300L</span><span class="p">)</span> <span class="c1">// delay a bit</span>
+<span class="nf">println</span><span class="p">(</span><span class="s">"main: I'm tired of waiting!"</span><span class="p">)</span>
+<span class="n">job</span><span class="p">.</span><span class="nf">cancelAndJoin</span><span class="p">()</span> <span class="c1">// cancels the job and waits for its completion</span>
+<span class="nf">println</span><span class="p">(</span><span class="s">"main: Now I can quit."</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>이런 computation code를 취소시키는 방법은 두가지입니다.</p>
+
+<ul>
+  <li><strong>yield</strong> function을 이용하여 추기적으로 취소를 체크하는 suspend function을 invoke 시킨다.</li>
+  <li>명시적으로 취소 상태를 체크한다. (<strong>isActive</strong> 이용)</li>
+</ul>
+
+<p>일일히 Job으로 cancel하지 않고, 특정 시간이후에 취소하도록 하려면 <strong>withTimeout</strong>을 사용하면 됩니다.</p>
+
+<p>android에서 withTimeout 쓸때는 꼭 try-catch로 묶어서 사용해야 앱이 중지 되는걸 방지할 수 있습니다. 아니면 withTimeoutOrNull을 사용하여 exception throw 대신 null을 return 받도록 하면 됩니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">withTimeout</span><span class="p">(</span><span class="mi">1300L</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nf">repeat</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="p">{</span> <span class="n">i</span> <span class="p">-&gt;</span>
+        <span class="nf">println</span><span class="p">(</span><span class="s">"I'm sleeping $i ..."</span><span class="p">)</span>
+        <span class="nf">delay</span><span class="p">(</span><span class="mi">500L</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">sleeping</span> <span class="mi">0</span> <span class="o">..</span><span class="p">.</span>
+<span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">sleeping</span> <span class="mi">1</span> <span class="o">..</span><span class="p">.</span>
+<span class="nc">I</span><span class="err">'</span><span class="n">m</span> <span class="n">sleeping</span> <span class="mi">2</span> <span class="o">..</span><span class="p">.</span>
+<span class="nc">Exception</span> <span class="k">in</span> <span class="n">thread</span> <span class="s">"main"</span> <span class="n">kotlinx</span><span class="p">.</span><span class="n">coroutines</span><span class="p">.</span><span class="nc">TimeoutCancellationException</span><span class="p">:</span> <span class="nc">Timed</span> <span class="k">out</span> <span class="n">waiting</span> <span class="k">for</span> <span class="mi">1300</span> <span class="n">ms</span>
+
+<span class="kd">val</span> <span class="py">result</span> <span class="p">=</span> <span class="nf">withTimeoutOrNull</span><span class="p">(</span><span class="mi">1300L</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nf">repeat</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="p">{</span> <span class="n">i</span> <span class="p">-&gt;</span>
+        <span class="nf">println</span><span class="p">(</span><span class="s">"I'm sleeping $i ..."</span><span class="p">)</span>
+        <span class="nf">delay</span><span class="p">(</span><span class="mi">500L</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="s">"Done"</span> <span class="c1">// will get cancelled before it produces this result</span>
+<span class="p">}</span>
+<span class="nf">println</span><span class="p">(</span><span class="s">"Result is $result"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                                        wait children
+    +-----+ start  +--------+ complete   +-------------+  finish  +-----------+
+    | New | -----&gt; | Active | ---------&gt; | Completing  | -------&gt; | Completed |
+    +-----+        +--------+            +-------------+          +-----------+
+                     |  cancel / fail       |
+                     |     +----------------+
+                     |     |
+                     V     V
+                 +------------+                           finish  +-----------+
+                 | Cancelling | --------------------------------&gt; | Cancelled |
+                 +------------+                                   +-----------+
+</code></pre></div></div>
+
+<h3 id="job-states">job states</h3>
+<table>
+  <colgroup>
+    <col />
+    <col width="15%" />
+    <col width="15%" />
+    <col width="15%" />
+  </colgroup>
+  <thead>
+    <tr class="header">
+      <th>State</th>
+      <th>isActive</th>
+      <th>isCompleted</th>
+      <th>isCancelled</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>New (optional initial state)</td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+    </tr>
+    <tr>
+      <td>Active (default initial state)</td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" checked="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+    </tr>
+    <tr>
+      <td>Completing (transient state)</td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" checked="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+    </tr>
+    <tr>
+      <td>Cancelling (transient state)</td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" checked="" /></td>
+    </tr>
+    <tr>
+      <td>Cancelled (final state)</td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" checked="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" checked="" /></td>
+    </tr>
+    <tr>
+      <td>Completed (final state)</td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" checked="" /></td>
+      <td><input type="checkbox" class="task-list-item-checkbox" disabled="" /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Job이 활성화되면 활성 상태인 Active 상태가 되지만, Job() 팩토리 함수에 인자로 CoroutineStart.LAZY를 설정하면 활성상태가 아닌 New 상태로 생성됩니다. New 상태의 job을 Active 상태로 만들기 위해서는 start()나 join() 함수를 호출해야 합니다.
+<br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>Android는 코틀린 도입 이후 Jetpack 등을 통해서 역동적으로 변화하고 있습니다. 매년 새로운 기술이 적용된 신규 라이브러리가 추가되고 이를 구글에서는 샘플 등으로 제공해 주고 있습니다. Kotlin에서는 비동기 처리를 쉽게 하기 위해서 기존에는 RxAndroid와 같은 외부 라이브러리를 사용했던 것을 Kotlin Coroutines과 같이 라이브러리로 제공해주고 있습니다. 저희 브랜디 MA팀에서도 이러한 신규 기술 트렌드를 따라가기 위해서 매우 열심히 노력하고 있습니다. Kotlin Coroutines도 열심히 학습하여서 이를 브랜디에 반영하여서 더욱 더 좋은 앱을 만들도록하겠습니다.
+<br /><br /></p>
+
+<h3 id="참고-사이트">참고 사이트</h3>
+
+<p><a href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html</a><br />
+<a href="https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md">https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md</a></p>
+:ET

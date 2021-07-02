@@ -1,0 +1,24 @@
+I"F<p><span><a class="gray" href="#link1">Overview</a></span><br />
+<span><a class="gray" href="#link2">TDD와 Mock</a></span>
+<span class="indent"><a class="gray" href="#link3">Mock?</a></span>
+<span class="indent"><a class="gray" href="#link4">DB Mock</a></span>
+<span class="indent"><a class="gray" href="#link5">AWS Mock?</a></span>
+<span><a class="gray" href="#link6">Moto</a></span>
+<span class="indent"><a class="gray" href="#link7">소개</a></span>
+<span class="indent"><a class="gray" href="#link8">사용</a></span>
+<span><a class="gray" href="#link9">Boto Mock</a></span>
+<span class="indent"><a class="gray" href="#link10">검토</a></span>
+<span class="indent2"><a class="gray" href="#link11">SQS</a></span>
+<span class="indent2"><a class="gray" href="#link12">S3</a></span>
+<span class="indent2"><a class="gray" href="#link13">Lambda</a></span>
+<span class="indent2"><a class="gray" href="#link14">CloudWatchLogs</a></span>
+<span class="indent"><a class="gray" href="#link15">구현</a></span>
+<span class="indent2"><a class="gray" href="#link16">BotoMock</a></span>
+<span class="indent2"><a class="gray" href="#link17">CloudWatchLogsMock</a></span>
+<span class="indent2"><a class="gray" href="#link18">filter_log_events</a></span>
+<span class="indent2"><a class="gray" href="#link19">create_log_stream</a></span>
+<span class="indent2"><a class="gray" href="#link20">Controller</a></span>
+<span class="indent2"><a class="gray" href="#link21">주입</a></span>
+<span class="indent2"><a class="gray" href="#link22">실행</a></span>
+<span><a class="gray" href="#link23">Conclusion</a></span></p>
+:ET

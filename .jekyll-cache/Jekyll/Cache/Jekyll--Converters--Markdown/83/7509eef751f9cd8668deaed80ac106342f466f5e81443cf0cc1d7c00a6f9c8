@@ -1,0 +1,230 @@
+I"�4<h1 id="overview">Overview</h1>
+<p>대학원에서 소프트웨어 공학을 전공하고 있습니다. 이번 학기엔 ‘빅데이터 분석’ 과 ‘대용량데이터베이스관리론’ 과목을 수강하면서 생애 처음으로 R Studio 프로그램을 설치해봤는데요. 머신 러닝을 다뤄본 적도, 자연언어처리 분야를 개발한 적도 없지만 어느 날 텍스트 마이닝 관련 강의에서 불현듯 이런 생각이 떠올랐습니다. <br /><br /></p>
+
+<p>“내가 좋아하는 가수로 텍스트 마이닝을 하면 어떤 결과가 나올까?”<br /><br /></p>
+
+<p>머릿속으로 생각하는 것과 내가 직접 구현을 해보는 것은 절대 다른 법! 일단 도전해보기로 했습니다. 개발 3년과 덕질 10년의 실력을 쏟아 부을 겁니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>지금까지 예쁜 디자인이라고만 알고 있었던 WordCloud</figcaption>
+<p><br /><br /><br /></p>
+
+<h2 id="step1-트위터-developer-에서-인증키-받기">Step1. 트위터 Developer 에서 인증키 받기</h2>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+트위터 Developer (<a href="https://developer.twitter.com/" target="_blank">Twitter Developer Platform — Twitter      Developers</a>) 에 접속해서 개인 계정으로 로그인하고, 오른쪽 위의 <em>Apply</em>를 클릭합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+Twitter standard APIs &gt; Get started with standard access를 클릭합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+등록된 개발자 앱이 없으면 <em>Create an app</em>의 apps.twitter.com을 클릭합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+<em>Create New App</em>을 클릭합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+각 항목을 입력합니다. 저는 Website 가 없기 때문에 로컬 호스트를 기재했습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/07.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+약관에 동의한 후 <em>Create your Twitter application</em>을 클릭합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/08.png" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+만약 어플리케이션 이름이 중복된다면 위와 같은 에러 메세지가 나올 겁니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/09.png" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+정상적으로 어플리케이션이 등록되면 위의 화면과 함께 API Key를 발급받을 수 있습니다. <em>Consumer Key (API Key)</em> 옆의 내용 (캡쳐화면에는 비공개)을 클릭하면 API Key 뿐만 아니라 API Secret, Access Token 등 세부 내용을 관리할 수도 있습니다.<br /><br /><br /></p>
+
+<h2 id="step2-r-studio-설치하기-mac-os-기준">Step2. R Studio 설치하기 (Mac OS 기준)</h2>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/10.png" alt="10" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+구글에서 <em>R for macOS</em>를 검색을 하면 맨 위에 설치 페이지가 보입니다. 1)<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/11.png" alt="11" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+먼저 R 패키지를 설치해야, 나중에 R Studio를 설치했을 때 실행이 가능합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/12.png" alt="12" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+R Studio 홈페이지에서 R Studio를 다운받습니다. 다운로드 링크는 <a href="https://www.rstudio.com" target="_blank">여기</a>를 클릭하세요.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/13.png" alt="13" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+RStudio가 정상적으로 실행이 된다면, 이제 준비는 끝났습니다! <br /><br /><br /></p>
+
+<h2 id="step-3-필요한-패키지를-먼저-설치하기">Step 3. 필요한 패키지를 먼저 설치하기</h2>
+<p>따로 설치가 필요한 패키지는 RStudio에서 명령어로 설치할 수 있습니다.<br /><br /></p>
+
+<p>—<br /></p>
+<h3 id="한-개씩-설치하는-법">한 개씩 설치하는 법</h3>
+<h3 id="installpackagespackagename">install.packages(“packageName”)</h3>
+<p>—<br /><br /></p>
+
+<p>여러 개의 패키지를 한 번에 설치하고 싶을 땐 위와 같이 설치할 수 있습니다.<br /><br /></p>
+
+<p>—<br /></p>
+<h3 id="여러-개를-한꺼번에-설치하는-법">여러 개를 한꺼번에 설치하는 법</h3>
+<h3 id="installpackagescpackage1-package2package3">install.packages(c(“package1”, “package2”,”package3”))</h3>
+<p>—<br /><br /></p>
+
+<p>설치를 했다고 해서 바로 사용할 수는 없습니다. 이 패키지를 사용하겠다는 명령어를 다시 입력해야 합니다.<br /><br /></p>
+
+<p>—<br /></p>
+<h3 id="설치한-패키지를-사용하기">설치한 패키지를 사용하기</h3>
+<h3 id="librarypackagename">library(“packageName”)</h3>
+<p>—<br /><br /></p>
+
+<p>이번 글에서는 아래와 같은 패키지들이 필요합니다.<br /><br /></p>
+
+<ul>
+  <li>twitteR</li>
+  <li>ROAuth</li>
+  <li>base64enc</li>
+  <li>httpuv</li>
+  <li>tm</li>
+  <li>SnowballC</li>
+  <li>wordcloud</li>
+  <li>RColorBrewer</li>
+</ul>
+
+<p><br /><br /><br /></p>
+
+<h2 id="step-4-트위터-api와-연동하여-wordcloud-생성하기">Step 4. 트위터 api와 연동하여 WordCloud 생성하기</h2>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/14.png" alt="14" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/15.png" alt="15" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>먼저 각자 API 관련 Key 들로 객체를 생성해주고, <em>setup_twitter_oauth()</em>  메소드를 사용하여 Twitter API에 접근합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/16.png" alt="16" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>searchTwitter 4) 라는 함수를 사용하면, 트위터 API 를 통해 관련 트윗 내용을 추출할 수 있는데요. 좋아하는 일본 아이돌 가수인 “아라시”를 키워드로 추출하려고 첫 번째 파라미터에 “Arashi”를 넣었습니다. 그 뒤의 내용은 영문으로 작성된 최근(Recent) 트윗을 최대 1500개까지 리턴 받겠다는 의미입니다. resultType에는 popular를 넣으면 가장 인기있는 트윗을 받을 수도 있습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/17.png" alt="17" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>데이터를 가져오면, 위와 같이 데이터가 추출된 것을 확인할 수 있습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/18.png" alt="18" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>이제 matchTweets에 있는 내용으로 분석가가 되어 마음대로 데이터를 가공할 수 있습니다.  class 등으로 구조와 클래스를 확인할 수 있을 뿐만 아니라, nchar() 를 이용해 트윗당 문자 수를 계산할 수도 있습니다.  이번 글에서는 위와 같이 트윗을 20개 추출했습니다.<br /><br /></p>
+
+<p>각각의 트윗을 보면, 이상한 코드나 슬래시 등 필요 없는 데이터들이 포함되어 내려온 것을 확인할 수 있습니다. 이 부분들을 제거해 깔끔한 데이터로 가공해보겠습니다. 그리고 텍스트 집합이라고 볼 수 있는 Corpus를 생성한 후, WordCloud 까지 생성해볼게요.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/19.png" alt="19" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>데이터를 Corpus 로 만들 때는 <em>Corpus()</em> 를 사용하면 됩니다. 저는 <em>VectorSource</em> 라는 명령어를 사용해 단어들을 Vector로 바꿔주었고, 데이터가 잘 들어갔는지 확인하기 위해 <em>inspect()</em> 를 사용했습니다.<br /><br /></p>
+
+<p>사람이 읽기 불편한 단어들을 제거하는 건 <em>tm_map</em> 함수 하나면 충분합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/20.png" alt="20" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>위의 이미지를 보면, 각 행마다 특정 특수문자들을 제거하기 위한 명령어가 있습니다. 중간 부분엔 <em>stopwords</em> 라는 단어가 있는데, 영어 문장에 들어가는 i.e 나 etc 같은 표현들을 제거할 수 있는 겁니다. 그 외에도 대문자를 소문자로 바꾸거나 번호를 제거하는 등의 옵션들이 이미 R에서는 제공되고 있기 때문에, 우리는 입맛에 맞게 가져다 쓰기만 하면 됩니다.<br /><br /></p>
+
+<p>이제 대망의 WordCloud를 만들 차례입니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/21.png" alt="21" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>max.words는 최대 N개의 단어를 고르는 옵션이며, min.freq는 최소 N번 이상 나온 단어, random.order = FALSE는 제일 많이 나온 단어가 먼저 나오도록 지정하는 옵션입니다. colors는 지정하지 않으면 검정색으로만 나오지만, 알록달록 예쁘게 표현하고 싶다면 여러 옵션을 지정해서 Frequency 에 따라 다른 색이 나오도록 할 수도 있습니다. 5) <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/22.png" alt="22" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180610/23.png" alt="23" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>첫 번째 이미지가 이번 글의 예제로 얻은 결과인데요. 추출 언어를 영어로만 한정했더니 일본어 발음을 영문으로 표현한 데이터가 많았습니다. 기타 설정을 변경하여 다시 추출한 게 바로 두 번째 이미지입니다. <br /><br /></p>
+
+<p>큼직큼직하게 나온 단어들을 보면 DVD 나 블루레이 출시와 관련된 트윗이 대다수인 것을 볼 수 있는데요, 검색 결과 최근 2017-2018 라이브 투어 ‘Untitled’가 출시된 것을 확인할 수 있었습니다. 기타 작게 표현된 단어들을 보면 아라시의 노래 제목들도 확인 가능한데, 이 노래들이 인기있다는 것도 예측할 수 있습니다.<br /><br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>지금까지 R을 이용해 트위터 API 와 연동한 텍스트 마이닝을 했습니다. 데이터를 WordCloud로 생성하는 것도 해봤고요. 이번 글에서는 기본적인 예제를 다뤘지만 텍스트 마이닝의 세계는 아주 깊고 넓습니다. 만약 이 글로 텍스트 마이닝에 조금이라도 흥미가 생겼다면 일단 도전해보세요! 좋아하는 것과 연관 지어서 따라 하다 보면 꽤 즐거운 시간이 될 겁니다.<br /><br /><br /></p>
+
+<p><strong>참고</strong><br />
+1) 18년 6월 6일 기준이다.<br />
+2) <a href="https://rstudio-pubs-static.s3.amazonaws.com/90345_36e829555b464fb08ed888d1678827f9.html" target="_blank">Twitter Sentiment Analysis Tutorial</a><br />
+3) <a href="https://towardsdatascience.com/text-mining-twitter-extraction-and-stepwise-guide-to-generate-a-word-cloud-a2c9d626008d" target="_blank">Text mining: Twitter extraction and stepwise guide to generate a word cloud</a><br />
+4) R 함수 관련 설명은 <a href="https://www.rdocumentation.org" target="_blank">R Documentation 사이트</a>에서 확인할 수 있다. <br />
+5) 색상 옵션이 궁금하다면 <a href="http://www.sthda.com/sthda/RDoc/images/rcolorbrewer.png" target="_blank">여기</a>에서 참고할 수 있다. <br />
+6) <a href="https://pabii.co/wordcloud-r/" target="_blank">머신러닝 언어처리 - R로 WordCloud 만들어보기 - 데이터 사이언스 랩</a><br /><br /></p>
+:ET

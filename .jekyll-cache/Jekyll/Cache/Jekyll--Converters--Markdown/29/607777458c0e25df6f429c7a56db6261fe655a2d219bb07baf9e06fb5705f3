@@ -1,0 +1,186 @@
+I"�1<h1 id="overview">Overview</h1>
+<p>During development, whenever developing a complicated functions or the source code is getting longer and massive, we often use open source libraries. Because it’s easy to use and makes what we want to feature in our app function well. So how do you bring an open source library into the app and use it? By using ‘CocoaPods’.<br /><br /><br /></p>
+
+<h1 id="what-is-cocoapods">What is CocoaPods?</h1>
+<p>The <a href="https://cocoapods.org/">official website</a> of CocoaPods introduces the CocoaPods as follows :<br /></p>
+
+<p><strong>“CocoaPods is a dependency manager for Swift and Objective-C Cocoa projects”</strong><br /></p>
+
+<p>In other words, CocoaPods is an environment or a tool to link open source libraries with our project, so we could use and manage it. It has many advantages. First, we can manage adding, removing, updating dependencies(libraries) used in our app. For instance, we can make our own networking library, but CocoaPods can link our app with <a href="https://github.com/Alamofire/Alamofire">Alamofire</a> dependency to use networking functions.<br /></p>
+
+<p>Second, we can specify the dependency version we want to use in our app. Even if the new update version of the dependency comes out, we can still use the version we set up until we are ready to use the new version. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>If you search ‘facebook’, you can find variaty of related libraries in CocoaPods.</figcaption>
+<p><br /><br /><br /></p>
+
+<h1 id="how-to-use-cocoapods">How to use Cocoapods?</h1>
+<p><strong>1.Install CocoaPods</strong><br />
+If you found an open source library to use with your app, let’s link it by using CocoaPods. First, open the ‘Terminal’ program and enter the following command to install CocoaPods.<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sudo gem install cocoapods
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+And then download the Podspec file from the <a href="https://github.com/CocoaPods/Specs">CocoaPods Master Specs repository</a> to your computer. Use the –verbose command to view the current progress at the terminal.<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ pod setup --verbose
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+Now you are ready to use CocoaPods. Create a simple project in Xcode and quit. In this article, we will make an app that shows a list of tourist attractions.<br /><br /></p>
+
+<p><strong>2.Link Library</strong><br />
+Using terminal program, go to the project path that you just created, and then create Podfile to set up the library required for the app. There are two ways to make Podfile. One way is using the ‘pod init’ command to force the CocoaPods to create a file with a default frame. Another way is creating a blank file and set it all by yourself. Let’s use the ‘pod init’ command. (It’s convenient)<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ pod init
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Podfile has been created.</figcaption>
+<p><br /></p>
+
+<p>Now go to the <a href="https://cocoapods.org">CocoaPods website</a> to find the library we want to set up. Browse the library you want to use and place the mouse pointer on the clipboard icon next to the library name. A text that you can copy will show up. Copy that and paste it to the Podfile and save. We’re going to use the SDWebImage library to handle the images with using URL address.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Completed Podfile</figcaption>
+<p><br /></p>
+
+<p>To briefly describe Podfile above, the project’s distribution target is iOS 9.0. The ‘use_frameworks!’ is a sentence that you must add if you are going to add a library that is written in Swift and to use frameworks. The numbers next to the library mean we are going to use the library version 4.3 and before 4.4. With the minimum settings, save the Podfile and run the following command :<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ pod install --verbose
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/07.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>After pod install is completed, xcworkspace has been added.</figcaption>
+<p><br /></p>
+
+<p>When pod installation is completed, you can see that the xcworkspace file has been created. Xcworkspace file is a collection of projects. It combines the original project which we created before, and the Pods project that allows us to manage the libraries. The original project relies on the pods project. So when you open the xcodeproj file, Xcode does not have the information (or does not find it) about the libraries that are connected, as a result it shows errors to us. Therefore, after installing pods with CocoaPods, you must open the xcworkspace to develop with the connected libraries.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180318/08.png" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<p><strong>3.Using the Library</strong><br />
+Now let’s try using the library that you have connected to.1) In the example, we will add a code using <a href="https://github.com/rs/SDWebImage">SDWebImage library</a> to set up an image in ImageView with a URL image address.<br /><br /></p>
+
+<p>By using UITableViewController, we will display a list of tourist attractions with name, description, and images. Create a data model of tourist attraction and design the app at the interface builder. Open the view controller file to import the library to do the work. First, enter the import command to connect the library to this source.<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>AttractionTableVC.swift
+
+import SDWebImage
+</code></pre></div></div>
+
+<p><br />
+Add a code for the tableView(tableView:cellForRowAtIndexPath:) function as shown below. 2)<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -&gt; AttractionTableViewCell {
+        // Table view cells are reused and should be dequeued using a cell identifier.
+        let cellIdentifier = "AttractionTableViewCell"
+
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? AttractionTableViewCell else {
+            fatalError("The dequeued cell is not an instance of AttractionTableViewCell.")
+        }
+
+        let attraction = attractions[indexPath.row]
+
+		// . . .
+
+		cell.attractionLabel.text = "\(indexPath.row). \(attraction.nameWithDescription)"
+        cell.attractionImage.sd_setImage(with: attraction.photoURL, completed: nil)
+
+		// . . .
+
+        return cell
+    }
+</code></pre></div></div>
+<p><br />
+The reason why I use SDWebImage library, is that I wanted to show the tourist attraction image using the URL image address. However, URL address were not immediately available for UIImage, and had to be converted to Data format to use it. If you don’t use the library, you would have to write the following code :
+<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// return UIImage which is set from url data
+    private func imageFromUrl(url: URL) -&gt; UIImage {
+        var photo = UIImage()
+
+        do {
+            let imageData = try Data.init(contentsOf: url)
+            photo = UIImage(data: imageData)!
+            return photo
+        } catch {
+            print(error.localizedDescription)
+            return photo
+        }
+    }
+</code></pre></div></div>
+<p><br />
+However, with the SDWebImage library, you can reduce the code created above to only one command :<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cell.attractionImage.sd_setImage(with: attraction.photoURL, completed: nil)
+</code></pre></div></div>
+<p><br />
+Source length is significantly reduced. In addition, access the <a href="https://github.com/rs/SDWebImage">SDWebImage Library GitHub page</a> to see more features like GIF support, asynchronous image downloader, and more.<br /><br /><br /></p>
+
+<h1 id="cocoapods-error">CocoaPods Error</h1>
+<p>After cloning the ‘Brandi’ app project and working with it, I often get some errors related to CocoaPods. Let me introduce some solutions to errors.<br /><br /></p>
+
+<p>1.<br />
+<strong>“/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include/sqlite3.h” not found”</strong><br />
+-&gt; Most errors are resolved almost entirely by reinstalling the CocoaPods.<br />
+$ sudo gem install cocoapods <br />
+$ pod install –verbose <br /><br /></p>
+
+<p>2.<br />
+<strong>“Could not build module firebase core” Error</strong><br />
+-&gt; Delete project’s temp file (~/Library/Developer/Xcode/DerivedData — located at : Xcode-&gt;Preference-&gt;Location)<br />
+First, find the folder path above and open it in Finder. Next, you need to close the Xcode and safely delete it.<br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/09.png" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>-&gt; Delete ProjectName &amp; .xcworkspace<br />
+-&gt; Delete both Podfile.lock file and Pods folder <br />
+-&gt; $ pod install –verbose <br />
+-&gt; Run the newly created ProjectName.xcworkspace and rebuild <br />
+-&gt; But still doesn’t work? <br />
+—&gt; $ pod update or $ pod –version or $ pod repo update <br />
+       —&gt; Comment the pod ‘Firebase’ line at Podfile <br />
+       —&gt; $ pod install (old Firebase will be erased) <br />
+       —&gt;Add the pod line ‘Firebase’ again <br />
+       —&gt; $ pod install (new Firebase will be installed) <br />
+       —&gt; Resolved! <br /><br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>Now when it comes to developing new features or modifying sources, find any library from the CocoaPods that is relevant. If you found the best library, you can immediately apply it to your project. While it’s a good idea to write your own function or library by yourself, it’s also good to use convenient tools to improve your work. Have you found a library you like? Tell me about it. Congratulations on becoming an iOS developer using the CocoaPods! <br /><br /><br /></p>
+
+<p><strong>▶︎한글 원문을 보려면 <a href="http://labs.brandi.co.kr/2018/03/16/kimjh.html">여기</a>를 클릭하세요.</strong> <br /><br /><br /></p>
+
+<p><strong>Comment</strong> <br />
+1) Each library’s GitHub page contains detailed ways how to install it. <br />
+2) The tourist attraction data are stored in the attractions array. Set it up for each table view cell using one of the tourist attraction data selected in the array. Here, we are going to set image with URL address to attractionImage(UIImageView) in the Table View Cell. <br /><br /></p>
+
+<p><strong>Reference</strong> <br /></p>
+<ul>
+  <li><a href="https://stackoverflow.com/questions/41709912/error-could-not-build-objective-c-module-firebase">swift3 - Error: Could not build Objective-C module ‘Firebase’ - Stack Overflow</a><br /></li>
+  <li><a href="https://groups.google.com/forum/#!msg/firebase-talk/Fu51jfAxh-E/iBkmria6FgAJ">Google Groups</a><br /></li>
+  <li><a href="https://www.youtube.com/watch?v=iEAjvNRdZa0%20">An Introduction to CocoaPods (Route 85) - YouTube</a><br /><br /><br /></li>
+</ul>
+:ET

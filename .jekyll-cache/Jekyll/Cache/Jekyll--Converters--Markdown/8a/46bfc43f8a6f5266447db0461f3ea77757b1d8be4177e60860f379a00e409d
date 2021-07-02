@@ -1,0 +1,653 @@
+I"��<p>본 글은 너무 느린 SAM local start-api 환경을 개선하고자 작성된 글입니다.</p>
+
+<p><a href="#link1">이미 느려터진 SAM에 고통받던 분들을 위한 바로가기!</a>
+<br /></p>
+
+<h1 id="overview">Overview</h1>
+
+<p>최근 개발 패러다임이 서버리스 클라우드 컴퓨팅으로 변화함에 따라 수많은 개발자들이 AWS를 사용하여 프로젝트를 개발하고 있습니다.  초기 투자 비용이 작아 리스크가 낮으면서  확장성은 매우 좋기 때문이지요.</p>
+
+<p>그중에서도 AWS Lambda가 너무나 파워풀하기 때문에 가장 유용하게 쓰일 것이라 조심스레 예상해 봅니다. (옆 동네 Firebase에도 CloudFunctions라는 직관적인 이름으로 비슷한 기능이 추가 되었더군요!)</p>
+
+<p>AWS Lambda는 과거에 Apex로 관리 하거나, AWS Online IDE인 Cloud9으로 즉시 배포하여 사용할 때에는 재빠른 반영으로 개발에 별다른 문제가 없었습니다.<br />
+하지만, 시간이 지나 Lamda Project는 거대해지고, AWS에서 소프트웨어 개발 프로젝트를 통합관리할 수 있는 솔루션 CodeStar를 출범시키며 그 문제가 나타나게 되었습니다.
+<br /></p>
+
+<h2 id="1-정말-편하지만-불편한-codestar">1. 정말 편하지만 불편한(?) CodeStar</h2>
+
+<p>CodeStar로 Lambda 프로젝트를 구성하게 되면 자동으로 빌드와 배포의 일련의 과정을 세팅해 다음과 같은 Pipeline으로 제공해 줍니다.</p>
+
+<p><strong>간략한 CodeStar 개념도</strong></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/01.png" alt="sam" />
+</figure>
+<figcaption>CodeStar Project 생성 시 기본 세팅 모습. 언제든 요소를 추가하거나 뺄 수 있다.</figcaption>
+<p><br /></p>
+
+<p>개발자는 자동 생성된 CodeCommit Repository에 소스를 push 하기만 하면 빌드부터 배포까지 자동으로 처리해 줍니다.</p>
+
+<p>정말 복잡하기 그지 없던 과거의 서버 세팅 과정이 혁신적으로 간소화 되었습니다만, 문제는 한번의 소스 Push 후 엔드포인트 배포까지 소요되는 시간이 빨라야 5분은 걸린다는 것입니다.<br />
+‘고작 5분 가지고 뭘..’ 이라고 생각할 수도 있지만, 한차례 개발을 진행할 때 수십 혹은 수백 번의 수정을 확인해 가며 개발하는 것을 생각하면 매번 수정 시 마다(간단한 텍스트 일지라도) 5분씩 기다리고 있는 것은 과거에 반영 즉시 테스트할 수 있었던 환경에 비해 개발 진행 속도를 엄청나게 더디게 만들어 버렸습니다.<br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># API Gateway의 Prod stage 요청 경로로 요청해봅니다. - 응답내용이 너무길어 생략합니다.
+curl -w %{time_total} https://[API URL]
+
+# curl 요청 결과
+{"output": "Hello World", "timestamp": "2019-11-21T09..." ...생략 0.487197
+{"output": "Hello World", "timestamp": "2019-11-21T09..." ...생략 0.121171
+{"output": "Hello World", "timestamp": "2019-11-21T09..." ...생략 0.084350
+
+# 소요시간 약 0.1 ~ 0.4초
+</code></pre></div></div>
+
+<h3 id="소요시간"><strong>소요시간</strong></h3>
+
+<p>소스 수정 → 커밋 → 빌드 → 배포 → 실행 : 5~10분 소요<br />
+API Call : 0.1 ~ 0.3 초</p>
+
+<p>한번 반영되기만 하면 퍼포먼스는 정말 괜찮았습니다. 단, 반영이 너무 오래 걸리는 것이 문제였죠<br /><br /></p>
+
+<h2 id="2-aws-sam">2. AWS SAM</h2>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/02.png" alt="sam" />
+</figure>
+<figcaption>람다 문양 모자를 쓴 샘람쥐</figcaption>
+<p><br /></p>
+
+<p>CodeStar의 빌드-배포 자동화 때문에 느려진 개발 속도를 해결할 수 있도록 AWS는 AWS SAM CLI 툴 을 제공해 줍니다.</p>
+
+<p>SAM이란 Serverless Application Model의 약자로, 쉽게 설명하자면 AWS CloudFormation의 확장 기능을 의미합니다. SAM template은 실제로 Deploy될 때 CloudFormaion template 구문으로 재해석된 후 실행됩니다.</p>
+
+<p>SAM template을 통해 비교적(?) 간단하게 람다와 API Gateway 엔드포인트를 구성하고 권한을 부여할 수 있습니다.</p>
+
+<p>SAM CLI는 CloudFormation을 통해 람다가 배포되는 일련의 기능을 실행할 수 있는 명령줄 인터페이스 입니다.</p>
+
+<p>이 중에 우리가 살펴볼 것은 위의 기능을 로컬 환경에서도 실행할 수 있도록 제공하는 sam build와 sam local 명령어입니다.</p>
+
+<p>(SAM CLI를 사용하기 위해서는 AWS Configuration이 우선되어야 합니다.)</p>
+
+<p>sam configure 명령은 여기에서 확인 → <a href="https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/cli-chap-configure.html">https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/cli-chap-configure.html</a><br /><br /></p>
+
+<p><strong>SAM CLI에서 주로 사용하는 build와 local에 관해 간략히 알아보겠습니다.</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sam build : 각 람다함수 빌드
+**sam build 옵션 목록**
+&gt; -b, --build-dir DIRECTORY : 빌드 경로 지정 (기본.aws-sam)
+&gt; -s, --base-dir DIRECTORY : template.tml이 있는 소스코드 경로 지정
+&gt; -u, --use-container : docker 컨테이너를 사용해서 빌드
+    - 실행 환경을 타는 패키지가 있을때 사용
+    - ex) 이미지 처리 라이브러리의 *.so 등
+&gt; -m, --manifest PATH : package.json, requirements.txt등 경로 지정
+&gt; -t, --template PATH : AWS SAM template.yml 경로 지정(yaml도 가능)
+&gt; --docker-network TEXT : 도커 네트워크상의 람다 컨테이너 이름지정
+    - 지정시 해당 컨테이너로 빌드됨
+&gt; --debug : 빌드 정보를 상세하게 보여줌
+&gt; --profile TEXT : aws credential(인증정보)파일 경로
+&gt; --region TEXT : 서비스의 리전 정보
+
+
+sam local : 로컬에서 실행
+**sam local 옵션 목록**
+&gt; generate-event : 샘플 이벤트 생성
+&gt; invoke : 람다 함수 1회 호출
+&gt; start-api : API전체 테스트용 엔드포인트 시작 - 소스 수정시 재시작할 필요 없음
+&gt; start-lambda : 람다 함수 호출가능 엔드포인트 시작
+</code></pre></div></div>
+<p><br /></p>
+
+<h2 id="3-aws-sam을-이용한-테스트-그리고-배포-환경">3. AWS SAM을 이용한 테스트 그리고 배포 환경</h2>
+
+<h3 id="서버리스-lambda는-사실-서버리스가-아니다">서버리스 Lambda는 사실 서버리스가 아니다</h3>
+
+<p>이건 또 무슨 말인가 싶겠지만 AWS 서버리스 환경에서 개발할 때 놓치기 쉬운 부분이 있는데, 그것은 바로 Lambda가 실행되는 환경이 Amazon Linux라는 것입니다.<br />
+아무리 서버가 없다고는 하지만 함수가 실행되는 그 순간만큼은 가상의 서버가 존재하게 되는 것이지요.
+<br /></p>
+
+<h3 id="로컬-테스트-api-서버--local-start-api">로컬 테스트 API 서버 : local start-api</h3>
+
+<p>SAM CLI 의 sam local start-api 기능은 docker를 이용해 Amazon Linux 위에 template.yml에서 지정한 runtime 환경이 설치된 컨테이너에서 실제 Lambda환경과 “유사”하게(테스트 결과 완전히 똑같지는 않습니다.) 동작 하는 가상 서버를 로컬 환경에서 실행시켜 줍니다.</p>
+
+<p>따라서 환경을 타는 일부 라이브러리(대표적으로 이미지 처리나 암호화 라이브러리)등은 sam build -u(탬플릿 사용 옵션으로 docker Amazon Linux 환경에서 빌드)를 하지 않으면 OS가 다르기 때문에 sam local start-api 환경에서 정상 작동하지 않을 수 있습니다.</p>
+
+<p>필자가 주로 작업하는 프로젝트는 이미지 리사이징과 압축 때문에 환경에 영향을 많이 타는 Pillow 라는 이미지 처리 라이브러리를 사용하고 있습니다. 따라서 sam build -u 과정이 꼭 필요했습니다.</p>
+
+<p>물론 이미지 처리 라이브러리를 sam build 기능을 통해 빌드하여 해당 파일을 lambda layer로 띄워 사용할 수도 있지만, 최대 5개밖에 지원되지 않는 layer를 낭비하기 전에 가능한 방법을 찾아보는 것이 좋겠죠?</p>
+
+<p>환경을 타는 프로젝트의 SAM local 환경 테스트 플로우는 다음과 같습니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 빌드 및 람다 실행용 docker image 로딩시간은 제외합니다.
+
+# 빌드 실행
+sam local build -u
+
+# API 규모가 커짐에 따라 처음엔 30초 내외였으나 현재는 2분정도 소요
+
+# 로컬 api 실행
+sam local start-api -p 3333
+
+# 테스트용 헬로 월드 요청 - 필자는 3333포트를 사용함
+curl -w %{time_total} http://127.0.0.1:3333
+{"output": "Hello World", "timestamp": "2019-11-21T08:35:42.646361"} 7.281562
+
+# 약 7.28초 소요
+
+# 속도 향상을 위해 --skip-pull-image 옵션 사용
+sam local start-api -p 3333 --skip-pull-image
+
+curl -w %{time_total} http://127.0.0.1:3333
+{"output": "Hello World", "timestamp": "2019-11-21T09:00:36.189425"}3.25787
+{"output": "Hello World", "timestamp": "2019-11-21T09:00:52.250169"}1.510781
+{"output": "Hello World", "timestamp": "2019-11-21T09:01:02.837183"}1.364086
+
+# 약 1.5 ~ 3초 소요
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="소요시간-helloworld-요청"><strong>소요시간 (HelloWorld 요청)</strong></h3>
+
+<p>소스 수정시 - 빌드 →  API Call : (API 1개만 빌드할 경우) 약 37초 소요<br />
+소스 미수정 테스트시 - API Call  : 7.28초 소요</p>
+
+<p>위의 내용으로 한 페이지에 API 요청이 5개일 경우를 가정한다면<br />
+페이지 로딩 시 : 약 35초 소요<br />
+skip-pull-image옵션 사용 시 동일 페이지 로딩 : 약 10~15초 소요<br />
+(skip-pull-image옵션을 사용하면 이미 다운로드 된 docker 컨테이너가 있으면 다시 다운로드하지 않습니다.)</p>
+
+<p>위의 시간은 모든 요청이 hello world 요청만큼 가벼울 경우로 계산된 시간이며, 실제 개발시 UI로딩 속도는 API처리 속도에 따라 더욱더 늘어날 수 있습니다.<br />
+실제 테스트 시에 비교적 간단한 페이지임에도 불구하고 마치 2000년대 초반에 다음 홈페이지에 접속 했을 때 브라우저가 온 힘을 다해 페이지를 로딩 하던 것과 비슷한 느낌이었습니다.</p>
+
+<p>단건 API 테스트에는 좀 느리고 답답하긴 해도, 빌드 속도 문제는 파일이 변경 되었을 때를 자동으로 감지해 변경된 파일을 .aws-sam(빌드 경로로) 복사해주는 잔꾀로 해결할 수 있었으나, UI에 붙이는 것은 이야기가 달랐죠, API 호출 자체가 느려도 너무 느렸습니다.
+<br /><br /></p>
+
+<h2 id="4-debugging-debugging-debugging">4. Debugging! Debugging? Debugging…</h2>
+
+<p>속도도 문제 였지만 개발 속도를 지연 시키는데 크게 한몫 한 녀석이 바로 디버깅입니다.</p>
+
+<p>“sam local start-api 를 통해 실행되는 api는 docker 환경에서 실행된다” 라고 말씀드린 것에서 알 수 있듯이. IDE의 강력한 디버깅 기능이 작동을 안합니다. 빨간색 brake point를 도배해도 전혀 작동하지 않습니다. 현재 소스는 복제되어 docker container 안쪽에 있기 때문이지요.</p>
+
+<p>디버깅 기능들을 전혀 사용할 수 없기 때문에 필자는 과거 sam local start-api에 의존해 개발했던 당시 모든 값을 print로 찍어 침침한 눈을 부비며 콘솔의 하얀 글자들을 한 땀 한 땀 검사하여 개발을 진행했었습니다. (옛날 생각에 눈물이.. )
+<br /></p>
+
+<h3 id="방법을-찾아보자">방법을 찾아보자.</h3>
+
+<p>속도도 느리고 디버깅과 테스트도 너무 힘들어 정말 이것이 최선인가 수없이 검색해 보았지만…<br />
+많은 사람들이 같은 문제를 가지고 있었고 또 AWS에 요청 하고 있었습니다.</p>
+
+<p><strong>2017년 12월 23일의 글 (GItHub awslabs/aws-sam-cli/issues에 기재된 문의 글)</strong></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/03.png" alt="sam" />
+</figure>
+<figcaption>도커 컨테이너를 따듯하게 유지할 수 없나요!?</figcaption>
+<p><br /></p>
+
+<p>17년 12월에 aws sam local start-api의 warm start에 관하여 질문이 올라왔습니다.<br />
+많은 사람들이 좋아요를 날리고 있군요.
+<br /></p>
+
+<p><strong>해당 글에 달린 댓글 중 일부</strong></p>
+
+<ul>
+  <li>간단한 디버깅이 너무 오래걸립니다.. - 2017-12-28</li>
+  <li>이 이야기를 보고있나요? 이것(웜스타트)의 이점은 정말 엄청날거에요 - 2018-02-02</li>
+  <li>헬로월드가 4초나 걸립니다!! - 2018-06-18</li>
+  <li>API 빌드 에서 1초는 엄청난 차이이며, warm invoke는 충분히 가치 있다고 생각합니다. - 2018-09-11</li>
+  <li>node.js Lambda 테스트 진행 시간 대부분은 기능 실행을 기다리는 것입니다. - 2018-11-09</li>
+  <li>응답 시간이 길면 로컬 개발이 고통스럽습니다. - 2019-04-13</li>
+  <li>누구 실행시간 단축한 사람 없어요? - 2019-06-10</li>
+  <li>나는 이기능을 내 git에서 제작할것입니다. - 2019-09-15</li>
+  <li>aws-sam-cli 이제 남은 것은 warm invoke에 대한 지원입니다. - 2019-11-18(그저께)
+<br />(참고: <a href="https://github.com/awslabs/aws-sam-cli/issues/239">https://github.com/awslabs/aws-sam-cli/issues/239</a>)</li>
+</ul>
+
+<p>python, java, nodejs 모두 다 실행 시간이 느리다고 합니다.<br />
+수많은 개발자가 2017년부터 거의 2년간 간절하게 요청하였지만 AWS는 이 기능에 대해 지원할 생각이 없어 보입니다…</p>
+
+<p>아.. 정말 개발자란 이토록 고달픈 것인가.. (AWS 나빠요)<br />
+라고 생각하다가 문득 python 명령어로 api handler 함수를 강제로 실행시켜 봅니다.<br />
+(실제로는 개발중인 프로젝트의 함수를 호출했지만 hello world로 대체합니다.)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;kww$ python3
+Python 3.7.5 (v3.7.5:5c02a39a0b, Oct 14 2019, 18:49:57)
+[Clang 6.0 (clang-600.0.57)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; import index
+&gt;&gt;&gt; index.handler({},None)
+{'statusCode': 200, 'body': '{"output": "Hello World", "timestamp": "2019-11-21T09:10:17.594872"}', 'headers': {'Content-Type': 'application/json'}}
+&gt;&gt;&gt;
+</code></pre></div></div>
+
+<p>당연한 것이지만, 당연하게도(?) 정말 빠르고 정확하게 잘 실행됩니다.<br />
+너무나 당연한 것이지만 break point도 잘 잡힙니다.<br />
+당연하게도 python은 eval 함수를 가지고 있습니다.<br />
+( 아.. 왜 이 생각을 못했을까.. )</p>
+
+<p>당장 <a href="https://github.com/awslabs/aws-sam-cli">https://github.com/awslabs/aws-sam-cli</a> 에서  SAM-CLI 소스를 pull 합니다.<br />
+소스를 열어 확인해보니 local_lambda_invoke_service.py의 람다 앞단에는 flask로 구성되어 있었습니다!</p>
+
+<p>aws-sam-cli 프로젝트 소스를 상세하게 분석하여 개조할지, 단순화하여 flask를 이용해 테스트 서버를 만들지 저울질 하다가 aws-sam-cli프로젝트 소스가 다른 여러 객체에 너무 거미줄처럼 연결 되어있어 새로 단순화하여 제작하기로 합니다.
+<br /><br /></p>
+
+<p><a name="link1"></a></p>
+<h1 id="flask를-이용한-매우-빠르고-디버깅까지-되는-sam-local-start-api-환경-만들기">Flask를 이용한 매우 빠르고 디버깅까지 되는 sam local start-api 환경 만들기</h1>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/04.png" alt="sam" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>처음 AWS Lambda 진입점을 어떻게 구성할까 고민하던 중 aws-sam-cli 내부적으로 Flask를 사용하는 것을 알게 되어 그대로 Flask를 선택하게 되었습니다.</p>
+
+<p>Lambda를 sam local start-api를 거치지 않고 Direct Python Function Call 방식으로 실행하기 위하여 sam local start-api 구동 방식을 분석합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. sam template.yml을 재구성하여 api배포용 template.yaml파일을 생성합니다
+    - sam build를 사용하면 내부에 template.yaml이 생성되는데, 실제 CloudFormation
+      template 문서 보다는 훨씬 간략합니다 (사용자의 template과 별다른 차이도 없습니다.)
+
+2. 재생성된 template.yml을 기반으로 docker container를 통해 api를 실행 할 수 있는
+    진입점을 생성합니다
+    - Python기반 Flask로 되어있습니다.
+
+3. 요청이 들어오면 Flask웹서버가 해당 요청 url을 기반으로 template 의 Function
+  handler로 지정해놓은 함수 코드를 docker container를 띄워 container 내부에서 실행합니다.
+</code></pre></div></div>
+
+<p>어렵게 생각했던 것이 의외로 간단합니다.
+<br /><br /></p>
+
+<h2 id="1-단계--templateyml-분석">1 단계 : template.yml 분석</h2>
+
+<p>목표 : <strong>template.yml 을 분석하여 End Point 목록을 추출한다.</strong><br /></p>
+
+<p>먼저 template.yml의 구조를 파악해야 합니다.<br />
+(편의상 자동 생성된 HelloWorld프로젝트에 경로를 하나 더 추가하여 진행합니다.)
+<br /></p>
+
+<h3 id="주의">주의</h3>
+
+<ul>
+  <li>!Ref 혹은 !Sub는 AWS SAM의 축약 함수 문법이기 때문에 표준 yaml로 해석이 불가능합니다. 해당 함수는 풀어서 작성하거나 ruamel.yaml을 사용하면 정상적으로 parsing됩니다.<br />
+(풀어진 yml은 sam build 명령어를 통해 빌드한 후 ./.aws-sam 폴더 하위에 있는 빌드된 template.yaml을 참고하시면 됩니다.)</li>
+</ul>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Globals, Parameters 등등 생략...</span>
+<span class="na">Resources</span><span class="pi">:</span>
+  <span class="na">HelloWorld</span><span class="pi">:</span>
+    <span class="na">Type</span><span class="pi">:</span> <span class="s">AWS::Serverless::Function</span>
+    <span class="na">Properties</span><span class="pi">:</span>
+      <span class="na">Handler</span><span class="pi">:</span> <span class="s">index.handler</span>
+      <span class="na">Runtime</span><span class="pi">:</span> <span class="s">python3.7</span>
+      <span class="na">Role</span><span class="pi">:</span>
+        <span class="s">Fn::GetAtt:</span>
+        <span class="s">- LambdaExecutionRole</span>
+        <span class="s">- Arn</span>
+      <span class="na">Events</span><span class="pi">:</span>
+        <span class="na">GetEvent</span><span class="pi">:</span>
+          <span class="na">Type</span><span class="pi">:</span> <span class="s">Api</span>
+          <span class="na">Properties</span><span class="pi">:</span>
+            <span class="na">Path</span><span class="pi">:</span> <span class="s">/</span>
+            <span class="na">Method</span><span class="pi">:</span> <span class="s">get</span>
+        <span class="c1"># 테스트를 위해 2 depth 경로 추가</span>
+        <span class="na">GetEvent2</span><span class="pi">:</span>
+          <span class="na">Type</span><span class="pi">:</span> <span class="s">Api</span>
+          <span class="na">Properties</span><span class="pi">:</span>
+            <span class="na">Path</span><span class="pi">:</span> <span class="s">/depth1</span>
+            <span class="na">Method</span><span class="pi">:</span> <span class="s">get</span>
+        <span class="na">GetEvent3</span><span class="pi">:</span>
+          <span class="na">Type</span><span class="pi">:</span> <span class="s">Api</span>
+          <span class="na">Properties</span><span class="pi">:</span>
+            <span class="na">Path</span><span class="pi">:</span> <span class="s">/depth1/depth2</span>
+            <span class="na">Method</span><span class="pi">:</span> <span class="s">get</span>
+        <span class="na">PostEvent</span><span class="pi">:</span>
+          <span class="na">Type</span><span class="pi">:</span> <span class="s">Api</span>
+          <span class="na">Properties</span><span class="pi">:</span>
+            <span class="na">Path</span><span class="pi">:</span> <span class="s">/</span>
+            <span class="na">Method</span><span class="pi">:</span> <span class="s">post</span>
+<span class="c1"># LambdaExecutionRole 생략..</span>
+</code></pre></div></div>
+
+<p>위의 template.yml에서 실제 handler 함수를 호출하는 핵심 부분만 추출한다면<br />
+<code class="language-plaintext highlighter-rouge">Resources &gt; [함수명]</code>중에서 <code class="language-plaintext highlighter-rouge">Type</code>이 <code class="language-plaintext highlighter-rouge">AWS::Serverless::Function</code>인 요소의<br />
+<code class="language-plaintext highlighter-rouge">Properties &gt; Handler</code>값이 실제 실행되는 진입 함수가 되겠네요.<br />
+또한 <code class="language-plaintext highlighter-rouge">Properties &gt; Events &gt; Method</code>로 어떤 REST요청인지 알 수 있습니다.</p>
+
+<p>위의 template.yml에서 필요한 요소만 추출해 보도록 하겠습니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># 탬플릿 경로
+</span>    <span class="n">templatePath</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="p">.</span><span class="n">curdir</span><span class="p">)</span> <span class="o">+</span> <span class="s">'/template.yml'</span>
+    <span class="c1"># 템플릿 로딩
+</span>    <span class="n">template</span> <span class="o">=</span> <span class="n">yaml</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">templatePath</span><span class="p">,</span> <span class="s">'r'</span><span class="p">))</span>
+
+    <span class="c1"># 템플릿 파일 파싱
+</span>    <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">resources</span> <span class="o">=</span> <span class="n">template_data</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Resources'</span><span class="p">)</span>
+    <span class="n">path_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">resourcesKey</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+        <span class="n">resource</span> <span class="o">=</span> <span class="n">resources</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">resourcesKey</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resource</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Type'</span><span class="p">)</span> <span class="o">==</span> <span class="s">'AWS::Serverless::Function'</span><span class="p">:</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">resource</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Properties'</span><span class="p">)</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="n">properties</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Events'</span><span class="p">)</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">properties</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Handler'</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">event_key</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">events</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">event_key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">e</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Type'</span><span class="p">)</span> <span class="o">==</span> <span class="s">'Api'</span><span class="p">:</span>
+                    <span class="n">e_properties</span> <span class="o">=</span> <span class="n">e</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Properties'</span><span class="p">)</span>
+                    <span class="n">path_list</span><span class="p">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s">'path'</span><span class="p">:</span> <span class="n">e_properties</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Path'</span><span class="p">),</span>
+                        <span class="s">'method'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e_properties</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Method'</span><span class="p">)).</span><span class="n">upper</span><span class="p">(),</span>
+                        <span class="s">'handler'</span><span class="p">:</span> <span class="n">handler</span>
+                    <span class="p">})</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">'--------- 추출 결과 확인 ---------'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">extract_path</span> <span class="ow">in</span> <span class="n">path_list</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">extract_path</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'--------- 추출 결과 확인 ---------'</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">'__main__'</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>결과</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>--------- 추출 결과 확인 ---------
+{'path': '/', 'method': 'GET', 'handler': 'index.handler'}
+{'path': '/depth1', 'method': 'GET', 'handler': 'index.handler'}
+{'path': '/depth1/depth2', 'method': 'GET', 'handler': 'index.handler'}
+{'path': '/', 'method': 'POST', 'handler': 'index.handler'}
+--------- 추출 결과 확인 ---------
+</code></pre></div></div>
+
+<p>인덱스 함수 하위에 GET 이벤트 3개와 POST 이벤트 1개가 정상적으로 추출되었습니다.<br />
+이제 이 추출된 데이터를 기반으로 알맞는 핸들러 함수를 호출해주면 됩니다.
+<br /></p>
+
+<h2 id="2-단계--dynamic-import-eval">2 <strong>단계 : Dynamic import, eval()</strong></h2>
+
+<p>목표 : python의 __import__()와 eval()을 사용하여 알맞은 endpoint 함수를 호출한다.</p>
+
+<p>1단계에서 template.yml을 분석하여 엔드포인트 경로와 함수 REST 메소드를 추출하였습니다.<br />
+이제 Flask의 @app.route 기능을 이용하여 엔드포인트를 만들어주고, 실제 람다 함수에서 넘겨받는 event 객체와 똑같은 형태의 가짜 event객체를 만들고, 정규식을 이용하여 depth에 상관없이 알맞은 함수에 가짜 event객체를 전달하여 실행시키면 됩니다.
+<br /><br /></p>
+
+<h3 id="주의-1">주의</h3>
+
+<ul>
+  <li>@app.route 의 경로명은 딱히 상관없지만 depth는 template과 일치해야 합니다.</li>
+  <li>변수 = __import__(‘핸들러 객체명’) 에서 변수명은 핸들러 객체명과 일치시켜 주어야 eval()에서 동작합니다.</li>
+  <li>설정에 따라 event객체의 형태는 다를 수 있습니다. 실제로 객체를 확인한 후 제작해야 합니다.</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import os
+import re
+import yaml
+
+def main(**kwargs):
+
+    path = ''; # 추후 flask를 통해 path 추가
+
+    # AWS SAM Event 객체 흉내내기
+    event = {
+        'httpMethod': request.method,
+        'headers': dict(request.headers),
+        'body': {} # 추후 flask를 통해 body 추가,
+        'path': '/'+path,
+        'queryStringParameters': {} # 추후 Flask를 통해 param 추가,
+        'isBase64Encoded': False,
+        'requestContext': {
+            'resourcePath': '',
+            'identity': {
+              'sourceIp': '127.0.0.1',
+            },
+        },
+        'pathParameters': {}
+    }
+
+    # template.yml 파싱 및 추출 부분 생략
+    path_list = [... 생략 ...]
+
+    # 추출된 path_list를 통해 알맞은 핸들러 함수 호출
+    result = None # 결과 반환용 변수
+    for p in path_list:
+        origin_path = p.get('path').replace('{proxy+}', '.+')
+        origin_path_parts = list(filter(None, origin_path.split('/')))
+
+        # 경로 키가 존재할경우 event에 pathParameters 챙겨주기 ({key}패턴)
+        key_path_parts = list(filter(lambda path_part: re.match('{[a-zA-Z0-9]+?}', path_part), origin_path_parts))
+        if len(key_path_parts) &gt; 0:
+            path_parameters = dict()
+
+            # 요청 경로 요소 - filter - 공백요소 걸러냄
+            request_path_parts = list(filter(None, path.split('/')))
+            for i, key_path in enumerate(key_path_parts):
+                diff_count = len(request_path_parts) - len(key_path_parts)
+                path_key = key_path.replace('{', '').replace('}', '')  # {} 제거
+                # 아예 다른 경로는 pass
+                if diff_count &lt; 0:
+                    continue
+                path_parameters[path_key] = request_path_parts[i + diff_count]
+
+            # sam local start-api 에서 매핑한것과 같이 pathParameters 챙겨주기
+            event['pathParameters'] = path_parameters
+
+        replaced_path = re.sub(r'/{[a-zA-Z0-9]+?}', r'/[a-zA-Z0-9\.\?\:@\-_=#]+', origin_path) + '$'
+        re_compile = re.compile(replaced_path)
+
+        # flask의 request path 와 일치하는 패턴일때 핸들러 함수 실행
+        if request.method == p.get('method') and re.match(re_compile, '/'+path):
+            # 라우터 모듈 임포트 및 핸들러 실행
+            handler = p.get('handler').split('.')
+
+            # 주의 : 변수명이 template.yml의 핸들러 경로와 일치해야 eval()이 정상동작함
+            index = __import__('.'.join(handler[:-1]))
+            result = eval('.'.join(handler))(event, None)
+            break
+</code></pre></div></div>
+<p><br /></p>
+
+<h2 id="3단계--flask를-이용한-엔드포인트-설정-및-결과-반환">3단계 : Flask를 이용한 엔드포인트 설정 및 결과 반환</h2>
+
+<p>목표 : flask를 통해 실제 sam local start-api 처럼 작동하도록 제작한다.</p>
+<ul>
+  <li>옵션으로 포트번호와 호스트도 입력받을 수 있도록 작성합니다.
+<br /></li>
+</ul>
+
+<p>2단계에서 template.yml을 기반으로 depth에 상관없이 lambda 함수를 호출할 수 있게 되었습니다.<br />
+이제 마지막으로 Flask를 이용하여 사용자의 요청을 받아들이고 호출한 결과를 API Gateway에서 내려 주는 것과 같게 처리해 주면 엄청나게 빠르고 디버깅까지 되는 local lambda 환경이 완성됩니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">getopt</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">make_response</span><span class="p">,</span> <span class="n">Response</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="o">@</span><span class="n">app</span><span class="p">.</span><span class="n">route</span><span class="p">(</span><span class="s">'/'</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s">'path'</span><span class="p">:</span> <span class="s">''</span><span class="p">},</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s">'GET'</span><span class="p">,</span> <span class="s">'POST'</span><span class="p">,</span> <span class="s">'PUT'</span><span class="p">,</span> <span class="s">'DELETE'</span><span class="p">])</span>
+<span class="o">@</span><span class="n">app</span><span class="p">.</span><span class="n">route</span><span class="p">(</span><span class="s">'/&lt;path:path&gt;'</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s">'GET'</span><span class="p">,</span> <span class="s">'POST'</span><span class="p">,</span> <span class="s">'PUT'</span><span class="p">,</span> <span class="s">'DELETE'</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+
+    <span class="c1"># flask path와 request를 통한 fake 이벤트객체 생성
+</span>    <span class="n">path</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'path'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s">'favicon.ico'</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="s">'OK'</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s">'plain/text'</span><span class="p">)</span>
+
+    <span class="n">query_string_params</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">request</span><span class="p">.</span><span class="n">args</span><span class="p">:</span>
+        <span class="n">query_string_params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">args</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="n">body</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">data</span>
+
+    <span class="c1"># AWS SAM Event 객체 흉내내기
+</span>    <span class="n">event</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'httpMethod'</span><span class="p">:</span> <span class="n">request</span><span class="p">.</span><span class="n">method</span><span class="p">,</span>
+        <span class="s">'headers'</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">headers</span><span class="p">),</span>
+        <span class="s">'body'</span><span class="p">:</span> <span class="n">body</span><span class="p">,</span>
+        <span class="s">'path'</span><span class="p">:</span> <span class="s">'/'</span><span class="o">+</span><span class="n">path</span><span class="p">,</span>
+        <span class="s">'queryStringParameters'</span><span class="p">:</span> <span class="n">query_string_params</span><span class="p">,</span>
+        <span class="s">'isBase64Encoded'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+        <span class="s">'requestContext'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">'resourcePath'</span><span class="p">:</span> <span class="s">''</span><span class="p">,</span>
+            <span class="s">'identity'</span><span class="p">:</span> <span class="p">{</span>
+              <span class="s">'sourceIp'</span><span class="p">:</span> <span class="s">'127.0.0.1'</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+        <span class="s">'pathParameters'</span><span class="p">:</span> <span class="p">{}</span>
+    <span class="p">}</span>
+
+    <span class="c1"># ... template.yml 추출 부분 생략 ...
+</span>
+    <span class="c1"># ... eval()을 통한 핸들러 함수 호출 부분 생략 ...
+</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">make_response</span><span class="p">()</span>
+    <span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">'Content-Type'</span><span class="p">,</span> <span class="s">'application/json'</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">string_body</span> <span class="o">=</span> <span class="n">result</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'body'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">string_body</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">string_body</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">string_body</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">result</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'statusCode'</span><span class="p">),</span> <span class="n">mimetype</span><span class="o">=</span><span class="s">'application/json'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="s">'{"message": "서버스크립트 에러 - 데이터 없음"}'</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s">'application/json'</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">json</span><span class="p">.</span><span class="n">decoder</span><span class="p">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">traceback</span><span class="p">.</span><span class="n">print_exc</span><span class="p">()</span>
+        <span class="k">pass</span>
+    <span class="k">except</span> <span class="nb">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">traceback</span><span class="p">.</span><span class="n">print_exc</span><span class="p">()</span>
+        <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="s">'일치하는 경로가 없습니다.'</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s">'application/json'</span><span class="p">)</span>
+
+
+<span class="c1"># sam local start-api 처럼 -h와 -p옵션까지 추가해줍니다.
+</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">'__main__'</span><span class="p">:</span>
+    <span class="c1"># for arg in sys.argv:
+</span>    <span class="n">opts</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">getopt</span><span class="p">.</span><span class="n">getopt</span><span class="p">(</span><span class="n">sys</span><span class="p">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="s">"p:h:"</span><span class="p">,</span> <span class="p">[</span><span class="s">"port="</span><span class="p">,</span> <span class="s">"host="</span><span class="p">])</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="s">'127.0.0.1'</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="s">'3333'</span>
+
+    <span class="k">for</span> <span class="n">opt</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">opt</span> <span class="o">==</span> <span class="s">"-p"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">opt</span> <span class="o">==</span> <span class="s">"--port"</span><span class="p">):</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="n">arg</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">opt</span> <span class="o">==</span> <span class="s">"-h"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">opt</span> <span class="o">==</span> <span class="s">"--host"</span><span class="p">):</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">arg</span>
+
+    <span class="n">app</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>자, 이제 완성된 Flask API Server를 실행해 보겠습니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Flask 서버 실행 (필자는 파일명을 flaskSAM으로 사용하였습니다)
+python3 flaskSAM.py -p 3333 -h localhost
+
+# 실행 결과
+* Serving Flask app "flaskSAM" (lazy loading)
+  * Environment: production
+    WARNING: This is a development server. Do not use it in a production deployment.
+    Use a production WSGI server instead.
+  * Debug mode: on
+  * Running on http://localhost:3333/ (Press CTRL+C to quit)
+  * Restarting with stat
+  * Debugger is active!
+  * Debugger PIN: 374-760-283
+</code></pre></div></div>
+
+<p>Flask API Server가 성공적으로 실행되었습니다. 이제 API 요청에 걸리는 시간을 테스트해보겠습니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># sam local start-api 와 동일하게 요청합니다.
+curl -w %{time_total} http://127.0.0.1:3333
+{"output": "Hello World", "timestamp": "2019-11-21T09:51:35.157110"} 0.023090
+{"output": "Hello World", "timestamp": "2019-11-21T09:51:36.701121"} 0.022511
+{"output": "Hello World", "timestamp": "2019-11-21T09:51:38.581715"} 0.024612
+
+# 약 0.02초 소요
+</code></pre></div></div>
+
+<p>기대에 부응하듯이 엄청난 퍼포먼스를 보여 줍니다!<br />
+그렇다면 중요한 디버깅을 테스트해보도록 하겠습니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/05.png" alt="sam" />
+</figure>
+<figcaption></figcaption>
+
+<p>그리웠던 breakpoint에서 정확히 잡히는군요. 변수 위에 커서를 올려보니 당연하지만 Inspecting 기능도 너무나 훌륭하게 작동하는 것을 보실 수 있습니다!
+<br /><br /></p>
+
+<h2 id="최종-테스트-결과-정리">최종 테스트 결과 정리</h2>
+
+<h3 id="hello-world-프로젝트-요청-테스트">Hello World 프로젝트 요청 테스트</h3>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/06.png" alt="sam" />
+</figure>
+<figcaption></figcaption>
+
+<p>DB 접속 혹은 하드웨어 사양 등 다양한 변수가 존재하겠지만 API Call 속도는 타의 추종을 불허할 정도로 빠르며, Python의 디버깅 기능 또한 완벽하게 작동하였습니다.</p>
+
+<p>비교적(?) 간단한 python파일 하나로 답답하고 복잡한 AWS SAM 개발 환경을 혁신적으로 개선할 수 있었습니다.<br />
+단, 주의할 사항이 있습니다. <code class="language-plaintext highlighter-rouge">python3 flaskSAM.py</code> 명령으로 실행한 것에서 눈치채셨을 수도 있지만, 어디까지나 로컬 python환경을 이용했기 때문에 환경에 영향을 받는 라이브러리를 requirements.txt로 작성하여 올리지 않고 프로젝트 폴더 내에 파일로 저장하여 올릴 경우 정상적으로 실행되지 않습니다.<br />
+따라서 <strong>항상! 환경에 유의</strong>하셔야 합니다.
+<br /><br /></p>
+
+<h3 id="딱-3가지만-유의하시면-환경문제는-걱정없습니다">딱 3가지만 유의하시면 환경문제는 걱정없습니다.</h3>
+
+<ol>
+  <li>필요한 라이브러리는 requirements.txt에 작성하고 pip로 설치하여 사용한다.</li>
+  <li>codeBuild의 ec2이미지는 반드시 local runtime (본 글에서는 python3.7) 환경과 일치하는 이미지를 사용해야 한다. (2.0 이미지에서는 빌드스펙의 런타임을 보고 자동으로 선택됨)</li>
+  <li>Layer를 구성할 일이 생길 경우 sam build -u 옵션을 꼭 사용하여 빌드한 후 빌드된 파일을 업로드 한다.
+<br /></li>
+</ol>
+
+<p>CodeStar 프로젝트는 기본적으로 CodeBuild를 통해 Amazon Linux에서 빌드 되기 때문에 위의 3가지 사항만 조심하시면 환경 문제로 고생하는 일은 없을 것입니다.
+<br /></p>
+
+<p>2018년 4월 AWS Lambda로 API를 개발하기 시작하여, 열악한 환경에서 여러 다른 문제도 많았습니다.<br />
+그중 가장 개발을 힘들게 만들었던 것이 Amazon Linux와 mac사이의 환경문제와 SAM local의 속도 문제였습니다. 당시에 환경문제는 너무 생소해서 해결하기 위해 며칠 밤을 새기도 했습니다.<br />
+SAM의 버전이 매우 낮았을 때(0.2.0 시절)에는 그렇게 심하게 느리지 않았습니다만, npm설치에서 pip설치로 바뀌고, 0.10.0 버전을 넘어선 후부터 매 요청마다 새로 docker container를 띄우게 되면서 속도 문제는 정말 심각해졌습니다.<br />
+그러던 어느날 호기심에 밤새며 제작했던 flaskServer가 생각보다 더 훌륭하게 작동하면서 여러 번의 업데이트를 거쳐 점차 안정적으로 사용할 수 있게 되었고, 많은 사람들이 같은 문제로 고생하고 있기에 이렇게 글로 공유하게 되었습니다.
+<br /></p>
+
+<p>모두 Flask를 이용해 AWS Lambda 개발에 날개를 달아 줍시다!<br />
+감사합니다.
+<br /><br /></p>
+
+<h2 id="사족-알아두면-편한-pycharm-rundebug-configurations">사족) 알아두면 편한 PyCharm Run/Debug Configurations</h2>
+
+<p>여러 프로젝트를 개발하다 보면, 참 다양한 port번호를 사용하게 되실겁니다. (80, 8080, 9999, 3333 ..)<br />
+이럴 때마다 매번 각 프로젝트를 껐다 켰다 하거나 커맨드로 일일이 서버를 띄우는 일은 피곤한 일입니다.<br />
+PyCharm에는 command에서 넘겨주는 것과 같은 역할을하는 Parameters를 설정할 수 있습니다.
+<br /></p>
+
+<p>1. PyCharm IDE에서 flaskSAM.py를 처음 한번 우클릭 후 Run 해줍니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/07.png" alt="sam" />
+</figure>
+<figcaption></figcaption>
+
+<p>2. 한번 실행하면 우측 상단에 등록되는데 여기서 Edit Configurations를 눌러 줍니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/08.png" alt="sam" />
+</figure>
+<figcaption></figcaption>
+
+<p>3. Configuration 탭의 Parameters에 원하는 호스트와 포트를 작성해 줍니다. (이것 때문에 Flask에 옵션을 받는 로직이 꼭 필요합니다.)</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200211/09.png" alt="sam" />
+</figure>
+<figcaption></figcaption>
+
+<p>4. 이제 버튼과 단축키(mac: ^R, windows: ⇧F10)로 편-안하게 실행하세요!</p>
+:ET

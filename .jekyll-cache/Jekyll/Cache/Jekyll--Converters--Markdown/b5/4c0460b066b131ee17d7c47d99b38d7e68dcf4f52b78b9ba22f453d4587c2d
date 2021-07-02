@@ -1,0 +1,297 @@
+I"f�<p>리액티브 프로그래밍(Reactive Programming)을 사용하기 위해, VIPER 패턴으로 되어 있는 앱 구조를 MVVM 패턴으로 변환하는 작업을 시작했을 때였습니다. MVVM 패턴을 사용해 보지 않았지만, VIPER 패턴의 Interactor와 Presenter의 코드들을 적절하게 View와 ViewModel로 분리하는 작업은 쉬웠습니다. 하지만 Router(Wireframe) 코드들을 단순하게 View에 넣기에는, View를 담당하는 <code class="language-plaintext highlighter-rouge">UIViewController</code>가 점점 하는 일이 많아지면서 코드들도 덩달아 많이 늘어나고 있었습니다. 비대해지는 뷰 컨트롤러(Massive View Controller)가 될 수 있어, 나중에 재사용 및 관리가 힘들어질 수 있기 때문에 고민이 되었습니다.</p>
+
+<p>그러던 중, MVVM 관련 자료를 보게 되었고 coordinator 패턴이라는 것을 발견했습니다. 이전에 어느 개발자한테 들었던 기억이 있어, coordinator 패턴을 검토하여 적용하는 방안을 결정하게 됐습니다. 이 글에서 iOS에서의 화면 전환에 대한 간략한 설명과 coordinator 패턴이 어떤 것인지, 그리고 그 예시를 소개해드리겠습니다.
+<br /><br /></p>
+
+<div class="annotation">
+💡 VIPER 패턴, MVVM 패턴에 익숙하지 않으시는 분은 예전에 쓴 <a href="http://labs.brandi.co.kr/2018/02/21/kimjh.html">iOS 아키텍처 패턴(MVC, MVVM, VIPER)</a> 글 보시면 도움이 될 겁니다.
+</div>
+<p><br /></p>
+
+<div class="annotation">
+💡 앱 구조를 변경하면서 맞닥뜨리게 된 문제와 그 문제를 해결하기 위해 coordinator 패턴을 사용하게 되었습니다. 그래서 본 글의 취지는 coordinator 패턴이 무엇인지와 어떤 식으로 사용하는지에 초점을 두었습니다. 튜토리얼 글이 아니기 때문에 coordinator를 어떻게 만들고 사용하는지 자세한 내용은 검색하여 찾아보는 것이 좋습니다.
+</div>
+<p><br /></p>
+
+<h2 id="흔한-화면-전환하는-방법">흔한 화면 전환하는 방법</h2>
+
+<p>Coordinator 패턴에 대해서 소개하기 전에, iOS에서의 화면 전환과 VIPER 패턴에서의 화면 전환 설명이 필요할 것 같아 먼저 설명하겠습니다. iOS에서는 화면 전환을 담당하는 컨트롤러인 <code class="language-plaintext highlighter-rouge">UINavigationController</code>가 있습니다. <code class="language-plaintext highlighter-rouge">UINavigationController</code>는 Stack 방식으로 새로운 화면들을 push하고, 이전 화면으로 pop합니다. 가장 시작점이라고 부를 수 있는 화면 기준으로 새로운 화면으로 갈 때마다 순서대로 쌓이면서 가고, 뒤로 가기 버튼을 통해 이전에 방문했던 화면들을 순서대로 꺼내면서 갑니다.</p>
+
+<p><strong>그림 1</strong> 화면 전환 예시</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200616/01.jpeg" alt="coordinator" />
+</figure>
+<figcaption></figcaption>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">ProductListViewController</span><span class="p">:</span> <span class="kt">UICollectionViewController</span> <span class="p">{</span>
+
+    <span class="k">override</span> <span class="kd">func</span> <span class="nf">collectionView</span><span class="p">(</span><span class="n">_</span> <span class="nv">collectionView</span><span class="p">:</span> <span class="kt">UICollectionView</span><span class="p">,</span> <span class="n">didSelectItemAt</span> <span class="nv">indexPath</span><span class="p">:</span> <span class="kt">IndexPath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">productId</span> <span class="o">=</span> <span class="n">products</span><span class="p">[</span><span class="n">indexPath</span><span class="o">.</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">let</span> <span class="nv">productDetailController</span> <span class="o">=</span> <span class="kt">ProductDetailViewController</span><span class="p">(</span><span class="nv">productId</span><span class="p">:</span> <span class="n">productId</span><span class="p">)</span>
+        <span class="n">navigationController</span><span class="p">?</span><span class="o">.</span><span class="nf">pushViewController</span><span class="p">(</span><span class="n">productDetailController</span><span class="p">,</span> <span class="nv">animated</span><span class="p">:</span> <span class="kc">true</span><span class="p">)</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge" style="display: unset;">UINavigationController</code>는 기본적으로 <code class="highlighter-rouge" style="display: unset;">pushViewController(UIViewController, animated: Bool)</code> 함수와 <code class="highlighter-rouge" style="display: unset;">popViewController(animated: Bool) → UIViewController?</code> 함수 등을 제공하여 쉽고 간단하게 화면 전환을 구현할 수 있습니다. 위의 코드만으로도 충분히 사용할 수 있지만, 앱이 점차 커지고 화면이 많아진다면 사용하기가 버거워집니다. 같은 화면으로 화면 전환하고 싶은 곳이 많아지거나 기존 같은 화면이 아닌 다른 화면으로 전환하고 싶게 된다면, 해당 코드들을 다 찾으면서 수정하는 번거로운 일이 발생하고 휴면 에러가 생길 수 있습니다. 그리고 화면 전환하는 코드가 사용하는 view controller와 굉장히 종속적으로 연결되어 있고, hard-coding 되어 있습니다. 관리하기가 점점 힘들어지는 일이 발생할 수 있습니다.
+<br /><br /></p>
+
+<h2 id="현재-viper-패턴의-화면-전환">현재 VIPER 패턴의 화면 전환</h2>
+
+<p>VIPER 패턴에서는 Router(Wireframe)에서 화면 전환(navigation information)을 담당합니다. Presenter에서 화면 전환하는 시점에서 Wireframe에게 화면 전환을 요청하고, Wireframe에서는 필요한 화면들을 만들어 생성하고 보여 줍니다. 추가로 화면 전환 애니메이션 구현도 Wireframe에서 작업합니다.</p>
+
+<p>HomeMainPresenter.swift</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">Foundation</span>
+
+<span class="kd">class</span> <span class="kt">HomeMainPresenter</span><span class="p">:</span> <span class="kt">SuperPresenter</span> <span class="p">{</span>
+
+    <span class="c1">// MARK: Variables</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">wireframe</span><span class="p">:</span> <span class="kt">HomeMainWireframe</span><span class="p">?</span>
+
+    <span class="o">...</span>
+
+    <span class="kd">func</span> <span class="nf">productSelected</span><span class="p">(</span><span class="n">_</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">wireframe</span><span class="p">?</span><span class="o">.</span><span class="nf">pushToProductDetailViewController</span><span class="p">(</span><span class="n">productId</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>HomeMainWireframe.swift</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">Foundation</span>
+
+<span class="kd">class</span> <span class="kt">HomeMainWireframe</span><span class="p">:</span> <span class="kt">SuperWireframe</span> <span class="p">{</span>
+
+    <span class="o">...</span>
+
+    <span class="kd">func</span> <span class="nf">pushToProductDetailViewController</span><span class="p">(</span><span class="n">_</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">wireframe</span> <span class="o">=</span> <span class="kt">ProductDetailWireframe</span><span class="p">()</span>
+        <span class="n">wireframe</span><span class="o">.</span><span class="n">rootNavigationController</span> <span class="o">=</span> <span class="k">self</span><span class="o">.</span><span class="n">rootNavigationController</span>
+        <span class="n">wireframe</span><span class="o">.</span><span class="nf">presentViewController</span><span class="p">(</span><span class="kc">false</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="n">productId</span><span class="p">,</span> <span class="nv">animation</span><span class="p">:</span> <span class="kc">true</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>ProductDetailWireframe.swift</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">Foundation</span>
+
+<span class="kd">class</span> <span class="kt">ProductDetailWireframe</span><span class="p">:</span> <span class="kt">ProductWireframe</span> <span class="p">{</span>
+
+    <span class="c1">// MARK: Variables</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">productViewController</span><span class="p">:</span> <span class="kt">ProductDetailViewController</span><span class="p">?</span>
+
+    <span class="c1">// MARK: Constants</span>
+    <span class="kd">private</span> <span class="k">let</span> <span class="nv">presenter</span> <span class="o">=</span> <span class="kt">ProductDetailPresenter</span><span class="p">()</span>
+    <span class="kd">private</span> <span class="k">let</span> <span class="nv">interactor</span> <span class="o">=</span> <span class="kt">ProductDetailInteractor</span><span class="p">()</span>
+
+    <span class="k">override</span> <span class="kd">func</span> <span class="nf">setDependency</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">interactor</span><span class="o">.</span><span class="n">presenter</span> <span class="o">=</span> <span class="k">self</span><span class="o">.</span><span class="n">presenter</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">presenter</span><span class="o">.</span><span class="n">interactor</span> <span class="o">=</span> <span class="k">self</span><span class="o">.</span><span class="n">interactor</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">presenter</span><span class="o">.</span><span class="n">wireframe</span> <span class="o">=</span> <span class="k">self</span>
+    <span class="p">}</span>
+
+    <span class="kd">func</span> <span class="nf">presentViewController</span><span class="p">(</span><span class="n">_</span> <span class="nv">resetRootView</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> <span class="nv">animation</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">viewController</span> <span class="o">=</span> <span class="k">super</span><span class="o">.</span><span class="nf">marketProductViewControllerFromStoryboard</span><span class="p">()</span>
+        <span class="n">viewController</span><span class="o">.</span><span class="n">eventHandler</span> <span class="o">=</span> <span class="n">presenter</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">productViewController</span> <span class="o">=</span> <span class="n">viewController</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">productViewController</span><span class="p">?</span><span class="o">.</span><span class="n">productId</span> <span class="o">=</span> <span class="n">productId</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">productViewController</span><span class="p">?</span><span class="o">.</span><span class="nf">setNavigationTitle</span><span class="p">(</span><span class="s">"상품상세"</span><span class="p">)</span>
+        <span class="n">presenter</span><span class="o">.</span><span class="n">viewController</span> <span class="o">=</span> <span class="k">self</span><span class="o">.</span><span class="n">productViewController</span>
+        <span class="k">if</span> <span class="k">let</span> <span class="nv">vc</span> <span class="o">=</span> <span class="n">productViewController</span> <span class="p">{</span>
+            <span class="k">super</span><span class="o">.</span><span class="nf">displayViewController</span><span class="p">(</span><span class="n">vc</span><span class="p">,</span> <span class="nv">resetRootView</span><span class="p">:</span> <span class="n">resetRootView</span><span class="p">,</span> <span class="nv">animation</span><span class="p">:</span> <span class="n">animation</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>VIPER 패턴 특성상 서로 역할하고 있는 것이 분리되어 있기 때문에, Presenter에서는 화면을 “언제” 전환할지와 Wireframe에서 화면을 “어떻게” 전환할지 구분되어 있어 각각 화면 전환에 필요한 코드들이 존재하고 있습니다. VIPER 패턴에 익숙해지면 화면 전환 수정이 필요할 때 해당 파일에서 수정만 하면 금방 작업이 끝납니다. 하지만 단점은 화면 전환 수정할 때는 기본적으로 Presenter 혹은 Wireframe과 같이 수정하면 되지만, 새로운 화면으로 전환해야 한다면 VIPER 패턴 특성상 5개의 파일을 먼저 만들고 연결할 수 있어야 합니다. VIPER 패턴에 익숙하지 않다면 어디서 수정해야 하는지 파악하기 어려울 수 있으며, 특히 새로운 화면으로 전환해야 하는 작업임에도 불구하고 많은 작업이 필요합니다. 이런 이유로 인해, VIPER 패턴에 입문하는 개발자는 초기에 많은 어려움을 겪게 됩니다.
+<br /><br /></p>
+
+<h2 id="coordinator-패턴이란">Coordinator 패턴이란</h2>
+
+<p>앞에서 얘기했듯이, VIPER 패턴에서의 화면 전환 역할인 Router(Wireframe)를 MVVM 패턴으로 변경하면서 화면 전환하는 코드들을 view controller에 옮겨야 하는 상황이 되었습니다. View controller에 옮기기는 쉬우나, 이미 복잡하고 거대한 앱에서 view controller에서의 화면 전환 코드는 이후에 수정할 때 번거로울 수 있는 문제가 발생할 수 있습니다. MVVM 패턴에서도 화면 전환을 담당할 수 있는 게 없을까 찾다가 coordinator 패턴이라는 문구가 눈에 들어 왔습니다. Soroush Khanlou 개발자가 ‘2015 NSSpain talk’에서 발표했던 그 당시에 유명했던 coordinator <a href="https://khanlou.com/2015/01/the-coordinator/">블로그 포스트</a> 통해 coordinator 패턴이 유명해졌습니다.</p>
+
+<p>Coordinator 패턴에 대해서 간단하게 설명하자면, 화면 전환을 조금 더 flexible하게 사용할 수 있도록 하는 만들어주는 패턴입니다. VIPER의 Router처럼 화면 전환을 하지만, 여기서 더 나아가 어떤 화면에서 사용하더라도 화면 전환을 유연하게 사용할 수 있도록 해줍니다. 아래에서 코드를 활용해 조금 더 부연 설명하겠습니다.</p>
+
+<p>예를 들어, 상품 목록에서 상품 섬네일을 탭(tap)했을 때 상품 상세 화면으로 전환하고 있습니다. 상품 목록은 앱 실행했을 때 처음으로 나오는 홈 화면에도 있고, 검색 화면에서도 검색 결과로 상품 목록이 나타납니다. 그리고 이벤트 화면에서도 상품 목록이 나타납니다. 벌써 3개의 화면에서 상품 상세 화면으로 전환해야 합니다. 각 view controller에서 화면 전환을 해도 되지만, coordinator 패턴을 사용하여 구현해 보겠습니다.</p>
+
+<p>먼저 delegate protocol로 상품 상세 화면으로 전환하는 coordinator를 만들고, extension하여 화면 전환에 필요한 작업을 구현합니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">protocol</span> <span class="kt">ProductDetailCoordinator</span><span class="p">:</span> <span class="kt">AnyObject</span> <span class="p">{</span>
+  <span class="kd">func</span> <span class="nf">pushToDetail</span><span class="p">(</span><span class="n">_</span> <span class="nv">navigationController</span><span class="p">:</span> <span class="kt">UINavigationController</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">extension</span> <span class="kt">ProductDetailCoordinator</span> <span class="p">{</span>
+
+  <span class="kd">func</span> <span class="nf">pushToDetail</span><span class="p">(</span><span class="n">_</span> <span class="nv">navigationController</span><span class="p">:</span> <span class="kt">UINavigationController</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="nv">vc</span> <span class="o">=</span> <span class="kt">DetailViewController</span><span class="p">()</span>
+    <span class="n">vc</span><span class="o">.</span><span class="nf">setNavigationTitle</span><span class="p">(</span><span class="s">"상세화면"</span><span class="p">)</span>
+    <span class="n">vc</span><span class="o">.</span><span class="n">productId</span> <span class="o">=</span> <span class="n">productId</span>
+    <span class="n">navigationController</span><span class="o">.</span><span class="nf">pushViewController</span><span class="p">(</span><span class="n">vc</span><span class="p">,</span> <span class="nv">animated</span><span class="p">:</span> <span class="kc">true</span><span class="p">)</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>그리고 상세 화면으로 전환해야 하는 view controller에 coordinator를 담당하는 delegate를 만들고, 상세 화면으로 전환해야 하는 시점에 coordinator를 통해서 화면 전환하도록 합니다. 여기서는 상품 목록 중에 상품 섬네일을 탭 했을 때, coordinator를 통해 화면 전환하도록 했습니다.</p>
+
+<p>ListViewController.swift</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">ListViewController</span><span class="p">:</span> <span class="kt">UIViewController</span> <span class="p">{</span>
+  <span class="k">weak</span> <span class="k">var</span> <span class="nv">coordinator</span><span class="p">:</span> <span class="kt">ProductDetailCoordinator</span><span class="p">?</span>
+
+  <span class="o">...</span>
+
+  <span class="kd">func</span> <span class="nf">productTapped</span><span class="p">(</span><span class="n">_</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">coordinator</span><span class="p">?</span><span class="o">.</span><span class="nf">pushToDetail</span><span class="p">(</span><span class="n">navigationController</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span>
+  <span class="p">}</span>
+
+  <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>SearchResultViewController.swift</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">SearchResultViewController</span><span class="p">:</span> <span class="kt">UIViewController</span> <span class="p">{</span>
+  <span class="k">weak</span> <span class="k">var</span> <span class="nv">coordinator</span><span class="p">:</span> <span class="kt">ProductDetailCoordinator</span><span class="p">?</span>
+
+  <span class="o">...</span>
+
+  <span class="kd">func</span> <span class="nf">productTapped</span><span class="p">(</span><span class="n">_</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">coordinator</span><span class="p">?</span><span class="o">.</span><span class="nf">pushToDetail</span><span class="p">(</span><span class="n">navigationController</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span>
+  <span class="p">}</span>
+
+  <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>EventViewController.swift</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">EventViewController</span><span class="p">:</span> <span class="kt">UIViewController</span> <span class="p">{</span>
+  <span class="k">weak</span> <span class="k">var</span> <span class="nv">coordinator</span><span class="p">:</span> <span class="kt">ProductDetailCoordinator</span><span class="p">?</span>
+
+  <span class="o">...</span>
+
+  <span class="kd">func</span> <span class="nf">productTapped</span><span class="p">(</span><span class="n">_</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">coordinator</span><span class="p">?</span><span class="o">.</span><span class="nf">pushToDetail</span><span class="p">(</span><span class="n">navigationController</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span>
+  <span class="p">}</span>
+
+  <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>화면 전환 로직이 다 coordinator에 있기 때문에 view controller에서는 coordinator를 통해 화면 전환을 요청하면 됩니다. 또한, 하나의 coordinator를 가지고 여러 view controller에서 사용할 수 있으며, 만약 화면 로직에 수정이 필요하다면 coordinator에서만 로직 수정하면 됩니다. Coordinator를 사용한 view controller에서는 수정할 필요가 없고, 오로지 view에만 집중할 수 있게 됩니다.</p>
+
+<p>Coordinator 패턴을 적용하면서 두 가지를 할 수 있게 되었습니다. 첫 번째, 화면 전환 로직을 view controller에서 분리하여 비대해지는 view controller 문제를 해결했습니다. 두 번째, VIPER 패턴의 Router(Wireframe)의 역할을 하는 Coordinator패턴을 MVVM 패턴과 같이 적용하면서 코드 옮기는 작업이 수월해졌습니다.
+<br /><br /></p>
+
+<h2 id="coordinator-패턴-조금-더-알아봅시다">Coordinator 패턴, 조금 더 알아봅시다</h2>
+
+<h3 id="1-coordinator를-tab-bar-controller와-함께-사용해보기">1. Coordinator를 tab bar controller와 함께 사용해보기</h3>
+
+<p>앱 특성상 탭(tab)을 나눠서 tab 별로 담당하고 싶은 화면과 흐름이 있습니다. 이렇게 tab이 나뉘어 있을 때 주로 <code class="language-plaintext highlighter-rouge">UITabBarController</code>를 많이 사용하는데, coordinator도 탭이랑 같이 잘 사용할 수 있습니다. 각 하나의 탭을 하나의 coordinator가 담당하도록 설계하면 됩니다.</p>
+
+<p>앱의 전체 탭을 담당하는 MainTabBarController를 <code class="language-plaintext highlighter-rouge">UITabBarController</code>를 상속하여 만듭니다. 그리고 각 탭을 담당하는 coordinator를 만들어 MainTabBarController에 추가합니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">import</span> <span class="kt">UIKit</span>
+
+<span class="kd">class</span> <span class="kt">MainTabBarContoller</span><span class="p">:</span> <span class="kt">UITabBarController</span> <span class="p">{</span>
+
+  <span class="k">let</span> <span class="nv">home</span> <span class="o">=</span> <span class="kt">HomeCoordinator</span><span class="p">()</span>
+  <span class="k">let</span> <span class="nv">category</span> <span class="o">=</span> <span class="kt">CategoryCoordinator</span><span class="p">()</span>
+  <span class="k">let</span> <span class="nv">store</span> <span class="o">=</span> <span class="kt">StoreCoordinator</span><span class="p">()</span>
+  <span class="k">let</span> <span class="nv">bookmark</span> <span class="o">=</span> <span class="kt">FavoritesCoordinator</span><span class="p">()</span>
+  <span class="k">let</span> <span class="nv">profile</span> <span class="o">=</span> <span class="kt">ProfileCoordinator</span><span class="p">()</span>
+
+  <span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidLoad</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidLoad</span><span class="p">()</span>
+    <span class="nf">setupViewControllers</span><span class="p">()</span>
+  <span class="p">}</span>
+
+  <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>그리고 tab bar controller의 <code class="language-plaintext highlighter-rouge">viewControllers</code> property에 각 탭의 coordinator의 navigationController를 담은 배열로 세팅합니다. 탭별 아이콘 및 이름을 지정하는 작업도 필요합니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">func</span> <span class="nf">setupViewControllers</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">viewControllers</span> <span class="o">=</span> <span class="p">[</span><span class="n">home</span><span class="o">.</span><span class="n">navigationController</span><span class="p">,</span> <span class="n">category</span><span class="o">.</span><span class="n">navigationController</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">navigationController</span><span class="p">,</span> <span class="n">bookmark</span><span class="o">.</span><span class="n">navigationController</span><span class="p">,</span> <span class="n">profile</span><span class="o">.</span><span class="n">navigationController</span><span class="p">]</span>
+  <span class="c1">// 탭별 아이콘 및 이름을 지정하는 코드를 여기 혹은 원하는 곳에 작업해주세요</span>
+  <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>이제 만든 MainTabBarController를 앱 실행할 때 바로 세팅하도록 <code class="language-plaintext highlighter-rouge">AppDelegate</code> 파일에  설정합니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">AppDelegate</span><span class="p">:</span> <span class="kt">UIResponder</span><span class="p">,</span> <span class="kt">UIApplicationDelegate</span> <span class="p">{</span>
+  <span class="k">var</span> <span class="nv">window</span><span class="p">:</span> <span class="kt">UIWindow</span><span class="p">?</span>
+
+  <span class="kd">func</span> <span class="nf">application</span><span class="p">(</span><span class="n">_</span> <span class="nv">application</span><span class="p">:</span> <span class="kt">UIApplication</span><span class="p">,</span> <span class="n">didFinishLaunchingWithOptions</span> <span class="nv">launchOptions</span><span class="p">:</span> <span class="p">[</span><span class="kt">UIApplication</span><span class="o">.</span><span class="kt">LaunchOptionsKey</span><span class="p">:</span> <span class="kt">Any</span><span class="p">]?)</span> <span class="o">-&gt;</span> <span class="kt">Bool</span> <span class="p">{</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="kt">UIWindow</span><span class="p">(</span><span class="nv">frame</span><span class="p">:</span> <span class="kt">UIScreen</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">window</span><span class="p">?</span><span class="o">.</span><span class="n">rootViewController</span> <span class="o">=</span> <span class="kt">MainTabBarController</span><span class="p">()</span>
+    <span class="n">window</span><span class="p">?</span><span class="o">.</span><span class="nf">makeKeyAndVisible</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="kc">true</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>탭별로 coordinator 만드는 게 효율적으로 관리할 수 있고, 하나의 탭 coordinator에 어떤 것을 적용하면 다른 탭 coordinator에도 쉽게 적용할 수 있습니다.
+<br /><br /></p>
+
+<h3 id="2-coordinator를-protocol로-사용하기">2. Coordinator를 protocol로 사용하기</h3>
+
+<p>Coordinator 패턴을 사용하기 위해 delegate protocol 패턴으로 사용했습니다. iOS 프로그래밍하면 delegate 패턴에 익숙하고 얼마나 애플 플랫폼에서 많이 쓰이는지 알 수 있습니다. Delegate 패턴을 사용하기 위해서 protocol을 이용하는데, coordinator도 이런 protocol로 화면 전환하는 함수들을 선언하고, 구현체는 coordinator가 구현해야 하는 곳에 구현하면 저절로 delegate 패턴을 사용하게 됩니다. Protocol 사용하면서 장점은 용도 혹은 화면 단위로 쪼개서 만들 수 있는데, 점점 거대해지는 앱을 사용할 때 좋습니다.</p>
+
+<p>위에서 사용했던 상품 상세 화면 전환 coordinator를 다시 보여드리겠습니다. Protocol 이름은 coordinator하는 역할을 한눈에 볼 수 있도록 이름 지정하면 좋습니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">protocol</span> <span class="kt">ProductDetailCoordinating</span><span class="p">:</span> <span class="kt">AnyObject</span> <span class="p">{</span>
+  <span class="kd">func</span> <span class="nf">pushToProductDetail</span><span class="p">(</span><span class="n">_</span> <span class="nv">navigationController</span><span class="p">:</span> <span class="kt">UINavigationController</span><span class="p">,</span> <span class="nv">productId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>그리고 상품을 게시한 스토어의 프로필 화면으로 전환하는 coordinator를 만듭니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">protocol</span> <span class="kt">StoreDetailCoordinating</span><span class="p">:</span> <span class="kt">AnyObject</span> <span class="p">{</span>
+  <span class="kd">func</span> <span class="nf">pushToStoreDetail</span><span class="p">(</span><span class="n">_</span> <span class="nv">navigationController</span><span class="p">:</span> <span class="kt">UINavigationController</span><span class="p">,</span> <span class="nv">storeId</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>즐겨찾기 탭에서는 상품 상세로 갈 수 있고 스토어 프로필에 갈 수 있습니다. 해당 tab coordinator가 둘 다 필요하기 때문에 아래와 같이 추가합니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">FavoritesCoordinator</span><span class="p">:</span> <span class="kt">BaseCoordinator</span><span class="p">,</span> <span class="kt">ProductDetailCoordinating</span><span class="p">,</span> <span class="kt">StoreDetailCoordinating</span> <span class="p">{</span>
+</code></pre></div></div>
+
+<p>상품 목록과 스토어 목록이 둘 다 있는 화면에서는 상품 상세 화면과 스토어 프로필 화면으로 갈 수 있습니다. FavoriteListViewController에서 coordinator property를 아래와 같이 선언할 수 있습니다.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">FavoriteListViewController</span><span class="p">:</span> <span class="kt">UICollectionViewController</span> <span class="p">{</span>
+
+  <span class="k">weak</span> <span class="k">var</span> <span class="nv">coordinator</span><span class="p">:</span> <span class="p">(</span><span class="kt">ProductDetailCoordinating</span> <span class="o">&amp;</span> <span class="kt">StoreDetailCoordinating</span><span class="p">)?</span>
+
+  <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Protocol로 지정하면 역할 혹은 용도에 따라서 분리할 수 있고 얼마든지 다른 protocol로 수정하거나 추가할 수 있습니다. 이처럼 protocol을 이용하면 coordinator 패턴이 flexible하게 사용할 수 있습니다.
+<br /><br /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>화면 전환 로직을 view controller에서 분리하는 것이 view controller를 light하게 사용 및 관리할 수 있습니다. 그리고 화면 전환에 대한 수정 혹은 추가 작업을 coordinator, router처럼 특정 역할로 사용되고 있는 곳에서만 수정하면 되기 때문에 관리 및 편리성이 높아집니다. Coordinator 패턴을 적용하는 또 다른 이유는 5년이 지난 앱 구조를 조금씩 개선하고 싶어서입니다. 앞으로 더 발전시키고, 시도해보고 싶은 요소가 점점 더 많아지고 있기에 , 앱을 어떻게 더 잘 만들어갈 수 있을까 하는 마음이 점점 더 커집니다. 이 마음 놓치지 않으려, 올해도 여전히 밤늦게까지 공부하고 있습니다. 쭉쭉 발전해 나가는 앱을 기대해주세요! :D</p>
+:ET

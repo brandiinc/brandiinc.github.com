@@ -1,0 +1,361 @@
+I"}\<h1 id="overview">Overview</h1>
+<p>“githubPage로 기술 블로그를 만들자!” <br />
+“jekyll로 만들면 한두 시간이면 가능할 거야!” <br />
+지난 1월, 브랜디 기술 블로그 제작 작업을 시작했습니다. 다양한 삽질과 험난한 여정의 결과물인 기술 블로그의 제작 및 커스터마이징 과정을 소개하겠습니다.<br /><br /></p>
+
+<p>GithubPage는 Github에서 공식적으로 운영하는 블로그 서비스입니다. 이곳엔 개발자들의 경험이나, 코드가 업로드되어 있습니다. 저장 공간도 무료로 제공되고, 도메인 연결도 편리하게 할 수 있지만, 무엇보다 GithubPage 혹은 GithubIO라고 하면 개발자 스멜이 풀풀 나기 때문에 선택의 이유가 되는거 같습니다.<br /><br /></p>
+
+<p>GitgubPage 제작 프로그램은 jekyll, HEXO가 가장 많이 쓰입니다. 브랜디의 기술 블로그는 템플릿의 종류도 많고, 더 어울리는 <a href="http://jekyllthemes.org/" target="_blank">jekyll</a>을 선택했습니다.
+<br /><br />
+jekyll 공식 사이트는 <a href="https://jekyllrb-ko.github.io/" target="_blank">여기</a>를 클릭하세요.  한국어도 지원하니 아주 멋집니다. 변역된 문서가 2015년 11월 23일 문서인 게 함정이지만 기능의 거의 유사하기 때문에 문제될 것은 없습니다. <br /><br /><br /></p>
+
+<h2 id="1-준비물을-챙기자">1. 준비물을 챙기자!</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ gem install jekyll
+$ jekyll new my-awesome-site
+$ cd my-awesome-site
+/my-awesome-site $ jekyll serve
+</code></pre></div></div>
+<div style="text-align:center">▲ jekyll 설치 스크립트</div>
+<p><br />
+이제 브라우저로 http://localhost:4000 에 접속합니다.<br /><br /></p>
+
+<p>메인에 내거는 것처럼 설치와 실행이 쉽지만 몇 초 만에 되진 않습니다. 설치가 몇 분 정도 걸리고 ruby나 bundler같은 선행 조건이 갖춰져야 하기 때문입니다.<br /><br /></p>
+
+<p>ruby는 있는데 bundler가 없다면 아래와 같이 설치하면 됩니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem install bundler
+</code></pre></div></div>
+<p><br />
+설치가 잘 되고, 사이트 생성 후 실행을 했다면  브라우저와 함께 기본 페이지가 뜹니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/00.png" alt="00" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>설치가 성공했다!</figcaption>
+
+<p><br /><br /></p>
+
+<h2 id="2-1차-멘붕-이제-무엇을">2. 1차 멘붕, 이제 무엇을?</h2>
+<p>설치는 제법 쉽게 했지만 ‘이제 무엇을 해야 하나’ 막막하기만 합니다. 블로그 작성에 대한 아무런 가이드도 없고, 페이지나 이미지 추가 확인 등의 작업을 커멘드로만 하려니 힘들고 아찔하기만 합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>커멘드 지옥..</figcaption>
+
+<p><br />
+jekyll admin을 검색했더니 이런저런 아이들이 나옵니다. 그중에 <a href="https://github.com/jekyll/jekyll-admin/blob/master/README.md" target="_blank">jekyll 공식 플로그인</a>을 선택했습니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>jekyll-admin 공식 사이트 이미지</figcaption>
+
+<p><br />
+그런데 사이트 메뉴얼만 보고 설치하기 쉽지 않습니다. 이제 막 jekyll 띄웠을 뿐인데 플로그인은 어떻게 추가하는지 알 길이 없습니다. 이런저런 삽질을 거듭하고 안 되는 영어를 해석하다 보니 얼떨결에 성공했습니다.<br /><br /></p>
+
+<p>추가한 프로젝트 root에 보시면  Gemfile이 존재합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+아마도 사이트 제너레이트 시 실행되는 스크립트인 것 같습니다. 파일을 열고 아래와 같이 추가합니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 아래와 같이 한줄 추가해주세요
+gem 'jekyll-admin', group: :jekyll_plugins
+</code></pre></div></div>
+<p><br />
+프로젝트 root로 이동해 설치를 요청합시다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bundle install
+</code></pre></div></div>
+<p><br />
+달라진 게 없어 보여도 http://localhost:4000/admin 으로 접속하니 아뉫! 관리자가 설치되었습니다. 이제 한시름 놓입니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/04.jpeg" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<br /><br /></p>
+<h2 id="3-마크다운-넌-누구">3. 마크다운, 넌 누구?</h2>
+<font color="#ff4c42">마크다운을 잘 안다면 넘어가도 됩니다.</font>
+<p><br /></p>
+
+<p>관리자를 설치하고 나면 그나마 좀 할만하지만 막상 글을 쓰려고 보니 무언가 다릅니다. HTML이나 위지윅 에디터도 아니고 Textarea만 덩그러니 있기 때문입니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/05.jpeg" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>...</figcaption>
+
+<p><br />
+마크다운은 위키나 Github페이지 설명 작성 등에 쓰이는 언어입니다.1) HTML을 어느정도 한다면 문법만 읽어도 금방 이해할 수 있습니다. 생각보다 어렵지 않아서 간단한 문서 작성은 수월하게 가능합니다. 무엇보다 코드를 붙여넣을 때 아주 좋습니다. <br /><br /></p>
+
+<pre>
+``` PHP
+코드 내용
+```
+</pre>
+
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+위의 그림처럼 작성하면 자동적으로 신텍스 하이트라이트가 적용되니 개발 코드를 전달하기 편리합니다.<br /><br /><br /></p>
+
+<h2 id="4-posts-pages-static-files-data-files">4. Posts? Pages? Static Files? Data Files?</h2>
+<p>확실히 jekyll은 그동안 봤던 블로그나 워드프레스 등 유명한 블로그와는 많이 다릅니다. 일단 개념부터 짚어보겠습니다. <br /><br /></p>
+
+<p><strong>Posts</strong><br />
+Post는 한 개의 글을 지칭합니다. 블로그의 글 하나입니다. 어느 정도 구축이 되면 Post에서 글만 작성해도 쉽게 운영할 수 있습니다.<br /><br /></p>
+
+<p><strong>Pages</strong><br />
+Post처럼 계속 추가되는 형태가 아닌 고정 페이지를 작성할 때 씁니다. About이나, 채용, 회사소개 등 Post와 분리가 필요한 글을 작성할 때 유용합니다.<br /><br /></p>
+
+<p><strong>Static Files</strong><br />
+정적 리소스를 올리는 기능입니다. 생각보다 버그가 많아서 사용하기 쉽지 않습니다. 저는 이 기능을 커스터마이징해서 약간 쓰기 쉽게 바꾸었지만 쉽지는 않았습니다. 자세한 관리자 커스터마이징은 나중에 다루겠습니다.<br /><br /></p>
+
+<p><strong>Data Files</strong><br />
+정적 데이터를 다루는 기능입니다. 저자 관리나 공통 변수를 담아두면 편리하게 쓸 수 있는 기능입니다. 역시나 버그가 넘쳐납니다. 당분간은 그냥 파일을 직접 수정하는 게 나을 겁니다.<br /><br /><br /></p>
+
+<h2 id="5-블로그-제목-등-설정을-바꾸고-싶다면">5. 블로그 제목 등 설정을 바꾸고 싶다면</h2>
+<p>관리자의 configuration 메뉴를 이용하거나, 프로젝트 루트에서 _config.yml 을 열고 수정해도 됩니다. 사이트에서 사용할 전역 변수나, 플로그인, 기본값 등을 관리해주기 때문에 자주 수정하는 파일입니다. <br /><br /></p>
+
+<p>제목을 변경하려면 title을 찾아서 변경하면 됩니다. 그외의 하단 문구는 buttomtitle을 변경하면 됩니다. 아래 보이는 각종 정보들은 맞게 수정하면 되고,  social: 밑에 있는 정보들은 나중에 페이스북 공유나, 트위터 공유 등으로 사용할 수 있습니다. 해당 정보가 없거나 공유를 원치 않는다면 share를 false로 변경합니다. _config.yml은 수정 후 재시작을 해야만 반영되므로 jekyll를 다시 실행하면 됩니다.<br /><br /><br /></p>
+
+<h2 id="6-테마를-적용하자">6. 테마를 적용하자</h2>
+<p><a href="http://jekyllthemes.org/" target="_blank">테마 기능</a>은 jekyll를 선택한 가장 중요한 이유였습니다. 멋진 디자인과 추가로 구현된 특수한 기능들은 jekyll이 가지고 있는 큰 메리트입니다. 테마를 사용하려면 소스를 다운로드 받고 압축을 해제해 사용하거나 git checkout 하면 됩니다. 해당 폴더로 이동해 실행하면 테마를 쉽게 사용할 수 있습니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>jekyll serve
+</code></pre></div></div>
+<p><br />
+jekyll은 테마가 완성된 프로젝트 개념이기 때문에 바로 사용이 가능하지만 마이그레이션 이슈가 있습니다. 마이그레이션은 _post의 있는 파일과 _page에 있는 파일을 그저 테마 프로젝트 폴더에 덮어쓰기하면 됩니다.<br /><br /></p>
+
+<p>아쉽게도 _config.yml파일은 다시 세팅하는 게 빠릅니다. 어드민 설정 부분도 다시 하면 됩니다. 테마마다 약간씩 기능이 달라 마이그레이션이 안 되는 경우도 있으니 테마는 초기에 선택하는 게 좋습니다. 브랜디 랩스는 <a href="http://jekyllthemes.org/themes/centrarium/" target="_blank">Centrarium 테마</a>를 적용했습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/06_2.jpeg" alt="06_2" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>테마가 적용된 화면</figcaption>
+
+<p><br /><br /></p>
+
+<h2 id="7-글에-이미지를-어떻게-넣을까">7. 글에 이미지를 어떻게 넣을까?</h2>
+<p>글을 쓰면 참고자료로 쓸 이미지도 필요합니다. static file에 업로드 기능이 있지만 업로드를 하면 프로젝트 루트 폴더에 업로드되어 관리상 좋지 않습니다. 앞서 공유한 것처럼 해당 기능 개선에 대해서는 다루지 않을 것이기 때문에 수기로 이미지를 관리하는 방법을 소개하겠습니다.<br /><br /></p>
+
+<p>로컬 프로젝트 기준에서 _site는 제너레이트된 최종결과라고 할 수 있습니다. 그래서 _site 폴더에 assets와 같은 폴더가 있으나 그 폴더에 올리면 덮어쓰기와 동시에 초기화 되므로 반드시 프로젝트 루트의 assets에 파일을 올려주시면 됩니다. 폴더를 생성하는 것도 문제 없으므로 포스팅마다 이미지를 나누길 권장합니다. 이미지가 폴더에 복사가 되었다면 이제 글에 넣어봅시다.<br /><br /></p>
+
+<p>마크다운 위지윅을 이용해도 좋고 이미지 부분을 HTML코드롤 사용해도 좋습니다. 마크다운으로 이미지를 추가할려면 아래처럼 사용하면 됩니다.
+<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>![이내용은 alt속성으로 치환됨](/assest/20180118/test.jpg "이 내용은 타이틀로 치환 됨")
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/06_3.png" alt="06_3" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>assets/test.jpg</figcaption>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/06_4.png" alt="06_4" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>적용된 이미지</figcaption>
+
+<p><br />
+이미지의 사이즈나 정렬을 변경하는 건 다음에 다루겠습니다.<br /><br /><br /></p>
+
+<h2 id="8-gnav-변경은-어떻게-할까">8. Gnav 변경은 어떻게 할까?</h2>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/top.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>커스터마이징한 Gnav영역</figcaption>
+
+<p>테마도 적용했고, 글도 쓸 수 있지만 안 쓰는 기능 삭제를 비롯해 손볼 곳은 아직 많습니다. (분명 한두 시간이면 된다고 했던 일이 2주째 수정 중입니다…) 화면 구성을 고치려면 프로젝트에 포함되어 있는 템플릿 파일을 고쳐야 합니다. <br /><br /></p>
+
+<p>템플릿은 Liquid 라는 언어로 구성되어 있으며, 문법이 좀 난해하지만 충분히 헤쳐 나갈 수 있습니다. 다만 어디서부터 어떻게 고쳐야 하는지를 파악하는 게 어렵죠. 문법은 <a href="http://shopify.github.io/liquid/" target="_blank">공식 사이트</a>를 참고하고, 사용 가능한 변수는 <a href="http://jekyllrb-ko.github.io/docs/variables/" target="_blank">여기</a>를 참고하면 됩니다.<br /><br /></p>
+
+<p>사용 가능한 변수는 site와 page로 나눌 수 있습니다. site는 _config.yml 설정한 내용과 jekyll이 지원하는 전역 변수들입니다. page는 해당 페이지에 지정된 세부 변수들입니다. 글의 제목이나 경로 내용들은 기본적으로 세팅되어 있습니다. 추가적인 값을 다루려면 post를 작성하면서 meta정보를 추가하면 됩니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/07.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+템플릿의 시작파일은 index.html이고, 페이지에 layout이 지정되었다면 _layouts  안에 있는 [layout].html이 됩니다. 기본적 틀은 _layout/default.html에서 파생됩니다. 그외 파츠로 사용되는 HTML파일은 _includes에 넣고 `{% include header.html %} 같은 방식으로 추가하면 됩니다. <br /><br /></p>
+
+<p>우리 변경하려는 파츠는 <code class="language-plaintext highlighter-rouge">header.html</code>에 있습니다. <code class="language-plaintext highlighter-rouge">site.pages</code>에는 모든 페이지가 들어있기 때문에 그중에 gnav가 지정된 글만 상단에 노출되게 했습니다. 그리고 상단 글에 대한 정렬이 없기 때문에 좋은 방식은 아니지만 1~10까지 숫자를 기입하면 순서대로 나오게 코드를 구성했습니다. (<code class="language-plaintext highlighter-rouge">site.pages</code>에는 <code class="language-plaintext highlighter-rouge">posts</code>와 <code class="language-plaintext highlighter-rouge">pages</code>가 같이 나옵니다.)<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{% for i in (1..10) %}
+  {% for page in site.pages %}
+    {% if page.title and page.gnav == i %}
+    &lt;li class="nav-link"&gt;&lt;a href="{{ page.url | prepend: site.baseurl }}"&gt;{{ page.title }}&lt;/a&gt;
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/06_5.png" alt="06_5" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>글에 옵션을 지정한 화면</figcaption>
+
+<p><br />
+이제 pages에서 상단에 노출하고 싶은 글만 gnav를 숫자로 부여해 노출할 수 있게 변경했습니다.<br /><br /><br /></p>
+
+<h2 id="9-스타일-변경은-어떻게-할까">9. 스타일 변경은 어떻게 할까?</h2>
+<p>sass로 구성된 스타일의 변경은 심도있게 다루지 않으려고 합니다. sass를 처음 사용한 것도 있지만 내용이 너무 깊어지기 때문입니다.  스타일변경은 _sass 밑에있는 scss 파일을 변경하면 되고, 템플릿마다 구조가 다르기 때문에 열심히 찾는 수밖에 없습니다.<br /><br /><br /></p>
+
+<h2 id="10-저자-기능을-추가해보자-1">10. 저자 기능을 추가해보자 (1)</h2>
+<p>최고의 난이도를 자랑하는 신규 기능 추가입니다. 브랜디의 기술 블로그에서는 작성자를 클릭하면 작성자의 글만 따로 모아서 볼 수있습니다. 하지만 이 기능은 공식적으로 지원되는 것이 아니기 때문에 처음부터 만들어야 했습니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/08.png" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>완성된 작성자 기능</figcaption>
+
+<p><br />
+위의 이미지와 같은 기능을 구축하려고 collection을 사용했습니다. collection은 posts나 pages와 같이 그룹핑된 글 목록을 이야기 합니다. posts나 pages는 기본 세팅되어 있고, 약간(?)의 설정 변경으로 collection을 추가할 수 있습니다. 작성자의 메인 페이지가 필요하니 authors라는 collection을 추가해보겠습니다. <br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># _config.yml
+collections:
+  authors:
+    title: Authors
+    output: true
+</code></pre></div></div>
+<p><br />
+jekyll을 재시작하면 아래와 같이 Authors가 관리자에 추가된 것을 볼 수 있습니다. <br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/09.png" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+authors는 작성자 메인 페이지만 생성하면 되므로, 내용에는 작성자에 대한 소개글만 간략히 쓰면 됩니다. jekyll admin에 한글 버그가 있기 때문에 우선 영어로 작성하고, 제목을 다시 한글로 수정하면 됩니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/10.png" alt="10" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+포스팅마다 저자의 정보가 공통적으로 나와야 하기 때문애 위의 전역변수에 authors를 추가해 따로 관리하게 했습니다.<br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180514/11.png" alt="11" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># data/authors.yml
+# authors 공용 변수
+  - name: chunbs
+    koname: 천보성 팀장
+    email: chunbs@brandi.co.kr
+    position: R&amp;D 개발2팀
+    img: /assets/profile/chunbs.jpg
+  - name: kangww
+    koname: 강원우 과장
+    email: kangww@brandi.co.kr
+    position: R&amp;D 개발2팀
+    img: /assets/profile/kangww.jpg
+</code></pre></div></div>
+<p><br /><br />
+그리고 작성자의 포스팅을 엮어주려고 작성자의 아이디가 같을 때, 포스팅으로 나오게 구성합니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{% if post.author %}
+{% for author in site.data.authors %}
+  {% if post.author == author.name %}
+  &lt;a href="{{ site.baseurl }}/authors/{{ post.author }}"&gt;{{author.koname}}&lt;/a&gt;
+  {% endif %}
+{% endfor %}
+{% endif %}
+</code></pre></div></div>
+
+<p><br /><br /><br /></p>
+
+<h2 id="11-저자-기능을-추가해보자-2">11. 저자 기능을 추가해보자 (2)</h2>
+<p>데이터가 준비되었다면 저자 레이아웃을 추가해야 합니다.(이거 도대체 언제 끝날까요) 저자가 작성한 글만 노출되어야 하는 게 어려울 수도 있지만 jekyll의 구동 원리를 이해하면 손쉽게 할 수 있습니다.<br /><br /></p>
+
+<p>jekyll은 내용 수정이 발생되면 전체를 다시 컴파일하는 구조입니다. 다시 말해 일부 파일이 변경되면 노출되는 모든 html파일을 다시 랜더링해서 write하는 것입니다. author의 각 작성자 페이지는 컬렉션에 포함되어 있기 때문에 랜더링이 발생하고
+<code class="language-plaintext highlighter-rouge">site.posts</code>엔 작성된 모든 페이지 정보가 있습니다. <code class="language-plaintext highlighter-rouge">site.posts</code>를 <code class="language-plaintext highlighter-rouge">foreach</code>를 돌리고, 저자가 일치하는 페이지만 리스트로 보여줍시다. <br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{% for post in site.posts %}
+&lt;!-- author 정보가 저자와 같은 경우만 리스트로 출력한다. --&gt;
+{% if post.author == page.author %}
+&lt;li&gt;
+  &lt;h2&gt;
+    &lt;a class="post-link" href="{{ post.url | prepend: site.baseurl }}"&gt;{{ post.title }}&lt;/a&gt;
+  &lt;/h2&gt;
+  &lt;section class="post-excerpt" itemprop="description"&gt;
+    &lt;p&gt;{{ post.content | strip_html | truncatewords: 25 }}&lt;/p&gt;
+  &lt;/section&gt;
+  &lt;section class="post-meta"&gt;
+    &lt;div class="post-date"&gt;{{ post.date | date: "%Y-%m-%d" }}&lt;/div&gt;
+    &lt;div class="post-categories"&gt;
+      {% if post.author %}
+        {% for author in site.data.authors %}
+          {% if post.author == author.name %}
+          &lt;a href="{{ site.baseurl }}/authors/{{ post.author }}"&gt;{{author.koname}}&lt;/a&gt;
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    &lt;/div&gt;
+  &lt;/section&gt;
+&lt;/li&gt;
+{% if forloop.last == false %}
+&lt;hr&gt;
+{% endif %}
+
+{% endif %}
+{% endfor %}
+</code></pre></div></div>
+
+<p><br /><br /><br /></p>
+<h1 id="conclusion">Conclusion</h1>
+<p>jekyll admin은 은근히 버그가 많습니다. 그래도 ‘md파일을 메모장으로 작성하세요’라고 하는 것보단 편하죠. 다양한 기술을 사용하기 때문에 어려울 수도 있겠습니다. 글에서 소개할 수 없거나, 너무 깊어지는 내용은 소개에서 제외했습니다. 양해를 부탁드립니다. 대신에 브랜디 랩스는 저의 피땀 눈물로 만들어졌다는 걸 기억해주세요…
+<br /><br /><br /></p>
+
+<p><strong>기타</strong><br />
+jekyll의 기본값 설정을 이용하면 layout과 같은 공통적인 부분을 쉽게 설정할 수 있다.<br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># _config.yml
+defaults:
+- scope:
+    path: ''
+    type: posts
+  values:
+    #permalink: "/blog/:title/"
+    layout: post
+    cover: /assets/default.jpg
+    author:
+- scope:
+    path: ''
+    type: authors
+  values:
+    layout: author
+    cover: /assets/author.jpg
+    subtitle: ~담당하고 있습니다.
+    author: 영문이름
+</code></pre></div></div>
+<p><br /></p>
+
+<p>jekyll admin이 버그가 많아서 업로드 기능은 커스터마이징 했다. <br /></p>
+<ul>
+  <li>루비와 UI코드를 고쳐서 다시 빌드하는 어지러운 작업을 했다.</li>
+  <li>만약 버그를 고치기 어렵다면 IDE로 파일을 직접 수정하는 게 안전하다.
+<br /><br /></li>
+</ul>
+
+<p><strong>참고</strong> <br />
+1)마크다운 작성법은 <a href="https://gist.github.com/ihoneymon/652be052a0727ad59601" target="_blank">여기</a>를 참고하세요.</p>
+:ET

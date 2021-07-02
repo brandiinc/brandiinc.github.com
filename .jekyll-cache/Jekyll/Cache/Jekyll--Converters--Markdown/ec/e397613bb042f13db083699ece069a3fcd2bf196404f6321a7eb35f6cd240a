@@ -1,0 +1,193 @@
+I"m6<p>이 글은 REST API 설계를 위해 검색하였을 때, 그래서 REST가 뭐지? 하는 의문을 가졌던 필자 자신을 돌아보며, 기존 브랜디 관리자 프로젝트를 신규 API 프로젝트로 이관하면서, API의 개발된 API의 문서화를 위해 Swagger를 채택하여 적용하기까지의 과정을 공유하기 위해 이 글을 작성합니다.</p>
+
+<p>*REST에 대한 필자의 주관적인 견해가 포함되어 있음을 미리 말씀드립니다.
+<br /><br /></p>
+
+<h3 id="overview">Overview</h3>
+
+<p>웹 개발에 관심이 있거나 웹 개발을 진행하다 보면 채용공고나 문서에서 ‘Restful API 설계’, ‘Restful API에 대한 이해’ 등의 문구를 흔히 볼수 있습니다. 하지만 ‘Restful 하다는 설계의 정의는 무엇일까?’,  ‘설계 규칙을 따르면 Restful일까?’ 하는 의문들은 완벽하게 해소되지 못하였고, 항상 개운하지 못한 상태에서 작업을 진행하게 되었습니다. 그래서 이게 Restful인가하며 되물었던 경험을 정리하려는 목적으로 이 글을 작성하게 되었습니다. 더불어 야크 털을 깎을 거면 제대로 깎아야지 하는 생각과 2000년의 로이 필딩은 무슨 말을 했던 것일까라는 생각을 함께 하며 논문과 RFC문서까지 찾아보게 된 과정을 그립니다.
+<br /><br /></p>
+
+<h3 id="restful-api"><strong>Restful API</strong></h3>
+
+<p>REST란 Representational State Transfer의 줄임말로 … (후략) 검색을 통해 얻은 거의 모든 문서에서 볼수 있는 문구였습니다. REST는 로이 필딩의 논문에서 2000년에 처음 등장한 아키텍쳐라고 하는데, 도대체 무슨 뜻인지, 논문에 어떤 내용이 있는 것인지 직접 찾아보게 되었습니다.</p>
+
+<p>하지만 논문을 아무리 읽어 보아도 REST는 표준이나 프로토콜 규약 등으로 정해진 내용이 아니기 때문에, 얼마든지 다양한 방식으로 API를 개발하는 개발자의 철학이나 스타일이 구현에 영향을 미치게 됩니다. 로이 필딩의 논문에서도, 컨벤션에 대한 제안이나 내용은 당시 논문에서 확인할수 없었습니다.
+<br /><br /></p>
+
+<p><strong>그래서 REST는?</strong></p>
+
+<p>딱딱한 컨벤션과 거창한 개념적 원리가 아닌 다음의 특징을 가진 API 서버의 네트워크 아키텍쳐입니다.</p>
+
+<ol>
+  <li>Client-Server : 클라이언트/서버 구조로 구성되어 있어, 서버 구성요소를 단순화 하고 확장성을 높일수 있으며, 사용자 인터페이스는 여러 플랫폼으로 이식이 가능한 구조이다.</li>
+  <li>Stateless : 요청 간에 클라이언트 정보가 저장되지 않으며 세션 상태는 클라이언트에만 유지된다.</li>
+  <li>Cache : 클라이언트-서버 상호 작용의 평균 지연 시간을, 캐싱을 통해 줄여 효율성 및 확장성을 개선한다.</li>
+  <li>Uniform Interface : 일관된 인터페이스를 통한 웹의 일반적인 케이스에서는 REST 구조가 최적화 되어있다.</li>
+  <li>Layered System : API서버는 계층화된 구조로 개발이 가능하다. 클라이언트는 API 서버를 호출하나<br />
+해당 API 서버에서는 계층화된 구조로 레거시 시스템을 캡슐화 하여 사용할 수도 있으며, 사용자 인증 등의 절차를 가진 다양한 계층 구조로 개발할 수 있다.</li>
+  <li>Code on Demand (optional) : 서버에서 클라이언트에게 실행 가능한 코드를 전송하여 클라이언트의 기능을 확장할 수 있다.
+<br /><br /></li>
+</ol>
+
+<p><strong>REST의 Uniform Interface / 주요 Data Element</strong></p>
+
+<ol>
+  <li>Resource : 하이퍼텍스트 참조에서 의도된 개념적 대상</li>
+  <li>Resource Identifiers (리소스 식별자) : 각각의 리소스는 URI(Uniform Resource Identifier)로 자원을 재정의 하는 것에 사용된다. Modern Web Examples -&gt; URL/URN
+    <ul>
+      <li>자원의 재정의 : 식별자는 가능한 드물게 변경되어야 하며, REST는 참조가 생성될 때 의미에 해당하는 값이 아니라 작성자가 식별하려는 의미가 되도록 리소스를 정의하여 이를 수행한다.</li>
+    </ul>
+  </li>
+  <li>Representation : HTML document, image 파일
+<br /><br /></li>
+</ol>
+
+<p><strong>RFC3986 (Uniform Resource Identifier (URI): Generic Syntax)을 통해 볼수 있는 REST의 설계방향</strong></p>
+
+<ul>
+  <li>Resource (자원) : URI로 식별할 수 있는 모든 것을 칭한다.</li>
+  <li>Identifier (식별자) : 식별자는 식별 범위 내의 다른 자원들과 식별 될 내용을 구별하기 위해 필요한 정보를 포함한다.</li>
+  <li>URI는 계층구조를 가지며, 일반적인 구문에서는 슬래시(“/“)와 물음표(“?”), #으로 구분된다.</li>
+  <li>Path는 슬래시로 구분되며, 계층구조를 가지고 첫물음표와, #기호 이전을 Path로 간주한다.</li>
+  <li>Query는 비계층구조이며, “key=value” 쌍을 나타낸다.
+<br /><br /></li>
+</ul>
+
+<p><strong>그래서 브랜디는?</strong></p>
+
+<ul>
+  <li>REST란? RESTful API란? 이라는 키워드로 여러 문서를 참고하고, 필딩의 논문과 RFC 문서를 통해 필자가 도달한 결론은 ‘일관성 있게 http method와 경로를 보고 리소스 간의 관계와 기능을 유추할 수 있는 API서버를 만들자’였습니다.</li>
+  <li>/product/getProductList 혹은 /product/get_product_list 등의 경로가 현재도 여러 웹사이트에서 사용되고 있지만, API 서버 이관 작업을 진행하면서는 RESTful에 가까운 설계를 하기로 결정하였습니다.</li>
+  <li>간단하게 구성된 REST API 서버의 상품 컨트롤러에서는 상품리스트 가져오기, 상품상세 보기, 상품 등록, 상품 수정, 상품 삭제 등의 작업이 이루어질 것입니다.</li>
+</ul>
+
+<p>[AS-IS] 예시</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/product/getProductList
+/product/getProductDetail?product_id=12345
+/product/createProduct
+/product/modifyProduct
+/product/deleteProduct
+</code></pre></div></div>
+
+<p>[TO-BE] 예시</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[GET] /products
+[GET] /products/{product_id}
+[POST] /products
+[PUT] /products/{product_id}
+[DELETE] /products/{product_id}
+</code></pre></div></div>
+
+<p>각각의 작업들은 HTTP method와 경로를 통해 각 기능을 유추할 수 있으며, 일관된 인터페이스를 유지하고 있다는 점이 기존의 라우팅 구조와 차이를 나타내고 있습니다.</p>
+
+<p>두 방법 모두 경로를 통해 어떤 작업이 이루어질 수 있을지에 대한 유추는 가능하지만, 두 번째 방법에서는 HTTP method에 대한 내용이 명확하지 않을 수 있습니다. 실제로 많은 웹사이트에서 사용되고 있기 때문에 잘못된 방식이라 단정 지을수는 없지만, RESTful API와는 거리가 있습니다.</p>
+
+<p>계층 구조를 가진 예시를 살펴보도록 하겠습니다.</p>
+
+<p>특정 이벤트 페이지에 노출되는 상품을 관리할 경우에는 계층 구조를 경로에 담아 표현해야 합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[GET] /events/{event_id}/products                 # 이벤트 페이지에 매핑된 상품 리스트
+[POST] /events/{event_id}/products                # 이벤트 페이지에 매핑될 상품 등록
+[PUT] /events/{event_id}/products                 # 이벤트 페이지에 매핑될 상품의 수정
+[DELETE] /events/{event_id}/products/{product_id} # 이벤트 페이지에 매핑된 특정 상품의 삭제
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="why-swagger">Why Swagger?</h3>
+
+<p>여러 개발자가 협업을 하는 환경에서는 API 문서화가 필수적인 요소라고 생각합니다. 문서화 도구를 선택할 때 고려했던 사항은 크게 세가지였습니다.</p>
+
+<ol>
+  <li>무료로 제공되었으면 ..</li>
+  <li>테스트가 가능하다면 ..</li>
+  <li>쉽게 사용할 수 있으면 ..</li>
+</ol>
+
+<p>세가지 고려사항을 만족하며 깔끔한 UI를 제공하는 툴로 swagger를 채택하게 되었습니다.
+<br /><br /></p>
+
+<p><strong>그래서 브랜디의 API 문서화는?</strong></p>
+
+<p>flask의 경우 restplus, flask-swagger, Django의 경우 django_rest_swagger, drf-yasg 등을 제공하고 있으니 쉽게 적용이 가능할 것으로 생각했으나, 자체 데코레이터와 라우터 레이어 환경에서는 제공된 모듈과 원활한 호환이 이루어지지 않아 본격적인 바퀴만들기에 돌입하게 됩니다.</p>
+
+<p>처음에는 yml 형식이나 json형식의 파일을 직접 작성하는 것도 고려했지만, 개발 작업을 하며 문서까지 모든 수정사항에 대한 스웨거 파일을 직접 수정하는 것은 프로젝트가 확장되고 많은 작업자들이 작업하는 환경에서는 관리의 어려움이 생길 수밖에 없다는 생각이 들었습니다.</p>
+
+<p>그렇기 때문에 프로젝트의 함수 개발시 작성한 docstring을 파싱하여, yml 파일을 생성하는 방향으로 결정하였습니다.</p>
+
+<p>docstring을 파싱하는 방식의 장점</p>
+
+<ol>
+  <li>별도 문서화 과정 없이 docstring 작성을 통해 swagger 파일을 생성하여 관리가 쉽다.</li>
+  <li>제공된 패키지와 달리 언제든 커스터마이징이 가능하다.</li>
+</ol>
+
+<p>브랜디 서비스에 적용할 때의 단점</p>
+
+<ol>
+  <li><del>누군가는 바퀴를 만들어야한다.</del></li>
+</ol>
+
+<p>그 결과 Docstring을 파싱하여 OpenAPI 스펙에 맞는 yml파일을 생성하는 모듈을 제작하여, localhost 라우팅되는 flask App을 통해 swagger 문서를 공유할 수 있도록 하였습니다.</p>
+
+<p>docstring의 예시)</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">@</span><span class="n">brandi</span><span class="p">.</span><span class="n">aws</span><span class="p">.</span><span class="n">api</span><span class="p">(</span><span class="s">'/products/{product_id}'</span><span class="p">,</span> <span class="s">'GET'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_product_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product_id</span><span class="p">):</span>
+    <span class="s">"""상품 상세
+
+    Args:
+        product_id (int): 상품 PK
+
+    Response:
+        200: Success Response
+        204: No Content
+        400: Bad Request
+        401: Unauthorized
+        403: Forbidden
+        500: Internal Server Error
+        503: Service Unavailable
+
+    Returns:
+        dict
+
+    History:
+        2020-00-00 (rojy@brandi.co.kr): 초기 생성
+    """</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># 상품 상세를 가져온다
+</span>    <span class="k">return</span> <span class="n">ApiResponse</span><span class="p">().</span><span class="n">make_response</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p>상단 docstring을 생성된 Swagger UI)</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201118/01.png" alt="swagger" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201118/02.png" alt="swagger" />
+</figure>
+<figcaption></figcaption>
+
+<p>postman 등의 툴 없이 swagger 문서를 통해 API 테스트까지 진행이 가능한 것은 큰 장점입니다.</p>
+
+<p>[app.py]</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">make_response</span><span class="p">,</span> <span class="n">Response</span><span class="p">,</span> <span class="n">send_from_directory</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="o">@</span><span class="n">app</span><span class="p">.</span><span class="n">route</span><span class="p">(</span><span class="s">'/swagger'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">swagger</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">swagger</span> <span class="c1">#swagger 파싱 모듈
+</span>    <span class="n">swagger</span><span class="p">.</span><span class="n">make_swagger</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">send_from_directory</span><span class="p">(</span><span class="s">'opt/brandi/framework/docs/'</span><span class="p">,</span> <span class="s">'swagger-ui.html'</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">'__main__'</span><span class="p">:</span>
+	<span class="n">app</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+:ET

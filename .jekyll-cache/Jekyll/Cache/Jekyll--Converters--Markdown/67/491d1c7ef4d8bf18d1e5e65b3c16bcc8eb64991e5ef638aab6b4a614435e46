@@ -1,0 +1,149 @@
+I"e<h1 id="overview">Overview</h1>
+<p>혹시 ‘imagemagick의 늪’을 아십니까? 브랜디의 신입 개발자들이 아마존보다 무서워하는 무시무시한 영역입니다. imagemagick을 사용하려면 php에 imagick을 우선 확장모듈로 달아주어야 합니다. 브랜디에서는 관리자 페이지의 이미지 컨트롤에 사용하는 라이브러리이기도 하지요. 만약 imagemagick이 없다면 관리자 페이지에서 수많은 상품 이미지를 업로드할 때 서버가 아무 반응도 없이 멈출 수도 있습니다. 다만 이것을 설정하기까지 짧게는 반나절에서 길게는 이틀까지 소요된다는 게 함정입니다. 오늘의 포스팅은 지난 16시간의 눈물을 압축한 글입니다.  <br /><br /></p>
+
+<h1 id="process">Process</h1>
+<p><b>설정 성공 환경</b></p>
+<ul>
+  <li>OS : High Sierra 10.13.2<br /></li>
+  <li>XAMPP for OSX 5.6.32 (PHP 5.6.32)<br /></li>
+  <li>imagemagick 7.0.7-21 (homebrew로 설치)<br /></li>
+  <li>php56-imagick	(homebrew로 설치)<br /></li>
+  <li>freetype 2.9 (별도 가이드대로 설치)<br /></li>
+  <li>zlib 1.2.11 (homebrew로 설치)<br /></li>
+</ul>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/01.png" alt="설정 환경" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>설정 환경</figcaption>
+<p><br /><br /></p>
+
+<p><b>0. 먼저 폴더 권한주고 시작하기</b><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//폴더가 없다면 생성
+[프로젝트 루트]/include/temp/images
+
+//프로젝트 루트에서
+$ sudo chmod -R 777 include/temp
+</code></pre></div></div>
+<p><br /><br />
+<b>1.imagemagick 설치 방법</b><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew install imagemagick
+</code></pre></div></div>
+<p><br /><br />
+<b>2.php56-imagick 설치 방법</b><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew search imagick # 네이밍 확인
+brew install homebrew/php/php56-imagick # 가이드 작성 당시 포뮬러명
+</code></pre></div></div>
+<p><br /><br />
+<b>3.php.ini 수정</b><br /></p>
+<ul>
+  <li>Dynamic Extension 부분에 추가한다.<br /></li>
+</ul>
+
+<figure class="percent30">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/02.png" alt="Dynamic" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+<figure class="percent50">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/03.png" alt="Dynamic" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+<ul>
+  <li>brew 로 설치했을 때 기본 경로 : extension=”/usr/local/opt/php56-imagick/imagick.so” <br /></li>
+  <li>다른 경로로 지정된 경우 해당경로로 설정한다. (xmappfile 폴더 내부에 둬도 됨) <br /></li>
+  <li>참고: xampp 기본 익스텐션 경로 /Applications/XAMPP/xamppfiles/lib/php/extensions/no-debug-non-zts-20131226/ <br /><br /></li>
+</ul>
+
+<p><b>4.apache 실행</b><br /></p>
+<ul>
+  <li>잘 실행될 경우, phpinfo()를 통해 imagick 라이브러리가 떴는지 확인한다.<br /></li>
+</ul>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/04.png" alt="imagick" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>imagick 라이브러리 확인</figcaption>
+<p><br /></p>
+<ul>
+  <li>실행되지 않을 경우, xamppfiles/logs/php_error_log 파일에 로그가 떨어진다.<br /></li>
+  <li>해당 로그 파일을 아래와 같은 프로그램으로 실행시켜 두면 자동으로 로그가 갱신되어 편하다.<br /></li>
+</ul>
+<figure class="percent10">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/05.png" alt="file" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<p><b>5.로그의 내용은 대체로 xampp 내부의 freetype 버전이 안 맞는 문제이기 때문에 다음 항목에서!</b><br /></p>
+<ul>
+  <li>요구되는 libfreetype.6.dylib 버젼은 22.0.0 이상 <br /></li>
+  <li>xampp내부의 libfreetype.6.dylib 버젼은 15.0.0 <br /></li>
+  <li>버젼 확인 방법은 otool -L /(경로)/libfreetype.6.dylib <br /></li>
+</ul>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/06.png" alt="file" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<p><b>6.freetype 설치 방법</b><br /></p>
+<ul>
+  <li><a href="http://ac-dev-env.patrickbougie.com/freetype/">patrickbougie.com</a>에서 2.9 버전으로 맞춰준다. (작성시점 최신)<br /></li>
+  <li>참고1: 2018.01.10에 brew로 진행하면 2.9 최신 버전이 설치된다.<br /></li>
+  <li>참고2: brew로 설치하면 필요 없는 파일이 많아지므로 위의 링크를 참조하는 것이 좋다.<br /></li>
+</ul>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/07.png" alt="freetype" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>FreeType</figcaption>
+<p><br /></p>
+<ul>
+  <li>위 사이트를 따라 진행한 경우 /usr/local/mac-dev-env/freetype-2.9 경로에 필요한 파일들이 생성된다. <br /></li>
+</ul>
+<figure class="percent50">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/08.png" alt="freetype_file" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>생성된 파일들</figcaption>
+<p><br /></p>
+<ul>
+  <li>
+    <p>위 파일들을 /Applications/XAMPP/xamppfiles 하위에 같은 폴더에 정확히 매칭시켜서 붙여넣는다. <br />
+(그전에 미리 xamppfiles의 원본 파일들은 백업해두자. 파일이 생각보다 꽤 많으니…)
+  <br /><br /></p>
+
+    <p><b>7.모두 진행했다면 apache 서버 실행!</b><br /></p>
+    <ul>
+      <li>실행도 안 되고, 로그도 안 나오는 경우엔 터미널에서 Application/XAMPP/xamppfiles/bin 으로 이동한다.<br /></li>
+      <li>sudo ./apachectl 명령어를 실행한다. (그냥 apachectl 하면 맥 자체 아파치가 뜨게되니 주의!!) <br /></li>
+      <li>콘솔에 표시되는 로그를 보면 libz.1.dylib 관련 문제인데, OSX의 High Sierra 에서 발생하는 문제로 보인다. 즉, 더 높은 버전의 zlib가 필요하다. <br /></li>
+    </ul>
+  </li>
+</ul>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/09.png" alt="apache" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br />
+ <b>8.zlib 설치 방법</b><br /></p>
+<ul>
+  <li>brew install zlib (작성시점 기준 1.2.11 설치됨 - xampp 내부에는 1.2.8) <br /></li>
+  <li>위 키워드로 설치하면 /usr/local/Cellar/zlib/1.2.11 에 xmppfiles 하위 폴더의 일부와 같은 폴더들이 생성된다.<br /></li>
+</ul>
+<figure class="percent70">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180115/10.png" alt="xmppfiles 하위 폴더" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+<ul>
+  <li>위의 화면에서  include, lib, share 폴더를 xamppfiles 에 정확하게 매칭시켜 붙여넣는다. (xampp 원본 파일은 백업) <br /><br /></li>
+</ul>
+
+<p><b>9.모든 과정이 완료되었다면 서버를 켜고 phpinfo()를 통해 imagick 확장 프로그램이 떴는지 확인한다.</b><br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>이번 개발 과정은 자아성찰을 할 수 있는 시간이기도 했습니다. <br />
+“이 길이 나의 길이 아닌가? 그래서 이 imagick 나부랭이 따위가 나를 거부하는 건가” <br />
+phpinfo() 화면에 imagick이란 글자를 만났을 때의 탄성은 2018년을 향한 포효와 다르지 않았습니다. 올해도 열심히 개발을 하겠지만 다시는 ‘imagemagick의 늪’에 빠지지 않기 위해 이곳에 기록을 남겨 둡니다. 언젠가는 분명 쓸모가 있겠지요. 이 글을 읽는 개발자 분들도… 부디 살아 남으시길 바라며…</p>
+:ET

@@ -1,0 +1,162 @@
+I"BK<h2 id="intro-the-navigation-controller">Intro: The Navigation Controller</h2>
+<p>예고했던 Navigation Controller와 TabBar Controller의 커스터마이즈 중, Navigation Controller의 구조와 간단한 커스텀 방법을 나누겠습니다. Navigation Controller(이하 내비게이션 컨트롤러)는 거의 모든 iOS 앱에서 사용된다고 해도 과언이 아닌 자주 사용되며, 간결하지만 막강한 기능을 가진 컨트롤러입니다. 앞선 글에서 소개했듯, TabBar Controller와 함께 iOS의 양대 컨트롤러라고 불러도 대부분의 iOS 개발자들이 동의하리라고 생각합니다.  이번 글에서는 내비게이션 컨트롤러를 커스텀하는 방법을 소개하겠습니다. <br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190521/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Navigation Cotroller (출처: apple developer)</figcaption>
+<p><br /><br /></p>
+
+<p><strong>목차</strong><br />
+<a href="#ju1">1. Push, Pop 애니메이션 커스터마이징</a><br />
+<a href="#ju2">2. Pop 제스처 사용하기, 사용하지 않기</a><br />
+<a href="#ju3">3. Back 버튼 타이틀 숨기기</a><br />
+<a href="#ju4">4. 상단 좌우의 버튼 추가하기</a><br />
+<a href="#ju5">5. NavigationBar 숨기기, 보여주기</a><br />
+<a href="#ju6">6. What’s NEXT?</a>
+<br /><br /><br /></p>
+
+<p><a name="ju1"></a></p>
+<h2 id="1-push-pop-애니메이션-커스터마이징">1. Push, Pop 애니메이션 커스터마이징</h2>
+<p>Push, Pop 트랜지션 기능은 내비게이션 컨트롤러의 핵심적인 기능입니다. Stack에 다음 View Controller를 쌓으며 디스플레이하는 것이 Push, 이전의 View Controller로 되돌아가는 것이 Pop 액션입니다. Pop 액션에는 최초에 디스플레이됐던 View Controller로 돌아가는 Pop to Root 액션이 포함되어 있습니다.<br /><br /></p>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/NqfYhI5ySKk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<div style="text-align:center">Pop View Controller(animated)</div>
+<p><br /><br />
+이러한 액션에는 애니메이션이 포함됩니다. 대개 기본적으로 적용된 애니메이션을 사용하면 되지만, 어떤 이유로 애니메이션을 커스텀하고 싶은 경우가 생깁니다. 이럴 때는 UINavigationController를 상속하는 커스텀 클래스를 만들어서 커스텀할 수 있습니다. 물론 Extension 형식으로 함수를 작성할 수도 있습니다.<br /><br /></p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// UINavigationController를 상속하는 커스텀 클래스를 작성</span>
+<span class="kd">class</span> <span class="kt">BRNavigationController</span><span class="p">:</span> <span class="kt">UINavigationController</span> <span class="p">{</span>
+
+    <span class="c1">// 애니메이션을 적용하는 함수를 작성</span>
+    <span class="kd">func</span> <span class="nf">overrideAnimation</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//여기에서 커스텀 애니메이션을 작성합니다.</span>
+        <span class="k">let</span> <span class="nv">transition</span> <span class="o">=</span> <span class="kt">CATransition</span><span class="p">()</span>
+        <span class="n">transition</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">0.3</span>
+        <span class="n">transition</span><span class="o">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="kt">CAMediaTimingFunction</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="n">kCAMediaTimingFunctionEaseInEaseOut</span><span class="p">)</span>
+        <span class="n">transition</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">kCATransitionFade</span>
+        <span class="k">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="nf">add</span><span class="p">(</span><span class="n">transition</span><span class="p">,</span> <span class="nv">forKey</span><span class="p">:</span> <span class="kc">nil</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="c1">// popToRootViewController(animted)를 오버라이드</span>
+    <span class="k">override</span> <span class="kd">func</span> <span class="nf">popToRootViewController</span><span class="p">(</span><span class="nv">animated</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="kt">UIViewController</span><span class="p">]?</span> <span class="p">{</span>
+        <span class="nf">print</span><span class="p">(</span><span class="s">"Custom Animation Triggered"</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">viewControllers</span><span class="o">.</span><span class="n">last</span><span class="o">!.</span><span class="nf">isKind</span><span class="p">(</span><span class="nv">of</span><span class="p">:</span> <span class="kt">PersonalViewController</span><span class="o">.</span><span class="k">self</span><span class="p">))</span> <span class="p">{</span> <span class="c1">// 커스텀 애니메이션을 사용할 ViewController의 케이스를 분기한다</span>
+            <span class="c1">// 작성된 커스텀 애니메이션 트리거</span>
+            <span class="k">self</span><span class="o">.</span><span class="nf">overrideAnimation</span><span class="p">()</span>
+            <span class="c1">//UINaivgationController의 Function을 그대로 반환</span>
+            <span class="k">return</span> <span class="k">super</span><span class="o">.</span><span class="nf">popToRootViewController</span><span class="p">(</span><span class="nv">animated</span><span class="p">:</span> <span class="kc">false</span><span class="p">)</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// 다른 모든 케이스의 경우 디폴트 애니메이션을 사용</span>
+            <span class="c1">//UINavigationController의 Function을 그대로 반환</span>
+            <span class="k">return</span> <span class="k">super</span><span class="o">.</span><span class="nf">popToRootViewController</span><span class="p">(</span><span class="nv">animated</span><span class="p">:</span> <span class="n">animated</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><br /><br />
+위의 코드로 작성한 애니메이션 아래의 영상과 같이 동작합니다.<br /><br /></p>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/g_XCo1Hmnj0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<div style="text-align:center">커스텀 Pop 애니메이션이 적용된 Navigation Controller</div>
+<p><br /><br />
+위와 같이 커스텀된 내비게이션 컨트롤러는, 단지 애니메이션을 오버라이드하는 데 그치지 않고 다양한 방식의 효율적 코드 작성을 할 수 있게 합니다. 우리가 아는 것처럼, 수퍼클래스의 위용과 유용을 마음껏 누릴 수 있습니다.<br /><br /><br /></p>
+
+<p><a name="ju2"></a></p>
+<h2 id="2-pop-제스처-사용하기-사용하지-않기">2. Pop 제스처 사용하기, 사용하지 않기</h2>
+<p>내비게이션 컨트롤러에서는 화면 왼쪽 끝에서 오른쪽으로 스와이프하는 Pop 제스처를 사용해 이전 View Controller로 돌아갈 수 있습니다. 하지만 종방향 스크롤이나 스와이프 이벤트를 사용하는 ViewController의 경우 어쩔 수 없이 Pop 제스처를 막아야 하는 일이 생깁니다. 이럴 때에는 해당하는 ViewController에서 다음과 같이 간단한 코드로 Pop 제스처를 방지하거나, 방지 해제할 수 있습니다.
+<br /><br /></p>
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 아래의 코드를 트리거하면 Pop 제스처를 비활성화할 수 있습니다</span>
+<span class="k">self</span><span class="o">.</span><span class="n">navigationController</span><span class="p">?</span><span class="o">.</span><span class="n">interactivePopGestureRecognizer</span><span class="p">?</span><span class="o">.</span><span class="n">isEnabled</span> <span class="o">=</span> <span class="kc">false</span>
+</code></pre></div></div>
+<p><br /><br />
+이 코드를 한 번 적용하면, 해당 내비게이션 컨트롤러의 Stack에 쌓인(또는 쌓일) View Controller에 일괄적으로 적용되기 때문에 반드시 다른 ViewController에서는 기본적으로 isEnabeld를 True값으로 지정하도록 코드를 구성하여 모든 ViewController에 일괄적용되는 것을 방지해야 합니다.
+<br /><br />
+다만 이 부분에서 중요한 것은, Back 버튼을 숨기거나 커스텀할 때 각별히 주의해야 한다는 것입니다. 제스처를 사용하는 사용자들도 있지만, 제스처의 존재 자체를 모르는 사용자들도 있기 때문에 Back 버튼은 대부분의 경우 유지하는 것이 좋습니다. 제스처를 비활성화할 때는 더더욱 유지해야 하고요.
+<br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190521/02.jpeg" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Back Button이 없다면 어떻게 뒤로 돌아갈 수 있을까요.</figcaption>
+<p><br /><br /></p>
+
+<p><a name="ju3"></a></p>
+<h2 id="3-back-버튼의-타이틀-숨기기">3. Back 버튼의 타이틀 숨기기</h2>
+<p>내비게이션 컨트롤러에 포함된 Navigation Bar(이하 내비게이션 바)의 Back 버튼은 자동으로 이전 ViewController의 타이틀을 보여주도록 디폴트 설정되어 있습니다. 이렇게 자동지정된 타이틀이 마음에 들지 않는다면, 간단한 트릭을 사용하여 타이틀을 없앨 수 있습니다.
+<br /><br />
+먼저, Back 버튼의 타이틀이 되는 이전 ViewController의 타이틀은 ViewController에서 다음과 같이 지정됩니다.
+<br /><br /></p>
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 직접 ViewController의 타이틀을 지정</span>
+<span class="n">viewController</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">"이것이 바로 타이틀입니다"</span>
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190521/03.jpeg" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Back Button에 '상품정보' 타이틀이 보입니다.</figcaption>
+
+<p><br />
+위의 코드로 지정한 ViewController의 타이틀은 Push 액션을 통해 다음 ViewController로 넘어갔을 때 Back 버튼의 타이틀로 사용됩니다. 그래서 이 코드를 사용하지 않고, 커스텀 Label을 titleView에 넣어주는 것으로 대신할 수 있습니다.
+<br /><br /></p>
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// titleView로 사용할 Label을 생성</span>
+<span class="k">let</span> <span class="nv">label</span> <span class="o">=</span> <span class="kt">UILabel</span><span class="p">(</span><span class="nv">frame</span><span class="p">:</span> <span class="n">customFrame</span><span class="p">)</span>
+<span class="n">label</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s">"이것을 타이틀로 사용합니다"</span>
+<span class="c1">// viewController의 titleView를 생성한 Label로 셋업</span>
+<span class="n">viewController</span><span class="o">.</span><span class="n">titleView</span> <span class="o">=</span> <span class="n">label</span>
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190521/04.jpeg" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>짜잔- Back Button의 타이틀이 사라졌습니다!</figcaption>
+<p><br /><br /></p>
+
+<p><a name="ju4"></a></p>
+<h2 id="4-상단-좌우-버튼-추가하기">4. 상단 좌우 버튼 추가하기</h2>
+<p>여러 iOS 앱들을 사용하다 보면, 내비게이션 바의 좌/우측단에 위치한 버튼들을 자주 보게 됩니다. 이 버튼들은 BarButtons(이하 내비게이션 바 버튼) 라고 불리우는 컴포넌트들입니다. 내비게이션 바 버튼들은 배열 방식으로 좌/우측에 각각 배치됩니다. 원하는 이미지와 텍스트 등으로 내비게이션 바 버튼을 생성한 후, 좌/우측의 버튼 배열 중 원하는 곳에 각각 넣어주면 디스플레이 되는 방식입니다. 다음의 코드 예제를 통해 내비게이션 바 버튼을 추가할 수 있습니다.
+<br /><br /></p>
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// RightBarButtons에 추가할 UIBarButtonItem을 생성</span>
+<span class="k">let</span> <span class="nv">customButton</span> <span class="o">=</span> <span class="kt">UIBarButtonItem</span><span class="p">(</span><span class="nv">customView</span><span class="p">:</span> <span class="n">customView</span><span class="p">)</span>
+<span class="c1">// Container가 될 Array를 생성 (혹은 직접 지정하는 방법도 있습니다)</span>
+<span class="k">let</span> <span class="nv">rightBarButtons</span><span class="p">:</span> <span class="p">[</span><span class="kt">UIBarButtonItem</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1">// Array에 버튼 아이템을 추가</span>
+<span class="n">rightBarButtons</span><span class="o">.</span><span class="nf">append</span><span class="p">(</span><span class="n">customButton</span><span class="p">)</span>
+<span class="c1">// RightBarButtonItems 배열을 셋업</span>
+<span class="n">viewController</span><span class="o">.</span><span class="n">navigationItem</span><span class="o">.</span><span class="n">rightBarButtonItems</span> <span class="o">=</span> <span class="n">rightBarButtons</span>
+<span class="c1">//LeftBarButtons에 추가할 UIBarButtonItem을 생성</span>
+<span class="k">let</span> <span class="nv">customButtonCopy</span> <span class="o">=</span> <span class="kt">UIBarButtonItem</span><span class="p">(</span><span class="nv">customView</span><span class="p">:</span> <span class="n">customView</span><span class="p">)</span>
+<span class="c1">// Container가 될 Array를 생성 (혹은 직접 지정하는 방법도 있습니다)</span>
+<span class="k">let</span> <span class="nv">leftBarButtons</span><span class="p">:</span> <span class="p">[</span><span class="kt">UIBarButtonItem</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1">// Array에 버튼 아이템을 추가</span>
+<span class="n">leftBarButtons</span><span class="o">.</span><span class="nf">append</span><span class="p">(</span><span class="n">customButtonCopy</span><span class="p">)</span>
+<span class="c1">// LeftBarButtonItems 배열을 셋업</span>
+<span class="n">viewController</span><span class="o">.</span><span class="n">navigationItem</span><span class="o">.</span><span class="n">leftBarButtonItems</span> <span class="o">=</span> <span class="n">leftBarButtons</span>
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190521/05.jpeg" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>타이틀뷰, LeftBarButton, RightBarButton이 모두 커스텀된 브랜디의 홈</figcaption>
+<p><br /><br /></p>
+
+<p><a name="ju5"></a></p>
+<h2 id="5-navigationbar-숨기기-보여주기">5. NavigationBar 숨기기, 보여주기</h2>
+<p>앱의 UI가 전체화면으로 컨텐츠를 표시해야 할 때, 또는 다른 목적에 의해서 내비게이션 바를 숨기거나 보여주어야 할 때가 있습니다. 이럴 때는 간단한 코드 트리거로 내비게이션 바를 숨기거나 보여줄 수 있습니다.
+<br /><br /></p>
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 단 한 줄의 코드로 내비게이션 바를 숨길 수 있다구요?</span>
+<span class="n">navigationController</span><span class="o">.</span><span class="nf">setNavigationBarHidden</span><span class="p">(</span><span class="kc">false</span><span class="p">,</span> <span class="nv">animated</span><span class="p">:</span> <span class="kc">true</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /><br /></p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ldpe-M8Uyy8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<div style="text-align:center">내비게이션바를 숨겼다가 보였다가</div>
+<p><br /><br /><br />
+<a name="ju6"></a></p>
+<h2 id="6-whats-next">6. What’s NEXT?</h2>
+<p>현재 앱스토어에 배포된 브랜디 iOS 앱은 내비게이션 컨트롤러를 적극적으로 활용하여 작성되었습니다. 내비게이션 컨트롤러는 기본 설정으로 사용할 때에도 여전히 막강한 특징들을 많이 가지고 있기 때문에, 선택적으로 알아두어야 할 컴포넌트가 아닌 필수적으로 그 장단점과 용법을 꿰고 있어야 하는 중요한 컴포넌트입니다. 내비게이션 컨트롤러만 잘 다루어도 앱을 개발할 때 굉장히 도움을 많이 받을 수 있다는 것이죠.
+<br /><br />
+내비게이션 컨트롤러는 다양한 방식으로 커스터마이즈를 할 수도 있습니다. 물론 이러한 커스터마이즈는 필수사항은 아닙니다. 디자인적 요소를 적용하기 위해 커스터마이즈하는 경우가 대부분이지만, 그에 못지 않게 개발자가 프로젝트의 컴포넌트를 정규화하고 모듈화하기 위해 커스텀하는 경우도 많은 만큼 StackOverflow나 애플 개발자 문서를 참고해 다양한 커스터마이즈를 해보는 것도 재미있을 겁니다.
+<br /><br />
+다음 글에서는 TabBar Controller의 커스터마이즈 방식에 대해 간략하게 공유하겠습니다. iOS 루키들의 장수와 번영을 바라며, 글을 마칩니다. Live long and prosper!<br /><br /><br /></p>
+
+<p><strong>참고</strong><br />
+<a href="https://developer.apple.com/documentation/uikit/uinavigationcontroller" target="_blank">UINavigationController - UIKit | Apple Developer Documentation</a></p>
+:ET

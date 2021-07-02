@@ -1,0 +1,246 @@
+I"�E<h1 id="overview">Overview</h1>
+
+<p>브랜디 AOS 파트에서는 MVVM + 캐싱 지원을 목표로 작업을 하고 있습니다. 방향성은 정해져 있지만 해당 기술 적용을 위한 변경 작업, 업무 시간 등을 고려했을 때 빠른 시간 내에 적용하고 테스트하기에는 무리가 있습니다. 이러한 문제를 피하고 안정적인 서비스를 유지하면서 적용할 수 있도록 많은 검증 단계와 테스트를 거치고 있습니다. 캐싱을 지원하기 위한 기반을 다지는 시간이라 생각하시면 될 것 같습니다.
+<br /><br /></p>
+
+<h1 id="room이란">Room이란</h1>
+
+<p>Room은 SQLite에 대한 추상화 레이어를 제공하여 원활한 데이터베이스 액세스를 지원하는 동시에 SQLite를 완벽히 활용합니다.</p>
+
+<p>상당한 양의 구조화된 데이터를 처리하는 앱은, 데이터를 로컬로 유지하여 대단한 이점을 얻을 수 있습니다. 가장 일반적인 사용 사례는 관련 데이터를 캐싱하는 것입니다. 이런 방식으로 기기가 네트워크에 액세스할 수 없을 때 오프라인 상태인 동안에도 사용자가 여전히 콘텐츠를 탐색할 수 있습니다. 나중에 기기가 다시 온라인 상태가 되면 사용자가 시작한 콘텐츠 변경사항이 서버에 동기화됩니다.</p>
+
+<p>Room은 이러한 문제를 자동으로 처리하므로 SQLite 대신 Room 을 사용할 것을 <strong>적극적으로 권장</strong>합니다.
+<br /><br /></p>
+
+<h1 id="room-의-구성-요소">Room 의 구성 요소</h1>
+
+<p>Entity, Database, Dao 이렇게 3가지로 구성되어 있습니다.</p>
+
+<ul>
+  <li>Entity
+    <ul>
+      <li>Database의 테이블을 나타냅니다.</li>
+    </ul>
+  </li>
+  <li>Dao
+    <ul>
+      <li>데이터베이스에 액세스하는 데 사용되는 메서드가 포함되어 있습니다.</li>
+    </ul>
+  </li>
+  <li>Database
+    <ul>
+      <li>데이터베이스 홀더를 포함하며 앱의 지속적인 관계형 데이터의 기본 연결을 위한 기본 액세스 포인트 역할을 합니다.</li>
+      <li>RoomDatabase를 상속받는 추상 클래스여야 합니다.</li>
+      <li>주석 내에 데이터베이스와 연결된 항목의 목록을 포함해야 합니다.</li>
+      <li>인수가 0개이며 @Dao로 주석이 지정된 클래스를 반환하는 추상 메서드를 포함해야 합니다.
+<br /><br /></li>
+    </ul>
+  </li>
+</ul>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201207/01.png" alt="room" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<h3 id="entity">Entity</h3>
+
+<ul>
+  <li>@Entity(tableName = “table_name”)
+    <ul>
+      <li>Table 정의 어노테이션</li>
+      <li>기본적으로 Room은 클래스 이름을 Dabatabse 테이블 이름으로 사용합니다.</li>
+      <li>다르게 지정하기 위해서는 tableName 을 선언해야 합니다.</li>
+      <li>SQLite의 테이블 이름은 대소문자를 구분하지 않습니다.</li>
+    </ul>
+  </li>
+  <li>@PrimaryKey
+    <ul>
+      <li>각각의 Entity에서는 최소 한 개의 필드에 PrimaryKey 어노테이션을 선언해야 한다.</li>
+    </ul>
+  </li>
+  <li>@ColumnInfo
+    <ul>
+      <li>테이블을 구성하는 필드</li>
+    </ul>
+  </li>
+  <li>@Ignore
+    <ul>
+      <li>유효하지 않는 필드일 경우 무시할 수 있습니다.</li>
+    </ul>
+
+    <div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nd">@Entity</span><span class="p">(</span><span class="n">tableName</span> <span class="p">=</span> <span class="s">"users"</span><span class="p">)</span>
+  <span class="kd">class</span> <span class="nc">User</span> <span class="p">{</span>
+  		<span class="nd">@PrimaryKey</span><span class="p">(</span><span class="n">autoGenerate</span> <span class="p">=</span> <span class="k">true</span><span class="p">)</span>  <span class="kd">val</span> <span class="py">id</span><span class="p">:</span> <span class="nc">Int</span><span class="p">,</span>
+      <span class="nd">@ColumnInfo</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="s">"first_name"</span><span class="p">)</span> <span class="kd">val</span> <span class="py">firstName</span><span class="p">:</span> <span class="nc">String</span><span class="p">?,</span>
+      <span class="nd">@ColumnInfo</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="s">"last_name"</span><span class="p">)</span> <span class="kd">val</span> <span class="py">lastName</span><span class="p">:</span> <span class="nc">String</span><span class="p">?,</span>
+  		<span class="nd">@Ignore</span> <span class="kd">val</span> <span class="py">picture</span><span class="p">:</span> <span class="nc">Bitmap</span><span class="p">?</span>
+  <span class="p">}</span>
+</code></pre></div>    </div>
+    <p><br /></p>
+  </li>
+</ul>
+
+<h3 id="dao">Dao</h3>
+
+<ul>
+  <li>@Dao
+    <ul>
+      <li>Database를 접근하는 interface 선언 어노테이션</li>
+    </ul>
+  </li>
+  <li>@Query(“SELECT * from tableName ORDER BY id ASC”)
+    <ul>
+      <li>기본적으로 읽기, 쓰기 작업을 실행할 수 있습니다.</li>
+    </ul>
+  </li>
+  <li>@Insert(onConflict = OnConflictStrategy.REPLACE)
+    <ul>
+      <li>단일 트랜잭션으로 데이터베이스에 삽입하는 구현을 생성합니다.</li>
+      <li>onConflict 중복 데이터 추가 시 REPLACE, ROLLBACK, ABORT, FAIL, IGNORE 정의할 수 있습니다.</li>
+    </ul>
+  </li>
+  <li>@Update
+    <ul>
+      <li>주어진 매개 변수로 부터 Database의 Entity를 수정할 수 있습니다.</li>
+    </ul>
+  </li>
+  <li>@Delete
+    <ul>
+      <li>주어진 매개 변수로부터 Database의 Entity를 삭제할 수 있습니다.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Dao</span>
+<span class="kd">interface</span> <span class="nc">UserDao</span> <span class="p">{</span>
+    <span class="nd">@Insert</span><span class="p">(</span><span class="n">onConflict</span> <span class="p">=</span> <span class="nc">OnConflictStrategy</span><span class="p">.</span><span class="nc">REPLACE</span><span class="p">)</span>
+    <span class="k">suspend</span> <span class="k">fun</span> <span class="nf">insertUsers</span><span class="p">(</span><span class="k">vararg</span> <span class="n">users</span><span class="p">:</span> <span class="nc">User</span><span class="p">)</span>
+
+    <span class="nd">@Update</span>
+    <span class="k">suspend</span> <span class="k">fun</span> <span class="nf">updateUsers</span><span class="p">(</span><span class="k">vararg</span> <span class="n">users</span><span class="p">:</span> <span class="nc">User</span><span class="p">)</span>
+
+    <span class="nd">@Delete</span>
+    <span class="k">suspend</span> <span class="k">fun</span> <span class="nf">deleteUsers</span><span class="p">(</span><span class="k">vararg</span> <span class="n">users</span><span class="p">:</span> <span class="nc">User</span><span class="p">)</span>
+
+    <span class="nd">@Query</span><span class="p">(</span><span class="s">"SELECT * FROM user"</span><span class="p">)</span>
+    <span class="k">suspend</span> <span class="k">fun</span> <span class="nf">loadAllUsers</span><span class="p">():</span> <span class="nc">Array</span><span class="p">&lt;</span><span class="nc">User</span><span class="p">&gt;</span>
+
+    <span class="nd">@Query</span><span class="p">(</span><span class="s">"SELECT * FROM user"</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">lvLoadAllUsers</span><span class="p">():</span> <span class="nc">LiveData</span><span class="p">&lt;</span><span class="nc">Array</span><span class="p">&lt;</span><span class="nc">User</span><span class="p">&gt;&gt;</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="database">DataBase</h3>
+
+<ul>
+  <li>@Database(entities = [EntityClass::class], version = 1, exportSchema = false)
+    <ul>
+      <li>RoomDatabase 상속받는 추상 클래스 정의</li>
+      <li>entities에는 정의된 Entity Data class 여러 개를 등록할 수 있습니다.</li>
+      <li>version 관리가 가능합니다.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Database</span><span class="p">(</span><span class="n">entities</span> <span class="p">=</span> <span class="p">[</span><span class="nc">User</span><span class="o">::</span><span class="k">class</span><span class="p">],</span> <span class="n">version</span> <span class="p">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">exportSchema</span> <span class="p">=</span> <span class="k">false</span><span class="p">)</span>
+<span class="k">abstract</span> <span class="kd">class</span> <span class="nc">UserDatabase</span> <span class="p">:</span> <span class="nc">RoomDatabase</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">abstract</span> <span class="k">fun</span> <span class="nf">userDao</span><span class="p">():</span> <span class="nc">UserDao</span>
+
+    <span class="k">companion</span> <span class="k">object</span> <span class="p">{</span>
+        <span class="nd">@Volatile</span>
+        <span class="kd">var</span> <span class="py">INSTANCE</span><span class="p">:</span> <span class="nc">UserDatabase</span><span class="p">?</span> <span class="p">=</span> <span class="k">null</span>
+
+        <span class="k">fun</span> <span class="nf">getDatabase</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nc">Context</span><span class="p">):</span> <span class="nc">UserDatabase</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nc">INSTANCE</span> <span class="o">?:</span> <span class="nf">synchronized</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">val</span> <span class="py">instance</span> <span class="p">=</span> <span class="nc">Room</span><span class="p">.</span><span class="nf">databaseBuilder</span><span class="p">(</span>
+                    <span class="n">context</span><span class="p">,</span>
+                    <span class="nc">UserDatabase</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">,</span> <span class="s">"database-name"</span>
+                <span class="p">).</span><span class="nf">build</span><span class="p">()</span>
+
+                <span class="nc">INSTANCE</span> <span class="p">=</span> <span class="n">instance</span>
+
+                <span class="n">instance</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="koin--viewmodel--repository-적용하기">Koin + ViewModel + Repository 적용하기</h3>
+
+<p>기본적인 구성요소를 확인했으니 마지막으로 MVVM에서 Room을 사용하여 DI 적용하고 Ropository Layer로 나누는 코드로 확인해 보겠습니다.</p>
+
+<p><strong>MyApplication.kt</strong></p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">MyApplication</span> <span class="p">:</span> <span class="nc">Application</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onCreate</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">super</span><span class="p">.</span><span class="nf">onCreate</span><span class="p">()</span>
+
+        <span class="c1">// start Koin</span>
+        <span class="nf">startKoin</span><span class="p">()</span> <span class="p">{</span>
+            <span class="c1">// Android context</span>
+            <span class="nf">androidContext</span><span class="p">(</span><span class="k">this</span><span class="nd">@MyApplication</span><span class="p">)</span>
+            <span class="c1">// modules</span>
+            <span class="nf">modules</span><span class="p">(</span><span class="n">myModule</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">val</span> <span class="py">myModule</span> <span class="p">=</span> <span class="nf">module</span> <span class="p">{</span>
+    <span class="nf">single</span> <span class="p">{</span> <span class="nc">MyViewModel</span><span class="p">(</span><span class="k">get</span><span class="p">())</span> <span class="p">}</span>
+    <span class="nf">single</span> <span class="p">{</span> <span class="nc">UserDatabase</span><span class="p">.</span><span class="nf">getDatabase</span><span class="p">(</span><span class="k">get</span><span class="p">())}</span>
+		<span class="nf">single</span> <span class="p">{</span> <span class="nc">UserRepository</span><span class="p">(</span><span class="k">get</span><span class="p">())</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><strong>UserRepository.kt</strong></p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">UserRepository</span><span class="p">(</span><span class="n">userDatabase</span><span class="p">:</span> <span class="nc">UserDatabase</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">userDao</span><span class="p">:</span> <span class="nc">UserDao</span>
+
+    <span class="kd">val</span> <span class="py">lvUserList</span><span class="p">:</span> <span class="nc">LiveData</span><span class="p">&lt;</span><span class="nc">Array</span><span class="p">&lt;</span><span class="nc">User</span><span class="p">&gt;&gt;</span>
+
+    <span class="nf">init</span> <span class="p">{</span>
+        <span class="n">userDao</span> <span class="p">=</span> <span class="n">userDatabase</span><span class="p">.</span><span class="nf">userDao</span><span class="p">()</span>
+        <span class="n">lvUserList</span> <span class="p">=</span> <span class="n">userDao</span><span class="p">.</span><span class="nf">lvLoadAllUsers</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">suspend</span> <span class="k">fun</span> <span class="nf">insertUsers</span><span class="p">(</span><span class="n">users</span><span class="p">:</span> <span class="nc">User</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">userDao</span><span class="p">.</span><span class="nf">insertUsers</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><strong>MyViewModel.kt</strong></p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">MyViewModel</span><span class="p">(</span><span class="kd">val</span> <span class="py">repository</span><span class="p">:</span> <span class="nc">UserRepository</span><span class="p">)</span> <span class="p">:</span> <span class="nc">ViewModel</span><span class="p">()</span> <span class="p">{</span>
+
+    <span class="kd">val</span> <span class="py">lvUser</span><span class="p">:</span> <span class="nc">LiveData</span><span class="p">&lt;</span><span class="nc">Array</span><span class="p">&lt;</span><span class="nc">User</span><span class="p">&gt;&gt;</span> <span class="p">=</span>  <span class="n">repository</span><span class="p">.</span><span class="n">lvUserList</span>
+
+
+    <span class="k">fun</span> <span class="nf">insertUser</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="nc">User</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">viewModelScope</span><span class="p">.</span><span class="nf">launch</span> <span class="p">{</span>
+            <span class="n">repository</span><span class="p">.</span><span class="nf">insertUsers</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>기존에 사용하던 ORM에서 나아가 Room 기반으로 변경을 준비하고 있습니다. 기본적으로 Room의 Dao 메서드는 LiveData와 코루틴을 지원하기 때문에 비동기에 대한 처리와 관리가 간편합니다. 지금 가장 가까운 목표는 로컬 데이터를 Room으로 마이그레이션을 하는 것이 될 것 같습니다. 이러한 결정은 언제나 브랜디에서 안정적인 서비스를 제공하는 것이 가장 큰 목적이기 때문에 다양한 상황을 고려한 후 반영될 것입니다. 겉에서 보이지는 않지만 항상 내부적인 질적 향상을 위해 오늘도 열심히 개발하는 MA팀이 되도록 하겠습니다. 감사합니다.
+<br /><br /></p>
+
+<p>참고사이트:<br />
+<a href="https://developer.android.com/training/data-storage/room?hl=ko">https://developer.android.com/training/data-storage/room?hl=ko</a><br />
+<a href="https://codelabs.developers.google.com/codelabs/android-room-with-a-view/#0">https://codelabs.developers.google.com/codelabs/android-room-with-a-view/#0</a></p>
+:ET

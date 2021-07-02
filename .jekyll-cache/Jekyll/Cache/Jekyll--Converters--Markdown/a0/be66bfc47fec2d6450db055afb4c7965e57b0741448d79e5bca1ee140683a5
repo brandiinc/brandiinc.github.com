@@ -1,0 +1,51 @@
+I"�<p>Activity는 화면의 기본 구성단위 입니다. 예전엔 하나의 Activity를 SubActivity 단위로 사용하려고 ActivityGroup으로 여러 Activity를 하나의 Activity로 묶어 사용했습니다. 이 방법은 장점보다 유지 관리 및 Lifecycle 관리 등의 이슈가 더 많았죠. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180717/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>이제는 사용하지 않습니다.</figcaption>
+<p><br /></p>
+
+<p>관리 이슈를 보완하기 위해 나온 것이 바로 Fragment입니다. View에는 없는 Lifecycle이 존재합니다. 이것을 이용해 Activity에서 할 수 있는 작업을 Fragment에서도 처리할 수 있습니다.<br /><br /></p>
+
+<p>더 이상 ActivityGroup을 이용해서 화면을 재활용하거나 Activity를 관리하지 않아도 됩니다. 대신 FragmentActivity를 이용해 여러 Fragment를 한 화면에서 보여주고 관리할 수 있게 되었습니다.<br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180717/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180717/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>브랜디에서 운영하는 하이버 앱은 위와 비슷하게 설계되어 있습니다. 화면의 기본이 되는 Activity에 실질적인 View를 담당하는 Fragment를 사용합니다. 여기에는 fragment layout이 있죠. 이런 설계 방식은 Activity 영역에선 보통 Toolbar 기능과 Bottom Menu Button을 만들 때 사용합니다. 실질적인 뷰는 Fragment 영역에서 보여주죠.<br /><br /></p>
+
+<p>하이버 앱은 Endless 기능을 포함한 RecyclerView가 80% 이상의 화면 비율을 차지합니다. 상품을 나열해서 보여주거나 스토어 목록을 보여주는 리스트 화면이 대부분이어서 RecyclerView에서는 다양한 api를 요청하고, 응답받은 데이터를 Adapter에서 View로 나누는 것이 주된 작업이었습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180717/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>생각한 것과는 다르게 설계되고 말았습니다. 다양한 화면을 재활용하려고 사용한 Fragment들은 API 요청 URL만 바뀌었을 뿐, 화면의 재활용은 Lifecycle 기능이 없는 Adapter에서 관리했기 때문입니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180717/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>대부분의 Activity layout의 fragment는 fragment_default_f_adapter.xml 을 이용했습니다.</figcaption>
+<p><br /></p>
+
+<p>더불어 Fragment를 사용하면서 제일 많이 접한 Fragmentmanager Transaction 버그 때문에 다양한 트릭을 써야 했습니다. 특히 비동기로 생기는 결함이 가장 큰 문제였습니다.<br /><br /></p>
+
+<p>문제점이 있어도 View에서는 가질 수 없는 Lifecycle 때문에 결국 Fragment를 사용해야 했습니다.<br /><br /></p>
+
+<p>이것은 모든 안드로이드 개발자가 가지고 있는 고민입니다. 하이버 앱은 리펙토링은 끝난 상태이기 때문에 더 이상 리펙토링에 시간을 쓸 수 없었습니다. 그래서 이번에 진행할 브랜디 리펙토링에서는 이 문제점을 고치려고 합니다. 저는 <a href="https://academy.realm.io/kr/posts/michael-yotive-state-of-fragments-2017/" target="_blank">여기</a>에서 도움을 많이 받았습니다.<br /><br /></p>
+
+<p>이전에도 이러한 라이브러리가 있다고 알고 있었지만 하이버를 리펙토링하면서 문제를  직접 마주하니 라이브러리가 왜 나왔는지 새삼 느꼈습니다. (역시 사람은 위기를 맞이할 때 큰 깨달음을 얻나 봅니다.)<br /><br /></p>
+
+<p>다음 화에서는 이러한 Fragment 문제를 극복하는 방법을 알아보겠습니다.<br /><br /></p>
+:ET

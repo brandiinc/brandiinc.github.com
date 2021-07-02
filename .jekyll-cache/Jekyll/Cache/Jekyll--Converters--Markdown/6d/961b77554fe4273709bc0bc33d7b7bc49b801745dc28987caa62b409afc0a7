@@ -1,0 +1,216 @@
+I"-&<p>이 포스팅에 실린 실습은 AWS CLI가 설치되어 있고, AWS credentials이 설정되어 있는 상태에서 진행했습니다. 서버와 하드웨어 사이의 TCP 연결을 구현하지 않고 AWS IoT를 이용해 MQTT 프로토콜로 데이터를 송수신하는 환경을 구성해보겠습니다. 진행을 위해 AWS IoT와 NodeJS가 필요합니다. <br /><br /><br /></p>
+
+<p>1.AWS IoT Core로 접속해 사물을 생성합니다.
+테스트로 1개만 사용할 것이므로 “단일 AWS IoT 사물”로 등록합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>2.‘인증서 없이 사물 생성’을 클릭합니다.
+인증서는 사물 등록 후에 생성할 예정입니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>3.사물이 정상적으로 등록되었는지 확인합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>4.루트 CA 인증서를 생성합니다.
+<em>4-1.</em>개인키를 생성하기 전, openssl 설정 파일을 추가해 아래 내용으로 저장합니다. 아래와 같이 진행하는 이유는 basicConstraints = true로 설정하기 위해서입니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>4-2.</em>개인키를 생성합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl genrsa -out rootCA.key 2048
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>4-3.</em>루트 인증서를 생성합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.pem -config rootCA_openssl.conf -extensions v3_ca
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/07.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>5.인증서를 생성합니다.
+<em>5-1.</em>AWS IoT 등록 코드를 확인합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aws iot —region=ap-northeast-1 get-registration-code
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/08.png" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-2.</em>개인키를 생성합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl genrsa -out verificationCert.key 2048
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/09.png" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-3.</em>CSR을 생성합니다. 앞서 5-1에서 확인한 등록코드를 Common Name 항목에 입력합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl req -new -key verificationCert.key -out verificationCert.csr
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/10.png" alt="10" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-4.</em>인증서를 생성합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl x509 -req -in verificationCert.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out verificationCert.pem -days 500 -sha256
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/11.png" alt="11" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-5.</em>CA 인증서와 개인 인증서 파일들을 확인합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/12.png" alt="12" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-6.</em>AWS에 인증서를 등록합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aws iot register-ca-certificate —ca-certificate file://rootCA.pem —verification-cert file://verificationCert.pem —region=ap-northeast-2
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/13.png" alt="13" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-7.</em>AWS에 인증서를 활성화합니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aws iot update-ca-certificate --certificate-id 인증서 등록 후 응답으로 오는 certificateId 값 --new-status ACTIVE --region=ap-northeast-2
+</code></pre></div></div>
+<p><br />
+예)<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aws iot update-ca-certificate —certificate-id AAAAAABDADFDF1ABADFDFDFDF### —new-status ACTIVE —region=ap-northeast-2
+</code></pre></div></div>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/14.png" alt="14" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>5-8.</em>AWS에 인증서 자동 등록 활성화를 켭니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/15.png" alt="15" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>6.AWS  콘솔에 접속해 CA 인증서 등록을 확인합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/16.png" alt="16" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>7.AWS 콘솔에서 인증서를 생성합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/17.png" alt="17" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>7-1.</em>원클릭 인증서 생성을 클릭합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/18.png" alt="18" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<em>7-2.</em>활성화를 클릭하면 완료됩니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/19.png" alt="19" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+8.인증서와 사물을 연결합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/20.png" alt="20" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br />
+9.상호 작용 탭에서 디바이스를 연결합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/21.png" alt="21" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>10.환경에 맞게 선택하여 다운로드합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/22.png" alt="22" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>11.압축을 해제해 srart.sh를 실행하고, 연결 대기합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/23.png" alt="23" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>12.AWS IoT 테스트 접속 후, topic 1으로 메시지를 게시합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/24.png" alt="24" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>13.터미널을 확인합니다.</p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20190403/25.png" alt="25" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /></p>
+
+<p>이것으로 AWS IoT 로컬 환경이 구성되었습니다. AWS IoT를 사용하면 서버와 하드웨어를 제어하는 클라이언트 간 통신을 쉽게 하도록 다양한 구성을 할 수 있습니다. 모든 포맷은 JSON 포맷으로 송수신하며, MQTT(Message Queueing Telemetry Transport) 방식이라 양방향 통신을 쉽게 처리하고 전송할 수 있을 겁니다.
+<br /><br /><br /></p>
+
+<p><strong>참고</strong><br />
+자세한 MQTT - Publish/Subscribe 모델은 <a href="https://en.wikipedia.org/wiki/Publish–subscribe_pattern" target="_blank">여기</a>를 클릭하세요.<br /><br /></p>
+:ET

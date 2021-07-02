@@ -1,0 +1,404 @@
+I"SW<h1 id="overview">Overview</h1>
+
+<p>외부에 HTTP 요청으로 자원 공유 시 보안에 특히 신경을 써야 합니다. AWS CloudFront + Lambda@Edge 서비스를 이용하면 HTTP 요청 시 사용자 지정 함수로 원하는 목적에 따라 처리 가능합니다.</p>
+
+<p>이번 글에서는 오리진 서버에게 요청 시 헤더에 Authorization Key 값을 추가하여 인증을 통해 특정 사용자만 자원에 접근할 수 있도록 권한을 추가해보겠습니다.
+<br /><br /></p>
+
+<h2 id="작업-진행-순서는-다음과-같습니다"><strong>작업 진행 순서는 다음과 같습니다.</strong></h2>
+
+<ol>
+  <li>Origin Server 생성</li>
+  <li>CloudFront 생성</li>
+  <li>CloudFront 오류 응답 설정</li>
+  <li>CloudFront 이벤트에 의한 Lambda@Edge 트리거</li>
+  <li>Route 53 도메인 연결</li>
+</ol>
+
+<p>1. Origin Server 생성
+<span class="indent">AWS S3 Bucket을 Origin Server로 사용하겠습니다.</span></p>
+
+<p><span class="indent">1) AWS S3 Bucket 생성</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/01.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- AWS S3 Bucket에 계층을 만들어 이미지 파일 저장</span>
+<span class="indent2">- CloudFront에서 제공하려는 모든 객체를 AWS S3 Bucket에 배치</span>
+<span class="indent2">- AWS S3 Bucket 해당 자원에 대한 GetObject 정책 추가</span></p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"Version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2012-10-17"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"Statement"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"Sid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"PublicReadGetObject"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"Effect"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"Principal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"*"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"Action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"s3:GetObject"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:s3:::dev-kwakjs-test/ex-img/*"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+<p><br /></p>
+
+<p>2. CloudFront 생성</p>
+
+<p><span class="indent">AWS CloudFront는 콘텐츠를 사용자에게 빠르고 안전하게 전송하는 서비스입니다.</span></p>
+
+<p><span class="indent">1) Distributions WEB (HTTP통신) 선택</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/02.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent">2) Origin Server 설정</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/03.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- Origin Domain Name : 대상 S3 Bucket</span>
+<span class="indent2">- Origin Path : 기본 경로 지정 (ex-img/)</span></p>
+
+<p><span class="indent3">💡<em>이번 글에서는 특정한 최종 사용자에게 권한을 부여하는 용도이기 때문에 권한이 필요한 S3 경로 패턴을 명확하게 지정하여 “ex-img/*” 에 접근할 때만 Lambda@Edge 함수가 실행되도록 하여 비용을 절감합니다.</em></span></p>
+
+<p><span class="indent">3) CloudFront Distributions WEB 생성</span></p>
+
+<p><span class="indent2">배포까지 10~15분 정도 소요됩니다.</span></p>
+
+<p><span class="indent2">- 배포 전</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/04.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- 배포 후</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/05.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>3. CloudFront 오류 응답 설정</p>
+
+<p><span class="indent">Lambda@Edge 함수 실행 후 HTTP 4xx 또는 5xx 오류를 반환할 때 CloudFront에서 최종 사용자에게 반환하려는 사용자 지정 오류 페이지를 만들 수 있습니다.</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/06.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent">- 403 오류를 반환할 경우 기본 XML 형식으로 응답</span></p>
+
+<p><span class="indent">1) 403-response.json 파일 생성</span></p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="nl">"meta"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="mi">403</span><span class="p">,</span><span class="w"> </span><span class="nl">"error_message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Forbidden"</span><span class="p">},</span><span class="w"> </span><span class="nl">"data"</span><span class="p">:</span><span class="w"> </span><span class="p">{}}</span><span class="w">
+</span></code></pre></div></div>
+
+<p><span class="indent">2) S3 Bucket 기본경로 하위 폴더에 업로드</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/07.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent">3) Error Pages 생성 Step-1</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/08.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent">4) Error Pages 생성 Step-2</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/09.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- S3 Bucket 에 업로드한 에러 페이지 경로 추가</span></p>
+
+<p><span class="indent">5) Error Pages 생성 Step-3</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/10.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- 필요한 오류 상태에 대한 사용자 지정 오류 페이지를 추가합니다.</span>
+<span class="indent2">- 현재 CloudFront 에서 사용자 지정 오류 페이지를 반환할 수 있는 HTTP 상태 코드입니다.</span>
+<span class="indent3">- 400, 403, 404, 405, 414, 416</span>
+<span class="indent3">- 500, 501, 502, 503, 504</span><br /></p>
+
+<p><span class="indent">6) JSON 형식의 오류 응답 확인</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/11.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+<p><br />
+<br /></p>
+
+<p>4. CloudFront 이벤트에 의한 Lambda@Edge 트리거</p>
+
+<p><span class="indent">CloudFront로 생성된 4가지 이벤트 시점에 Lambda@Edge 함수 호출하여 요구 사항에 맞게 로직을 추가할 수 있습니다.</span></p>
+
+<p><span class="indent">1) CloudFront로 생성된 4가지 이벤트</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/12.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">(1) Viewer Request</span></p>
+
+<p><span class="indent3">- 클라이언트에서 이벤트가 도착하고 들어오는 HTTP 요청에 접근할 때 동작</span>
+<span class="indent3">- 이 특정 이벤트는 요청된 개체가 이미 캐시되어 있는지 여부에 관계없이 동작</span></p>
+
+<p><span class="indent2">(2) Origin Request</span></p>
+
+<p><span class="indent3">- 요청된 객체가 엣지 로케이션에 캐시되지 않았을 경우에만 동작</span></p>
+
+<p><span class="indent2">(3) Origin Response</span></p>
+
+<p><span class="indent3">- 오리진이 요청에 대한 응답을 반환한 후에 동작</span></p>
+
+<p><span class="indent2">(4) Viewer Response</span></p>
+
+<p><span class="indent3">- 엣지 로케이션 뷰어에 응답을 반환하기 전에 이벤트가 동작</span></p>
+
+<p><span class="indent3">💡<em>요청된 개체가 캐시 생성 여부와 상관없이 모든 요청에서 실행되어야 해서 Viewer Request 이벤트 시점에 로직을 추가하겠습니다.</em></span><br /></p>
+
+<p><span class="indent">2) Lambda@Edge 함수 추가</span></p>
+
+<p><span class="indent2">서버 관리 부담 없이 전 세계적으로 빠르게 배포 가능하며, User-Agent 헤더를 기반으로 특정 객체를 사용자에게 전송 및 특정 헤더에 대한 접근 제어를 추가할 수 있는 유용한 서비스입니다.</span></p>
+
+<p><span class="indent2">특정 헤더에 인증을 추가하여 응답 헤더 값을 재정의하는 Lambda@Edge 함수를 추가하겠습니다.</span><br /></p>
+
+<p><span class="indent2">(1) Python 소스 코드</span></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: UTF-8 -*-
+</span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">logging</span><span class="p">.</span><span class="n">getLogger</span><span class="p">().</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_generate_change_request_info</span><span class="p">():</span>
+    <span class="s">"""
+    변경할 요청 정보 생성
+
+    401 상태 변경일 경우만 처리
+
+    Returns:
+        dict: request (요청데이터)
+    """</span>
+
+    <span class="n">headers_request</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'cache-control'</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s">'key'</span><span class="p">:</span> <span class="s">'Cache-Control'</span><span class="p">,</span>
+                <span class="s">'value'</span><span class="p">:</span> <span class="s">'no-cache'</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="s">'content-type'</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s">'key'</span><span class="p">:</span> <span class="s">'Content-Type'</span><span class="p">,</span>
+                <span class="s">'value'</span><span class="p">:</span> <span class="s">'application/json'</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># 변경할 상태 정보
+</span>    <span class="n">change_status_value</span> <span class="o">=</span> <span class="mi">401</span>
+    <span class="n">change_status_description</span> <span class="o">=</span> <span class="s">'Unauthorized'</span>
+
+    <span class="n">add_meta_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'code'</span><span class="p">:</span> <span class="n">change_status_value</span><span class="p">,</span>
+        <span class="s">'error_message'</span><span class="p">:</span> <span class="n">change_status_description</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">body_request_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'meta'</span><span class="p">:</span> <span class="n">add_meta_dict</span><span class="p">,</span>
+        <span class="s">'data'</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="p">}</span>
+
+    <span class="n">body_request_json</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">body_request_dict</span><span class="p">)</span>
+
+    <span class="n">request_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">'headers'</span><span class="p">:</span> <span class="n">headers_request</span><span class="p">,</span>
+        <span class="s">'status'</span><span class="p">:</span> <span class="n">change_status_value</span><span class="p">,</span>
+        <span class="s">'statusDescription'</span><span class="p">:</span> <span class="n">change_status_description</span><span class="p">,</span>
+        <span class="s">'body'</span><span class="p">:</span> <span class="n">body_request_json</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">request_dict</span>
+
+
+<span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="s">"""
+    CloudFront ViewerRequest 이벤트처리
+
+    헤더에 Authorization Key 값으로 접근권한 추가
+
+    Returns:
+        dict: request (요청데이터)
+    """</span>
+
+    <span class="n">logging</span><span class="p">.</span><span class="n">info</span><span class="p">(</span><span class="s">'event::{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">request_dict</span> <span class="o">=</span> <span class="n">event</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Records'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="n">get</span><span class="p">(</span><span class="s">'cf'</span><span class="p">).</span><span class="n">get</span><span class="p">(</span><span class="s">'request'</span><span class="p">)</span>
+
+        <span class="c1"># 헤더에 Authorization Key 값으로 접근 여부 확인
+</span>        <span class="n">auth_key</span> <span class="o">=</span> <span class="n">request_dict</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'headers'</span><span class="p">).</span><span class="n">get</span><span class="p">(</span><span class="s">'authorization'</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s">'value'</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">auth_key</span> <span class="o">!=</span> <span class="s">'brandi.token'</span><span class="p">:</span>
+            <span class="n">logging</span><span class="p">.</span><span class="n">warning</span><span class="p">(</span><span class="s">'유효하지 않은 접근'</span><span class="p">)</span>
+
+            <span class="c1"># 변경할 요청 정보 생성 (401)
+</span>            <span class="n">request_dict</span> <span class="o">=</span> <span class="n">_generate_change_request_info</span><span class="p">()</span>
+
+    <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="p">.</span><span class="n">error</span><span class="p">(</span><span class="s">'exception::{1}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s">'status'</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+            <span class="s">'statusDescription'</span><span class="p">:</span> <span class="s">'Internal server error'</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="n">logging</span><span class="p">.</span><span class="n">info</span><span class="p">(</span><span class="s">'request_dict::{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">request_dict</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">request_dict</span>
+</code></pre></div></div>
+
+<p>💡<em>오류 응답 설정 시 ‘401’ 상태에 대한 사용자 지정 오류 페이지를 반환할 수 없어, 오류 상태 ‘401’ 경우에만 Body 항목에 Json 형태로 재정의하여 응답 값을 반환합니다.</em><br /><br /></p>
+
+<p><span class="indent2">(2) Lambda@Edge 설정</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/13.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">1. 버지니아 리전에서만 Lambda@Edge 배포 가능합니다.</span>
+<span class="indent3">2. 런타임은 Node.js 10.x, Node.js 8.10, Python 3.7 중 하나로 선택해야 합니다.</span>
+<span class="indent3">3. 이 역할에는 AWS CloudWatch Logs에 로그를 업로드 할 수 있는 권한이 추가되어야 합니다.</span>
+<span class="indent3">4. Memory 128MB 이내로 설정 가능합니다.</span>
+<span class="indent3">5. Viewer Request, Viewer Response 이벤트는 실행시간 5초 이내로 설정 가능합니다.</span><br /></p>
+
+<p><span class="indent2">(3) Lambda@Edge 배포</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/14.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p><span class="indent2">(4) 버전 게시 (CloudFront Event 연결)</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/15.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- Distribution : CloudFront Distribution 선택</span>
+<span class="indent3">- CloudFront Event : Viewer Request 선택</span><br /></p>
+
+<p><span class="indent2">(5) Lambda@Edge 함수 생성</span></p>
+
+<p><span class="indent3">배포까지 10~15분 정도 소요됩니다.</span></p>
+
+<p><span class="indent3">- 배포 전</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/16.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- 배포 후</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/17.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent2">(6) 결과 확인</span>
+<span class="indent3">- Authorization 미인증</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/18.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent4">- 유효하지 않은 접근일 경우 오류 코드 ‘401’ 응답 데이터 반환됩니다.</span><br /></p>
+
+<p><span class="indent3">- Authorization 인증</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/19.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent4">- 인증된 정상적인 접근일 경우 요청한 컨텐츠가 보여집니다.</span>
+<br /></p>
+
+<p>5. Route 53 도메인 연결</p>
+
+<p><span class="indent">Route 53 는 가용성과 확장성이 뛰어난 클라우드 DNS 웹 서비스입니다. 등록된 도메인에 레코드를 추가 후 CloudFront CNAME 으로 매핑하여 사용자에게 노출될 도메인을 연결하겠습니다.</span><br /></p>
+
+<p><span class="indent">도메인 등록은 생략하겠습니다.</span><br /></p>
+
+<p><span class="indent">1) CloudFront CNAME 추가</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/20.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- Route 53로 등록된 도메인을 CloudFront CNAME 으로 연결합니다.</span><br /></p>
+
+<p><span class="indent">2) CloudFront CNAME 추가 확인</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/21.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p><span class="indent">3) Route 53 레코드 추가</span></p>
+
+<figure class="percent70">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/22.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">- 배포된 CloudFront Domain Name으로 Target을 선택합니다.</span><br /></p>
+
+<p><span class="indent">4) 도메인 연결 확인</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200120/23.png" alt="edge" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>AWS CloudFront + Lambda@Edge 서비스를 이용하여 HTTP 요청 시 권한을 추가하여 특정 사용자만 자원에 접근하는 방법을 알아보았습니다.<br />
+그 외에도 Lambda@Edge 함수로 지능적으로 처리할 수 있는 여러 예제가 AWS 개발자 안내서에 설명되어 있으니 참고하면 될 거 같습니다.<br /><br /></p>
+
+<h2 id="참고-자료">참고 자료</h2>
+
+<p><a href="https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/lambda-examples.html">https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/lambda-examples.html</a></p>
+:ET

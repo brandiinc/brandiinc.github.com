@@ -1,0 +1,363 @@
+I"7L<h1 id="overview">Overview</h1>
+
+<p>필자는 Amazon CloudWatch의 고유 기능만 사용하여 대시보드를 생성하여 프로젝트 모니터링을 진행해왔습니다. 하지만 점점 늘어나는 프로젝트마다 대시보드를 세팅하고 수시로 모니터링하는 것에 한계를 느끼게 되어, AWS SNS를 연결하여 Slack으로 알림을 받도록 모니터링 방법을 개선했습니다. (이제 스스로 대시보드를 들어가지 않아도 잠잘 때나 쉬고 있을 때나 Slack의 노예가 되어 프로젝트의 품질 유지에 힘쓸 수 있습니다! goooood!)</p>
+
+<p>이번 글에서는 샘플 예제를 통해 수집되는 이벤트를 정의한 지표 기준으로 측정치를 초과할 경우 Slack으로 알림을 수신해보겠습니다.</p>
+<ul>
+  <li>이전 글 확인하기 : <a href="http://labs.brandi.co.kr/2019/05/30/kwakjs.html">AWS 리소스를 효과적으로 모니터링하기</a>
+<br /><br /></li>
+</ul>
+
+<ol>
+  <li>
+    <p><strong>Lambda 함수를 실행하여 Slack 채널에 알림 전송</strong></p>
+
+    <p>SNS 서비스에서 전송받은 알림에 대한 Lambda 함수를 실행하여 Slack 채널에 알림을 전송합니다.
+<br /></p>
+  </li>
+</ol>
+
+<p><span class="indent">1. 시스템 구성</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/01.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent">2. SNS topic을 생성</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/02.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/03.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent">3. CloudWatch Alarm 생성</span></p>
+
+<p><span class="indent2">CloudWatch 로그 그룹에서 지표 필터 추가하는 방법 및 Alarm 생성은 이전 글에서 설명하여 생략하겠습니다.</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/04.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/05.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/06.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">알림 받을 SNS (Simple Notification Service) 생성한 주제를 선택</span>
+<br /></p>
+
+<p><span class="indent">4. Lambda 구현</span></p>
+
+<p><span class="indent2">4-1. CloudWatch Alarm 발생시 SNS에서 이벤트 전달 구조</span></p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"Records"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"EventSource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"aws:sns"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"EventVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"EventSubscriptionArn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SNS Subscription Arn"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"Sns"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Notification"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"MessageId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234-1234-1234-1234-1234"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"TopicArn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SNS Topic Arn"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"Subject"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ALARM: </span><span class="se">\"</span><span class="s2">[ERROR] Brandi-Lambda-Product-Info</span><span class="se">\"</span><span class="s2"> in Asia Pacific (Seoul)"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"Message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ALARM Detail Info"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"Timestamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-03-21T12:01:18.533Z"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"SignatureVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"Signature"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"SigningCertUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"UnsubscribeUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+                </span><span class="nl">"MessageAttributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+<p><br /></p>
+
+<p><span class="indent2">4-2. 전달받은 정보를 가공하여 슬랙 채널에 알림을 전송하는 Python 소스</span></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: utf-8 -*-
+</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">logging</span><span class="p">.</span><span class="n">getLogger</span><span class="p">().</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+
+
+<span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="s">"""
+    에러로그 수집시 Slack 해당채널로 발송
+
+    :param event: 수집 이벤트
+    :return: dict
+    """</span>
+    <span class="n">logging</span><span class="p">.</span><span class="n">info</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+    <span class="n">records</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">'Records'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">dict_sns</span> <span class="o">=</span> <span class="n">records</span><span class="p">[</span><span class="s">'Sns'</span><span class="p">]</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">dict_sns</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Subject'</span><span class="p">)</span>
+
+    <span class="n">dict_message</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dict_sns</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'Message'</span><span class="p">))</span>
+    <span class="n">alarm_name</span> <span class="o">=</span> <span class="n">dict_message</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'AlarmName'</span><span class="p">)</span>
+    <span class="n">alarm_description</span> <span class="o">=</span> <span class="n">dict_message</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'AlarmDescription'</span><span class="p">)</span>
+
+    <span class="c1"># 슬랙 발송 형식
+</span>    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">"text"</span><span class="p">:</span><span class="n">subject</span><span class="p">,</span>
+        <span class="s">"attachments"</span><span class="p">:[</span>
+            <span class="p">{</span>
+                <span class="s">"color"</span><span class="p">:</span><span class="s">"#FF0000"</span><span class="p">,</span>
+                <span class="s">"fields"</span><span class="p">:[</span>
+                    <span class="p">{</span>
+                      <span class="s">"title"</span><span class="p">:</span><span class="n">alarm_name</span><span class="p">,</span>
+                      <span class="s">"value"</span><span class="p">:</span><span class="n">alarm_description</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">logging</span><span class="p">.</span><span class="n">info</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+    <span class="c1"># 슬랙 채널 Incoming WebHooks Url
+</span>    <span class="n">webhook_url</span><span class="o">=</span> <span class="s">"https://hooks.slack.com/services/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"</span>
+
+    <span class="n">requests</span><span class="p">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">webhook_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s">'Content-Type'</span><span class="p">:</span><span class="s">'application/json'</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s">'statusCode'</span><span class="p">:</span> <span class="mi">200</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p><span class="indent3">예제 소스를 Lambda에 저장 후 실행시켜보면 에러가 발생합니다. 에러를 해결하기 위해선 아래 2가지를 추가해야 합니다. 이에 대한 설명은 이 글에서는 생략하겠습니다.</span></p>
+
+<p><span class="indent3">- Slack App Incoming WebHooks 추가</span>
+<span class="indent3">- Python requests module 추가</span>
+<br /></p>
+
+<p><span class="indent2">4-3. “CloudWatch-Alarm-Slack-dev” Lambda 생성</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/07.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent">5. SNS Topic (slack-notice)에 Subscriptions 추가</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/08.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/09.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/10.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent2">생성한 “CloudWatch-Alarm-Slack-dev” Lambda로 연결</span>
+<br /></p>
+
+<p><span class="indent">6. Slack 발송 확인</span></p>
+
+<p><span class="indent2">그럼 이제 알림을 잘 발송되는지 Lambda 함수를 실행시켜 에러를 발생시켜 보겠습니다.</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/11.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent">이와 같은 방법으로 약 3개월간 프로젝트들을 모니터링하고 있던 와중, AWS에서 대화형 서비스 기반으로 모니터링 기능을 제공하는 ‘Chatbot’을 베타 오픈했다는 소식을 들었습니다. 과연 AWS Chatbot에서 더 좋은 기능을 사용할 수 있을까 기대를 가지며 서비스 테스트를 했습니다.</span>
+<br /></p>
+
+<p>2. <strong>AWS Chatbot</strong></p>
+
+<p><span class="indent">AWS Chatbot은 Slack 채널 및 Amazon Chime을 통해 AWS 리소스를 쉽게 모니터링하고 지표를 감시하여 측정치에 대한 알림을 수신하고 빠르게 이벤트에 대응할 수 있게 도와주는 대화형 서비스입니다.</span></p>
+
+<p><span class="indent">기능으로 알림 수신, 진단 정보 검색 등이 있으며 사전 정의된 AWS 정책 템플릿을 선택할 수 있어 보다 빠르게 서비스 이용이 가능합니다.</span></p>
+
+<p><span class="indent">AWS Chatbot은 현재 베타 버전으로 제공됩니다.</span>
+<br /></p>
+
+<p><span class="indent">1. 시스템 구성</span></p>
+
+<p><span class="indent2">이 글에서는 Slack 채널을 통해 상호 작용하도록 구성하겠습니다.</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/12.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent">2. AWS Chatbot 생성</span>
+<span class="indent2">1. Slack 선택</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/13.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent2">2. Slack 계정 인증 후 엑세스 권한 요청 승인</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/14.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent2">3. Slack 계정 작업 공간에 채널을 추가</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/15.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><span class="indent2">4. Slack Channel 생성</span>
+<span class="indent3">1. Step-1</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/16.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- 생성 이름 및 로깅에 대한 설정</span>
+<br /></p>
+
+<p><span class="indent3">2. Step-2</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/17.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- Slack Channel 선택</span>
+<br /></p>
+
+<p><span class="indent3">3. Step-3</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/18.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">Slack Channel 생성시 정책에 대한 템플릿이 존재하여 선택만으로 역할을 생성할 수 있습니다.</span></p>
+
+<p><span class="indent3">- AWS Chatbot이 CloudWatch에서 지표 그래프 검색</span>
+<span class="indent3">- Slack에서 읽기 전용 명령</span>
+<span class="indent3">- Slack에서 Lambda 호출 명령</span>
+<span class="indent3">- Slack에서 Support API 호출 허용</span>
+<br /></p>
+
+<p><span class="indent3">4. Step-4</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/19.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- 이벤트 및 경보 알림을 전송하기 위한 처음에 생성한 SNS Topic 선택 (다중 선택 가능)</span>
+<br /></p>
+
+<p><span class="indent2">5. SNS Topic (slack-notice)에 Subscriptions 확인</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/20.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- SNS Topic Subscriptions에 HTTPS 통신 규약으로 Chatbot이 추가된 걸 확인할 수 있습니다.</span>
+<br /></p>
+
+<p><span class="indent2">6. Slack 채널로 알림 전송</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/21.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">알림 전송 전 Slack aws APP을 해당 채널로 초대해야 합니다.</span></p>
+
+<p><span class="indent3">1. 명령어 실행 “/invite @aws”</span>
+<span class="indent3">2. 경보 알림 발생</span>
+<br /></p>
+
+<p><span class="indent2">7. AWS Chatbot 명령 기능</span></p>
+
+<p><span class="indent3">알림 전송 이외에도 AWS Chatbot을 사용하여 Slack에서 AWS 서비스를 실행할 수 있습니다.</span>
+<br /></p>
+
+<p><span class="indent3">1. Lambda 함수 호출</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/24.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/22.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- 정상 호출시 함수 리턴 값을 메세지로 전송 받게 됩니다.</span>
+<br /></p>
+
+<p><span class="indent3">2. CloudWatch 경보에 대한 세부 정보 확인</span></p>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/25.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="percent90">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200331/23.png" alt="chatbot" />
+</figure>
+<figcaption></figcaption>
+
+<p><span class="indent3">- CloudWatch 경보 및 지표와 CloudWatch DescribeAlarms API 호출의 표준 출력이 포함된 이미지를 반환합니다.</span>
+<br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>지금까지 CloudWatch에서 지원되는 운영 경보를 이용한 알림을 수신하는 2가지 방법을 알아보았습니다.</p>
+
+<p>AWS Chatbot 서비스를 이용해본 결과, 알림을 전송 처리하는 코드를 따로 작성할 필요 없고 빠른 서비스 시작과 채널 확장이 AWS Console에서 클릭 몇 번만으로 가능합니다.</p>
+
+<p>하지만 알림 수신 문구에 대한 변경을 할 수 없으며, 아직 CloudWatch에서 경보 기능으로만 알림을 수신하는 것 같습니다.</p>
+
+<p>아쉬운 점은 있었으나 아직 베타버전이기 때문에 보완되길 기대하며 글을 마칩니다.</p>
+:ET

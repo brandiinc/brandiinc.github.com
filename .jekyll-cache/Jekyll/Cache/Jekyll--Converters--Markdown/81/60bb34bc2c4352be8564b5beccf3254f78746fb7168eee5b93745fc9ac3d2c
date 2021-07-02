@@ -1,0 +1,184 @@
+I"�8<h1 id="overview">Overview</h1>
+<p>개발 도중 내용이 복잡하거나 소스가 길면 종종 오픈소스 라이브러리를 사용합니다. 쉽게 원하는 기능을 구현할 수 있기 때문이죠. 그렇다면 오픈소스 라이브러리는 어떻게 앱에 가져와서 사용할까요? 바로 ‘CocoaPods(이하 코코아팟)’을 쓰면 됩니다.<br /><br /><br /></p>
+
+<h1 id="what-is-cocoapods">What is CocoaPods?</h1>
+<p>코코아팟의 <a href="https://cocoapods.org/">공식 웹사이트</a>에서는 코코아팟을 이렇게 소개하고 있습니다.<br /></p>
+
+<p><strong>“CocoaPods is a dependency manager for Swift and Objective-C Cocoa projects”<br />
+“코코아팟은 스위프트와 오브젝티브-C 코코아 프로젝트를 위한 의존성 매니저(dependency manager)다.”</strong><br /></p>
+
+<p>즉, ‘개발자가 편리하게 사용할 수 있게 오픈소스 라이브러리를 프로젝트와 연결해주는 환경 또는 도구’를 말합니다. 이로 인해 다양한 장점을 가지고 있는데요. 우선 코코아팟은 개발자가 개발한 앱에 라이브러리를 추가, 삭제, 업데이트 등의 관리를 할 수 있습니다. 예를 들어, 네트워크 관련 라이브러리를 개발자가 직접 개발하지 않고, <a href="https://github.com/Alamofire/Alamofire">Alamofire</a> 라이브러리를 코코아팟으로  앱에 연결해 사용하는 것입니다. 둘째, 라이브러리 버전을 직접 지정하여 사용할 수 있어 업데이트 버전이 나와도 지정한 버전을 계속 사용할 수 있다는 점입니다. 만약 새로운 버전에 맞춰 개발할 준비가 되면 그때 업데이트를 하면 됩니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>CocoaPods에서 facebook을 검색하면 관련된 다양한 라이브러리가 나옵니다.</figcaption>
+<p><br /><br /><br /></p>
+
+<h1 id="how-to-use-cocoapods">How to use Cocoapods?</h1>
+<p><strong>1.코코아팟 설치하기</strong><br />
+개발한 앱에 사용할 오픈소스 라이브러리를 찾았다면 코코아팟을 설치해 앱과 연결해봅시다. 먼저 코코아팟을 설치하고 터미널 프로그램을 열어 아래와 같은 명령어를 입력합니다.<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sudo gem install cocoapods
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+그리고 <a href="https://github.com/CocoaPods/Specs">CocoaPods Master Specs repository</a>에 있는 Podspec file를 컴퓨터에 다운로드합니다. –verbose 명령어를 이용해 현재 진행 상황을 터미널에서 볼 수 있게 합니다.<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ pod setup --verbose
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+이제 코코아팟을 사용할 준비가 되었습니다. Xcode에서 간단한 프로젝트를 만들고 끝냅니다. 이번 글에서는 관광명소를 보여주는 목록 앱을 예제로 만들겠습니다.<br /><br /></p>
+
+<p><strong>2.라이브러리 연결하기</strong><br />
+터미널 프로그램을 이용해 방금 전 만든 프로젝트 경로로 이동하고, Podfile을 만들어 앱에 필요한 라이브러리를 설정합니다. Podfile을 만드는 방법이 두 가지입니다.  첫 번째는 pod init 명령어를 이용해 코코아팟이 기본 틀이 있는 파일을 생성하게 하는 것입니다. 두 번째는 개발자가 직접 빈 파일을 만들어 설정하는 방법입니다. 이번 글에서는 pod init 명령어를 사용하겠습니다. (편리합니다.)<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ pod init
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>podfile이 생성된 것을 확인할 수 있습니다.</figcaption>
+<p><br /></p>
+
+<p>이제 Podfile을 열어 우리가 사용할 라이브러리를 세팅하고 <a href="https://cocoapods.org">코코아팟 공식 사이트</a>에 접속합니다. 사용하고자 하는 라이브러리를 검색하고 이름 옆 클립보드 아이콘에 마우스 포인터를 올려보세요. Podfile에 복사할 텍스트가 나타날 겁니다. 이 텍스트를 복사하여 Podfile에 붙이고 저장합니다. 이 글에선 URL에서 가져올 이미지를 다루기 위해 SDWebImage 라이브러리를 사용하겠습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>완성된 Podfile의 모습</figcaption>
+<p><br /></p>
+
+<p>위의 Podfile을 잠시 설명하자면 프로젝트의 배포 타겟은 iOS 9.0 입니다. ‘use_frameworks!’ 은 코코아팟을 통해 프로젝트에 추가할 라이브러리가 스위프트로 작성되어 있고, 프레임워크를 사용할 것이기 때문에 꼭 추가해야 하는 문장입니다. 라이브러리 옆의 숫자는 4.3 그리고 4.4 이전까지 라이브러리 버전을 사용하겠다는 뜻 입니다. 최소한의 설정을 맞췄으니, 저장하고 다음 명령어를 실행합니다. <br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ pod install --verbose
+</code></pre></div></div>
+<p><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/07.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>pod install 완료 후 xcworkspace 파일이 추가된 것을 확인할 수 있습니다.</figcaption>
+<p><br /></p>
+
+<p>Pod 설치가 완료되면 xcworkspace 파일이 생성된 것을 확인할 수 있습니다. Xcworkspace 파일은 쉽게 말해서 프로젝트들의 컬렉션(collection of projects)입니다. 기존에 제작한 프로젝트(Original project)와 pods 프로젝트(Pods project)를 함께 묶는데, 이 pods 프로젝트 하나로 모든 라이브러리를 관리할 수 있습니다. 기존 프로젝트는 이 pods 프로젝트를 의존하기 때문에 xcodeproj 파일을 열면 연결된 라이브러리들에 대한 정보가 없어서(혹은 발견하지 못해서) Xcode 프로그램이 에러를 발생시킵니다. 그러므로 코코아팟으로 pod을 설치했을 때, 프로젝트는 xcworkspace 파일을 열어 개발해야 연결한 라이브러리들을 잘 사용할 수 있습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/08.jpg" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<p><strong>3.라이브러리 사용하기</strong><br />
+이제 연결한 라이브러리를 사용해봅시다.1) 예제에서는 <a href="https://github.com/rs/SDWebImage">SDWebImage</a> 라이브러리를 이용해 URL 이미지 주소로 ImageView에 이미지를 설정하도록 코드를 추가하겠습니다.<br /><br /></p>
+
+<p>테이블뷰(UITableViewController) 컨트롤러를 이용해 목록으로 관광명소 이름, 설명, 이미지를 보여줄 것입니다. 관광명소 이름, 설명, 이미지에 맞게 데이터 모델을 만들고 스토리보드에서 UI를 디자인합니다. 테이블뷰 컨트롤러 파일을 새로 생성해서 이 소스 파일에서 라이브러리를 연결해서 기능을 구현해봅시다. 먼저 라이브러리를 이 소스에 연결하도록 import 명령어를 입력합니다.<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>AttractionTableVC.swift
+
+import SDWebImage
+</code></pre></div></div>
+
+<p><br />
+그리고 아래와 같이 tableView(tableView:cellForRowAtIndexPath:) 함수에 코드를 작성합니다.2)<br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -&gt; AttractionTableViewCell {
+        // Table view cells are reused and should be dequeued using a cell identifier.
+        let cellIdentifier = "AttractionTableViewCell"
+
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? AttractionTableViewCell else {
+            fatalError("The dequeued cell is not an instance of AttractionTableViewCell.")
+        }
+
+        let attraction = attractions[indexPath.row]
+
+		// . . .
+
+		cell.attractionLabel.text = "\(indexPath.row). \(attraction.nameWithDescription)"
+        cell.attractionImage.sd_setImage(with: attraction.photoURL, completed: nil)
+
+		// . . .
+
+        return cell
+    }
+</code></pre></div></div>
+<p><br />
+SDWebImage 라이브러리를 쓴 이유는, URL 이미지 주소를 이용해서 관광명소 이미지를 보여주고 싶었습니다. 하지만 UIImage에 바로 URL 주소를 사용할 수 없었고, Data 형식으로 변환한 다음 사용해야 했습니다. 라이브러리를 안 쓴 다면 아래와 같은 소스를 작성해야 했을 겁니다. <br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// return UIImage which is set from url data
+    private func imageFromUrl(url: URL) -&gt; UIImage {
+        var photo = UIImage()
+
+        do {
+            let imageData = try Data.init(contentsOf: url)
+            photo = UIImage(data: imageData)!
+            return photo
+        } catch {
+            print(error.localizedDescription)
+            return photo
+        }
+    }
+</code></pre></div></div>
+<p><br />
+하지만 위에서 만든 소스를 SDWebImage 라이브러리를 이용하면 아래처럼 딱 하나의 명령문으로 줄일 수 있습니다. <br /><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cell.attractionImage.sd_setImage(with: attraction.photoURL, completed: nil)
+</code></pre></div></div>
+<p><br />
+소스 길이가 확연히 줄어들었습니다. 이외에도 GIF 지원, asynchronous image downloader 등 <a href="https://github.com/rs/SDWebImage">SDWebImage 라이브러리 GitHub 페이지</a>로 접속하면 자세한 기능들을 만날 수 있습니다.<br /><br /><br /></p>
+
+<h1 id="cocoapods-error">CocoaPods Error</h1>
+<p>브랜디의 앱 프로젝트를 클론해서 작업하면 종종 코코아팟 관련 오류로 당황했던 적이 있습니다. 몇 가지 에러의 해결 방법들을 소개하겠습니다.<br /><br /></p>
+
+<p>1.<br />
+<strong>“/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include/sqlite3.h” not found”</strong><br />
+-&gt; 대부분의 오류들은 코코아팟을 다시 설치하면 거의 다 해결됩니다.<br />
+$ sudo gem install cocoapods <br />
+$ pod install –verbose <br /><br /></p>
+
+<p>2.<br />
+<strong>“Could not build module firebase core” Error</strong><br />
+-&gt; project’s temp file 삭제 (~/Library/Developer/Xcode/DerivedData — Xcode-&gt;Preference-&gt;Location에 위치함)<br />
+우선 위의 폴더 경로를 먼저 찾아 Finder로 여세요. 그 다음에 Xcode를 종료해 안전하게 삭제해야 합니다.<br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180316/09.png" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>-&gt; ProjectName, .xcworkspace 삭제<br />
+-&gt; Podfile.lock 파일과 Pods 폴더 삭제 <br />
+-&gt; $ pod install –verbose <br />
+-&gt; 새로 생성한 ProjectName.xcworkspace 실행하여 다시 빌드하기 <br />
+-&gt; 그래도 안 된다면? <br />
+—&gt; $ pod update <br />
+(or) —&gt; $ pod –version 체크 <br />
+(or) —&gt; $ pod repo update <br />
+       —&gt; Podfile에 ‘Firebase’ 주석 처리 <br />
+       —&gt; $ pod install (old Firebase가 제거된다) <br />
+       —&gt; Podfile에 ‘Firebase’ 주석 해제 <br />
+       —&gt; $ pod install (new Firebase 설치) <br />
+       —&gt; 해결 완료! <br /><br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>이제는 새로운 기능을 개발하거나 소스를 수정할 땐 코코아팟에서 관련 라이브러리를 찾아봅니다. 마음에 드는 라이브러리는 곧바로 개발하고 있는 앱 프로젝트에 연결해 적용하기도 하고요. 자신의 언어로 순수하게 소스를 개발하는 것도 좋지만, 좋은 도구를 활용하는 것도 업무에 도움이 될 겁니다. 혹시 마음에 드는 라이브러리 찾으셨다면 저에게도 알려주세요. 코코아팟을 사용하는 iOS 개발자가 되신 걸 축하드립니다! <br /><br /><br /></p>
+
+<p><strong>주석</strong> <br />
+1)각 라이브러리의 GitHub 페이지에서는 소스를 연결하는 자세한 방법들을 소개하고 있다.  <br />
+2)attractions 배열에 미리 만들어 놓은 관광명소 데이터들을 저장한다. 배열에서 선정한 하나의 관광명소 데이터 정보를 이용해 각 테이블 뷰 셀에 알맞게 설정한다. 여기서 테이블 뷰 셀에 있는 attractionImage(UIImageView)에 URL 주소로 이미지를 설정하면 된다. <br /><br /></p>
+
+<p><strong>참고문헌</strong> <br /></p>
+<ul>
+  <li><a href="https://stackoverflow.com/questions/41709912/error-could-not-build-objective-c-module-firebase">swift3 - Error: Could not build Objective-C module ‘Firebase’ - Stack Overflow</a><br /></li>
+  <li><a href="https://groups.google.com/forum/#!msg/firebase-talk/Fu51jfAxh-E/iBkmria6FgAJ">Google 그룹스</a><br /></li>
+  <li><a href="https://www.youtube.com/watch?v=iEAjvNRdZa0%20">An Introduction to CocoaPods (Route 85) - YouTube</a><br /><br /><br /></li>
+</ul>
+:ET

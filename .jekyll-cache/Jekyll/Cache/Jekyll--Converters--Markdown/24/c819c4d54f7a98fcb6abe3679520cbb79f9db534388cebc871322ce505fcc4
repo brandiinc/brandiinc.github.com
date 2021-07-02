@@ -1,0 +1,201 @@
+I"_)<h2 id="overview">Overview</h2>
+
+<p>프로젝트는 시간에 흐름에 따라 점점 레거시화 될 수 있습니다.</p>
+
+<p>꾸준한 유지 관리로 최신 버전의 런타임과 프레임워크를 사용하도록 하는 것이 개발 환경에 대한 부채를 쌓아가지 않는 방법 중 하나라고 생각합니다.</p>
+
+<p>지난 9월에는 Vue 3의 공식 릴리즈가 있었습니다.</p>
+
+<p>마이그레이션 빌드가 나오기 전, 추후 Vue 3의 도입이 어렵지 않도록 현재 사용하고 있는 Vue 2를 가장 최신 스테이블 버전으로 맞추며 동시에 NodeJS 런타임 버전업 등 산재한 Frontend 환경의 부채를 해결해 보았습니다.
+<br /><br /></p>
+
+<h2 id="기존-프로젝트-구성">기존 프로젝트 구성</h2>
+
+<ul>
+  <li>NodeJS runtime 8.x</li>
+  <li>Vue 2.5</li>
+  <li>Babel 6</li>
+  <li>webpack 3</li>
+</ul>
+
+<p>처음 팀에 합류하여 프로젝트를 세팅했을 때, 너무 낮은 NodeJS 런타임 버전과 미묘하게 낮은 Vue 버전이 마음에 걸렸습니다. 이에 팀 개발 환경 세팅 문서를 작성하면서 nvm을 쓰는 방향으로 가이드 하여 미래를 대비하였습니다. 하지만 이 또한 실무에 투입되고 나서 점점 잊어가고 있었습니다.
+<br /><br /></p>
+
+<h2 id="문제-발생">문제 발생</h2>
+
+<p>문제는 Frontend 성능 개선 업무를 진행하기 위해 몇몇 외부 라이브러리를 사용하면서 발생하기 시작했습니다. 조금 낮은 Vue 버전 덕분에 사용할 수 없는 최신 버전 문법들, vue 관련 외부 라이브러리 선택의 폭 제한, 최신 ES 문법 일부(Optional chaining 외) 사용 불가 등으로 인해 결국 버전업을 결심하게 됩니다.
+<br /><br /></p>
+
+<h2 id="초기-목표">초기 목표</h2>
+
+<p>처음 목표는 간단했습니다.</p>
+
+<ol>
+  <li>Vue 버전을 2.6.11로 업데이트</li>
+  <li>Optional Chaining 플러그인 추가</li>
+  <li>행복하게 코딩</li>
+</ol>
+
+<p>Vue의 업데이트는 package.json에서 vue, vue-template-compiler의 버전을 맞추는 것만으로 얼추 업데이트가 되었습니다. 문제는 Optional Chaining이었습니다. Babel의 이슈 트래커를 확인을 해보니 Optional chaining에 대해, Babel 6에서는 백포팅 할 계획이 없고 Babel 7로 버전을 올리라는 권고가 있었습니다.</p>
+
+<p>이때부터 고민을 하기 시작합니다.
+수동으로 모든 환경의 버전을 찾아 맞출 것인가, 다른 쉬운 방법을 택할 것인가.
+<br /><br /></p>
+
+<h2 id="vue-cli-활용">Vue CLI 활용</h2>
+
+<p>가장 쉽게 목표한 바를 이룰 수 있는 방법이 Vue CLI를 활용하는 것이라고 생각했습니다. 일전에 개인 프로젝트에서도 CLI를 통해 버전 업그레이드를 진행한 경험이 있어 선택하게 되었습니다.</p>
+
+<p>우선 nvm 을 사용해 node 런타임을 12로 맞춥니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nvm install 12
+nvm use 12
+</code></pre></div></div>
+
+<p>Vue CLI가 없다면 설치해 줍니다. (구버전 vue-cli 1.x or 2.x를 설치 중이라면 제거해야 합니다.)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm install -g @vue/cli
+</code></pre></div></div>
+
+<p>빈 프로젝트를 생성합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vue create migrate-vue
+</code></pre></div></div>
+
+<p>❯ Manually select features 선택 후 현재 개발 환경에 맞춰 세팅합니다.
+(Babel, Router, Vuex, CSS Pre-processors, Linter 등)</p>
+
+<figure class="percent70">
+  <img src="http://labs.brandi.co.kr///assets/2021/0111/01.png" alt="vue3" />
+</figure>
+<figcaption></figcaption>
+
+<p>생성이 완료되면 본 프로젝트의 pakage.json을 잠시 이름을 변경해 두고, 방금 생성된 프로젝트의 pakage.json을 카피하여 기존 프로젝트에 옮겨옵니다. 기존 프로젝트의 .babelrc는 제거하고 새 프로젝트의 babel.config.js를 옮겨 옵니다. Vue CLI 4.x에서는 webpack등 여러 devDependencies의 세팅들이 vue-cli-service 안으로 내장되었습니다.</p>
+
+<p>기존 프로젝트의 로컬 실행 명령은 아래처럼 webpack-dev-server를 통해 실행하지만</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>webpack-dev-server --inline --progress --config build/webpack.dev.conf.js
+</code></pre></div></div>
+
+<p>Vue CLI 4 기반의 프로젝트는 아래와 같이 실행됩니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vue-cli-service serve --mode development
+</code></pre></div></div>
+
+<p>빌드 또한 별도 작성했던 js 파일이 아닌 vue-cli-service를 통하여 할 수 있습니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vue-cli-service build --mode production
+</code></pre></div></div>
+
+<p>가장 큰 차이는 webpack 내재화로 인해 webpack config를 전달하는 방법이 변경되었습니다. 새로 추가된 <strong>vue.config.js</strong> 파일은 로컬 개발환경의 serve 및 배포 build시 추가 설정을 할 수 있습니다. 해당 파일에서 몇몇 추가 설정과 devServer 설정 webpack 설정이 가능합니다.</p>
+
+<p>이 중 일부 webpack 설정은 vue.config.js에서 우선하게 바뀌어 주의가 필요합니다.</p>
+
+<p>(webpack의 output.publicPath/Path 대신 vue.config의 publicPath/outputDir 사용 등)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// vue.config.js
+
+module.exports = {
+  runtimeCompiler : true,
+  devServer : {
+    ... // 로컬 실행 환경 설정 추가
+  },
+  outputDir : ... , // webpack의 output.path 대신 사용
+  publicPath : ... , // webpack의 output.publicPath 대신 사용
+  configureWebpack : {
+    ... // webpack 추가 설정 merge 가능
+  },
+  chainWebpack : config =&gt; {
+    ... // config를 통해 chaining방식으로 옵션 수정 가능
+  },
+  css : {
+    sourceMap : true,
+    loaderOptions : {
+      postcss : {
+        plugins : [
+          postcssUrl,
+          postcssImport,
+          autoprefixer,
+        ],
+      },
+    },
+  },
+}
+</code></pre></div></div>
+
+<p>기타 변경 점을 잘 숙지하고 이에 맞춰 빌드 설정을 수정합니다. (사실 이 부분이 가장 품이 많이 들었습니다만, 세세한 설정은 프로젝트마다 다른 부분이므로 설명은 생략하겠습니다.)</p>
+
+<p>기존에는 빌드 환경별로 별도의 스크립트가 있었지만 vue-cli-service build로 통합되었으므로, 빌드 및 개발 환경에 따른 분기 처리를 위해 프로젝트 rootDir에 .env 파일들을 생성합니다.</p>
+
+<figure class="percent40">
+  <img src="http://labs.brandi.co.kr///assets/2021/0111/02.png" alt="vue3" />
+</figure>
+<figcaption></figcaption>
+
+<p>각각의 <code class="language-plaintext highlighter-rouge">.env.*</code> 파일들에는 간단히 <code class="language-plaintext highlighter-rouge">VUE_APP_MODE = development</code> 정도만 선언해 둔다면, 이를 통해 vue.config.js 파일 안에서 분기 처리를 할 수 있습니다. (<code class="language-plaintext highlighter-rouge">process.env.VUE_APP_MODE</code> 에서 읽기 가능)</p>
+
+<p>다시 pakage.json으로 돌아와서, 필요한 dependencies를 기존 파일에서 복사합니다.</p>
+
+<p>패키지를 설치합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm i
+</code></pre></div></div>
+
+<p>프로젝트를 실행해 봅니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm run serve
+</code></pre></div></div>
+
+<p>분명 실패하는 포인트가 있을 것입니다. (devDependencies 등)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Error: Cannot find module 'postcss-import'
+</code></pre></div></div>
+
+<p>추가 설치합니다. (vue/cli-service의 postcss-loader가 3.0.0이어서 구버전 설치)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm i postcss-import@11 postcss-url@7 --save-dev
+</code></pre></div></div>
+
+<p>기본 세팅 이외에 별도로 사용 중이던 devDependencies의 빈자리를 계속 확인하며 채워줍니다. 이렇게 하는 이유는 어디까지 vue-cli-service에 포함되었는지 구분이 어려워 실행해서 확인하는 것이 확실하다고 생각했기 때문입니다.</p>
+
+<p>과정을 반복하다 보면 어느 순간 기동에 성공합니다.
+(사실 실 작업 때에는 빌드설정부터 검사하며 반복 실행했습니다. webpack 3 → 4 플러그인 호환 등 반복 노동…)</p>
+
+<p>마지막으로 프로젝트를 사용하는 다른 팀원들을 위해 기존 dev 명령어에 가이드를 제공합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// package.json
+{
+  "scripts": {
+    "dev": "echo '\\n프로젝트 개발 환경이 업데이트 되었습니다.\\n최초 실행 시 아래 명령어를 실행하세요.\\nrm -rf ./node_modules &amp;&amp; nvm install 12 &amp;&amp; nvm use 12 &amp;&amp; npm install \\n\\n이제부터 프로젝트 시작명령은 npm run serve 입니다.'",
+    ...
+  },
+  ...
+}
+</code></pre></div></div>
+<p><br /></p>
+
+<h2 id="최종-프로젝트-구성">최종 프로젝트 구성</h2>
+
+<ul>
+  <li>NodeJS runtime 12.x</li>
+  <li>Vue 2.6.11</li>
+  <li>Babel 7</li>
+  <li>webpack 4</li>
+</ul>
+
+<p>이로써 약 2년짜리 빚을 일부 청산하는 데 성공했습니다. 🎉
+<br /><br /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>역시 부채는 몰아서 갚으면 안 될 것 같습니다. 😂</p>
+
+<p>작업을 시작했던 시기가 10월 ~ 11월 사이 인걸로 기억합니다. 벌써 NodeJS의 활성 LTS가 14로 넘어갔습니다. 되도록이면 최신을 유지하도록 항상 신경 쓰며 프로젝트를 관리해야겠습니다.
+<br /><br /></p>
+
+<h2 id="reference">Reference</h2>
+
+<p><a href="https://cli.vuejs.org/config/#vue-config-js">https://cli.vuejs.org/config/#vue-config-js</a></p>
+
+<p><a href="https://github.com/babel/babel/issues/5905">https://github.com/babel/babel/issues/5905</a></p>
+:ET

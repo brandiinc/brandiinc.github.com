@@ -1,0 +1,259 @@
+I"�w<h2 id="overview">Overview</h2>
+
+<p>안드로이드 앱 개발시 뷰모델을 구현할 때, 액티비티 또는 프래그먼트의 구성 변경에도 데이터가 유지되는 <code class="language-plaintext highlighter-rouge">AAC-ViewModel</code> 클래스를 상속하는 것을 권장합니다. <code class="language-plaintext highlighter-rouge">AAC-ViewModel</code> 을 사용한다면 뷰모델 객체를 생성할 때 생명주기에 맞춰 데이터를 보존하기 위해 프로그래머는 <code class="language-plaintext highlighter-rouge">ViewModelProvider.Factory</code> 만 구현하고 <code class="language-plaintext highlighter-rouge">ViewModelProvider</code> 클래스가 뷰모델 인스턴스를 관리하도록 해야 합니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">MainActivity</span> <span class="p">:</span> <span class="nc">AppCompatActivity</span><span class="p">()</span> <span class="p">{</span>
+
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">viewModel</span><span class="p">:</span> <span class="nc">MainViewModel</span> <span class="k">by</span> <span class="nf">lazy</span> <span class="p">{</span>
+        <span class="nc">ViewModelProvider</span><span class="p">(</span>
+            <span class="k">this</span><span class="p">,</span>
+            <span class="kd">object</span> <span class="err">: </span><span class="nc">ViewModelProvider</span><span class="p">.</span><span class="nc">Factory</span> <span class="p">{</span>
+                <span class="k">override</span> <span class="k">fun</span> <span class="p">&lt;</span><span class="nc">T</span> <span class="p">:</span> <span class="nc">ViewModel</span><span class="err">?</span><span class="p">&gt;</span> <span class="nf">create</span><span class="p">(</span><span class="n">modelClass</span><span class="p">:</span> <span class="nc">Class</span><span class="p">&lt;</span><span class="nc">T</span><span class="p">&gt;):</span> <span class="nc">T</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nc">MainViewModel</span><span class="p">()</span> <span class="k">as</span> <span class="nc">T</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">).</span><span class="k">get</span><span class="p">(</span><span class="nc">MainViewModel</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
+    <span class="p">}</span>
+
+		<span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>매번 <code class="language-plaintext highlighter-rouge">ViewModelProvider.Factory</code> 를 구현 하려면 많은 보일러 플레이트 코드가 생길 수밖에 없는데, 기존에는 위와 같이 직접 팩토리를 생성해주어야 했지만 <code class="language-plaintext highlighter-rouge">Dagger2</code>, <code class="language-plaintext highlighter-rouge">Koin</code> 등의 의존성 주입 라이브러리를 통해 비교적 편리하게 이용할 수 있었습니다.</p>
+
+<p>하지만 <code class="language-plaintext highlighter-rouge">Dagger2</code> 라이브러리를 사용하더라도 복잡한 어노테이션, 높은 러닝커브 때문에 불편함이 많았는데 최근 <code class="language-plaintext highlighter-rouge">Dagger Hilt</code> 가 새로 나오면서 적은 코드만으로도 뷰모델 주입이 가능해졌습니다. <code class="language-plaintext highlighter-rouge">Dagger Hilt</code> 에 대해 학습해보면서 어떻게 아래의 코드가 동작하는 것인지 궁금증이 생겨서 동작 원리를 알아보게 되었습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@HiltAndroidApp</span>
+<span class="kd">class</span> <span class="nc">MyApplication</span> <span class="p">:</span> <span class="nc">Application</span><span class="p">()</span>
+
+<span class="nd">@AndroidEntryPoint</span>
+<span class="kd">class</span> <span class="nc">MainActivity</span> <span class="p">:</span> <span class="nc">AppCompatActivity</span><span class="p">()</span> <span class="p">{</span>
+
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">viewModel</span> <span class="p">:</span> <span class="nc">MainViewModel</span> <span class="k">by</span> <span class="nf">viewModels</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="nd">@HiltViewModel</span>
+<span class="kd">class</span> <span class="nc">MainViewModel</span> <span class="nd">@Inject</span> <span class="k">constructor</span><span class="p">()</span> <span class="p">:</span> <span class="nc">ViewModel</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>결론부터 말하자면, Dagger hilt 도 Dagger2 에서의 방식과 마찬가지로 멀티바인딩 기능을 활용하여 뷰모델을 생성하고 주입해줍니다. 따라서 대거의 멀티바인딩 기능, 기존 Dagger2 에서 뷰모델 생성 방식, 마지막으로 Hilt 에서 뷰모델 생성 방식을 차례대로 알아보겠습니다.</p>
+
+<h2 id="멀티바인딩">멀티바인딩</h2>
+
+<p>우선 먼저 알아야 하는 기능이 있습니다. 기존 Dagger2 를 사용할 때, Dagger2 에서 지원하는 기능인 멀티바인딩을 활용하여 <code class="language-plaintext highlighter-rouge">ViewModelProvider.Factory</code> 를 매번 구현하지 않고도 사용할 수 있었습니다. 멀티바인딩은 대거 모듈 안에 <code class="language-plaintext highlighter-rouge">@IntoMap</code> 어노테이션이 지정된 모든 주입 대상 객체를 컴포넌트 내부에 선언된 Map 인스턴스에 모아주는 기능입니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Module</span>
+<span class="kd">class</span> <span class="nc">SamsungModule</span> <span class="p">{</span>
+    <span class="nd">@Provides</span>
+    <span class="nd">@IntoMap</span>
+    <span class="nd">@StringKey</span><span class="p">(</span><span class="s">"daeyeon"</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">provideGalaxyS21</span><span class="p">()</span> <span class="p">=</span> <span class="s">"galaxy s21"</span>
+
+    <span class="nd">@Provides</span>
+    <span class="nd">@IntoMap</span>
+    <span class="nd">@StringKey</span><span class="p">(</span><span class="s">"sungkyu"</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">provideGalaxyNote20</span><span class="p">()</span> <span class="p">=</span> <span class="s">"galaxy note 20"</span>
+<span class="p">}</span>
+
+<span class="nd">@Module</span>
+<span class="kd">class</span> <span class="nc">GoogleModule</span> <span class="p">{</span>
+    <span class="nd">@Provides</span>
+    <span class="nd">@IntoMap</span>
+    <span class="nd">@StringKey</span><span class="p">(</span><span class="s">"boye"</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">providePixel5</span><span class="p">()</span> <span class="p">=</span> <span class="s">"google pixel 5"</span>
+
+    <span class="nd">@Provides</span>
+    <span class="nd">@IntoMap</span>
+    <span class="nd">@StringKey</span><span class="p">(</span><span class="s">"sohee"</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">providePixel3L</span><span class="p">()</span> <span class="p">=</span> <span class="s">"google pixel 3L"</span>
+<span class="p">}</span>
+
+<span class="nd">@Component</span><span class="p">(</span><span class="n">modules</span> <span class="p">=</span> <span class="p">[</span><span class="nc">SamsungModule</span><span class="o">::</span><span class="k">class</span><span class="p">,</span> <span class="nc">GoogleModule</span><span class="o">::</span><span class="k">class</span><span class="p">])</span>
+<span class="kd">interface</span> <span class="nc">AndroidComponent</span> <span class="p">{</span>
+    <span class="k">fun</span> <span class="nf">phones</span><span class="p">():</span> <span class="nc">Map</span><span class="p">&lt;</span><span class="nc">String</span><span class="p">,</span> <span class="nc">String</span><span class="p">&gt;</span>
+
+    <span class="nd">@Component</span><span class="p">.</span><span class="nc">Factory</span>
+    <span class="kd">interface</span> <span class="nc">Factory</span> <span class="p">{</span>
+        <span class="k">fun</span> <span class="nf">build</span><span class="p">():</span> <span class="nc">AndroidComponent</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>컴포넌트에서 phones() 메서드를 호출해서 로그를 출력해보면 모듈에 선언해놓은 StringKey 및 문자열과 동일하게 표시됩니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">val</span> <span class="py">component</span> <span class="p">=</span> <span class="nc">DaggerAndroidComponent</span><span class="p">.</span><span class="nf">create</span><span class="p">()</span>
+<span class="kd">val</span> <span class="py">phones</span> <span class="p">=</span> <span class="n">component</span><span class="p">.</span><span class="nf">phones</span><span class="p">()</span>
+<span class="nf">println</span><span class="p">(</span><span class="s">"$phones"</span><span class="p">)</span>
+
+<span class="c1">// {daeyeon=galaxy s21, sungkyu=galaxy note 20, boye=google pixel 5, sohee=google pixel 3L}</span>
+</code></pre></div></div>
+
+<p>대거 컴포넌트에 생성된 코드를 보면 아래와 같이 각각의 모듈에 선언 해놓은 스마트폰 객체가 Map 안에 넣어지는 것을 확인할 수 있습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="k">public</span> <span class="nc">Map</span><span class="p">&lt;</span><span class="nc">String</span><span class="p">,</span> <span class="nc">String</span><span class="p">&gt;</span> <span class="nf">phones</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nc">MapBuilder</span><span class="p">.&lt;</span><span class="nc">String</span><span class="p">,</span> <span class="nc">String</span><span class="p">&gt;</span><span class="nf">newMapBuilder</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="s">"daeyeon"</span><span class="p">,</span> <span class="nc">SamsungModule_ProvideGalaxyS21Factory</span><span class="p">.</span><span class="nf">provideGalaxyS21</span><span class="p">(</span><span class="n">samsungModule</span><span class="p">))</span>
+    <span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="s">"sungkyu"</span><span class="p">,</span> <span class="nc">SamsungModule_ProvideGalaxyNote20Factory</span><span class="p">.</span><span class="nf">provideGalaxyNote20</span><span class="p">(</span><span class="n">samsungModule</span><span class="p">))</span>
+    <span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="s">"boye"</span><span class="p">,</span> <span class="nc">GoogleModule_ProvidePixel5Factory</span><span class="p">.</span><span class="nf">providePixel5</span><span class="p">(</span><span class="n">googleModule</span><span class="p">))</span>
+    <span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="s">"sohee"</span><span class="p">,</span> <span class="nc">GoogleModule_ProvidePixel3LFactory</span><span class="p">.</span><span class="nf">providePixel3L</span><span class="p">(</span><span class="n">googleModule</span><span class="p">))</span>
+    <span class="p">.</span><span class="nf">build</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="기존-dagger2-에서-뷰모델-생성-방식">기존 Dagger2 에서 뷰모델 생성 방식</h2>
+
+<p>먼저 Dagger2 에서의 뷰모델 생성 방식을 보겠습니다. Dagger2 에서 멀티바인딩 기능을 사용하여 뷰모델을 식별해줄 Key 와 ViewModel 객체를 모듈에 선언합니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Module</span>
+<span class="k">abstract</span> <span class="kd">class</span> <span class="nc">MainModule</span> <span class="p">{</span>
+    <span class="nd">@Binds</span>
+    <span class="nd">@IntoMap</span>
+    <span class="nd">@ViewModelKey</span><span class="p">(</span><span class="nc">MainViewModel</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">bindHomeViewModel</span><span class="p">(</span><span class="n">mainViewModel</span><span class="p">:</span> <span class="nc">MainViewModel</span><span class="p">):</span> <span class="nc">ViewModel</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">ViewModelProvder.Factory</code> 를 상속받은 뷰모델팩토리(ViewModelFactory) 클래스를 만들어서 대거를 통해 주입받은 map(<code class="language-plaintext highlighter-rouge">creators</code>)에서 뷰모델 key 로 조회하여 뷰모델을 생성하도록 구현하였습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">ViewModelFactory</span> <span class="nd">@Inject</span> <span class="k">constructor</span><span class="p">(</span>
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">creators</span><span class="p">:</span> <span class="nd">@JvmSuppressWildcards</span> <span class="nc">Map</span><span class="p">&lt;</span><span class="nc">Class</span><span class="p">&lt;</span><span class="k">out</span> <span class="nc">ViewModel</span><span class="p">&gt;,</span> <span class="nc">Provider</span><span class="p">&lt;</span><span class="nc">ViewModel</span><span class="p">&gt;&gt;</span>
+<span class="p">)</span> <span class="p">:</span> <span class="nc">ViewModelProvider</span><span class="p">.</span><span class="nc">Factory</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="k">fun</span> <span class="p">&lt;</span><span class="nc">T</span> <span class="p">:</span> <span class="nc">ViewModel</span><span class="err">?</span><span class="p">&gt;</span> <span class="nf">create</span><span class="p">(</span><span class="n">modelClass</span><span class="p">:</span> <span class="nc">Class</span><span class="p">&lt;</span><span class="nc">T</span><span class="p">&gt;):</span> <span class="nc">T</span> <span class="p">{</span>
+        <span class="kd">val</span> <span class="py">found</span> <span class="p">=</span> <span class="n">creators</span><span class="p">.</span><span class="n">entries</span><span class="p">.</span><span class="nf">find</span> <span class="p">{</span> 
+          <span class="n">modelClass</span><span class="p">.</span><span class="nf">isAssignableFrom</span><span class="p">(</span><span class="n">it</span><span class="p">.</span><span class="n">key</span><span class="p">)</span> 
+        <span class="p">}</span>
+        <span class="kd">val</span> <span class="py">creator</span> <span class="p">=</span> <span class="n">found</span><span class="o">?.</span><span class="n">value</span> 
+          <span class="o">?:</span> <span class="k">throw</span> <span class="nc">IllegalArgumentException</span><span class="p">(</span><span class="s">"unknown model class $modelClass"</span><span class="p">)</span>
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nd">@Suppress</span><span class="p">(</span><span class="s">"UNCHECKED_CAST"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">creator</span><span class="p">.</span><span class="k">get</span><span class="p">()</span> <span class="k">as</span> <span class="nc">T</span>
+        <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nc">Exception</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="nc">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nd">@Module</span>
+<span class="k">abstract</span> <span class="kd">class</span> <span class="nc">ViewModelFactoryModule</span> <span class="p">{</span>
+  <span class="nd">@Binds</span>
+  <span class="nd">@Singleton</span>
+  <span class="k">fun</span> <span class="nf">bindViewModelFactory</span><span class="p">(</span>
+    <span class="n">viewModelFactory</span><span class="p">:</span> <span class="nc">ViewModelFactory</span>
+  <span class="p">):</span> <span class="nc">ViewModelProvider</span><span class="p">.</span><span class="nc">Factory</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>액티비티에서는 viewModelFactory 를 주입 받아서 뷰모델을 생성할 수 있습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">MainActivity</span> <span class="p">:</span> <span class="nc">AppCompatActivity</span><span class="p">()</span> <span class="p">{</span>
+
+ <span class="nd">@Inject</span>
+ <span class="kd">val</span> <span class="py">viewModelFactory</span><span class="p">:</span> <span class="nc">ViewModelProvider</span><span class="p">.</span><span class="nc">Factory</span>
+
+ <span class="k">private</span> <span class="kd">val</span> <span class="py">viewModel</span><span class="p">:</span> <span class="nc">MainViewModel</span> <span class="k">by</span> <span class="nf">viewModels</span><span class="p">({</span> <span class="n">viewModelFactory</span> <span class="p">})</span>
+ <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Dagger2 를 사용 했을 때는 뷰모델 클래스가 추가될 때마다 매번 viewModelFactory 를 만들어주어야 하는 불편함은 개선 되었지만, 멀티바인딩 기능에 대한 학습이 필요하고 의존성 주입을 하기 위해 필수적으로 구현해야 하는 모듈이 많았습니다.</p>
+
+<h2 id="dagger-hilt-에서-뷰모델-생성-방식">Dagger Hilt 에서 뷰모델 생성 방식</h2>
+
+<p>Dagger Hilt 도 Dagger2 사용할 때와 동일하게 멀티바인딩을 통해 뷰모델을 주입 받습니다. 우선 뷰모델에 선언한 <code class="language-plaintext highlighter-rouge">@HiltViewModel</code> 어노테이션을 읽어서 ViewModel 주입을 위한 모듈을 생성해줍니다. 생성된 메서드는 <code class="language-plaintext highlighter-rouge">XXXViewModel_HiltModules.java</code> 파일에 추가되고,  <code class="language-plaintext highlighter-rouge">DaggerApp_HiltComponents_SingletonC.java</code> 파일 내부를 보면 <code class="language-plaintext highlighter-rouge">getHiltViewModelMap()</code> 메서드에 뷰모델이 추가된 것을 확인할 수 있습니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// MainViewModel_HiltModules.java</span>
+<span class="nd">@Module</span>
+<span class="nd">@InstallIn</span><span class="o">(</span><span class="nc">ViewModelComponent</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">BindsModule</span> <span class="o">{</span>
+  <span class="nd">@Binds</span>
+  <span class="nd">@IntoMap</span>
+  <span class="nd">@StringKey</span><span class="o">(</span><span class="s">"com.android.hiltsample.MainViewModel"</span><span class="o">)</span>
+  <span class="nd">@HiltViewModelMap</span>
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="nc">ViewModel</span> <span class="nf">binds</span><span class="o">(</span><span class="nc">MainViewModel</span> <span class="n">vm</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="c1">// DaggerApp_HiltComponents_SingletonC</span>
+<span class="nd">@Override</span>
+<span class="kd">public</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Provider</span><span class="o">&lt;</span><span class="nc">ViewModel</span><span class="o">&gt;&gt;</span> <span class="nf">getHiltViewModelMap</span><span class="o">()</span> <span class="o">{</span>
+  <span class="k">return</span> <span class="nc">Collections</span><span class="o">.&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Provider</span><span class="o">&lt;</span><span class="nc">ViewModel</span><span class="o">&gt;&gt;</span><span class="n">singletonMap</span><span class="o">(</span>
+    <span class="s">"com.android.hiltsample.MainViewModel"</span><span class="o">,</span> <span class="o">(</span><span class="nc">Provider</span><span class="o">)</span> <span class="n">mainViewModelProvider</span><span class="o">()</span>
+	<span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>액티비티에서는 <code class="language-plaintext highlighter-rouge">@AndroidEntryPoint</code> 어노테이션을 읽어서 <code class="language-plaintext highlighter-rouge">Hilt_XXXActivity</code> 를 생성합니다.</p>
+
+<p>Hilt Gradle plugin 이 바이트코드 변환을 실행해서 실제로는 아래와 같은 상속 구조를 만들어 줍니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@AndroidEntryPoint</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainActivity</span> <span class="kd">extends</span> <span class="n">Hilt_HomeActivity</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">}</span>
+
+<span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">Hilt_HomeActivity</span> <span class="kd">extends</span> <span class="nc">AppCompatActivity</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<p>안드로이드 스튜디오에서 [Build] - [Analyze APK…] 를 실행하고 MainActivity 의 바이트코드를 보면 Hilt_MainActivity 를 상속하는 것을 확인할 수 있습니다.</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2021/0427/1.png" alt="athena" />
+</figure>
+<figcaption></figcaption>
+
+<p><code class="language-plaintext highlighter-rouge">Hilt_XXXActivity</code> 내부에서는 <code class="language-plaintext highlighter-rouge">getDefaultViewModelProviderFactory()</code> 메서드를 오버라이드하여  앞서 Dagger2 를 사용할 때 직접 만들었던 <code class="language-plaintext highlighter-rouge">ViewModelFactory</code> 와 동일한 역할을 수행하기 위한 <code class="language-plaintext highlighter-rouge">HiltViewModelFactory</code> 를 반환하도록 합니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">abstract</span> <span class="kd">class</span> <span class="nc">Hilt_MainActivity</span> <span class="n">extends</span> <span class="nc">AppCompatActivity</span> <span class="n">implements</span> <span class="nc">GeneratedComponentManagerHolder</span> <span class="p">{</span>
+
+	<span class="c1">// ...</span>
+
+  <span class="nd">@Override</span>
+  <span class="k">public</span> <span class="nc">ViewModelProvider</span><span class="p">.</span><span class="nc">Factory</span> <span class="nf">getDefaultViewModelProviderFactory</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nc">DefaultViewModelFactories</span><span class="p">.</span><span class="nf">getActivityFactory</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>HiltViewModelFactory 를 보면 hiltViewModelMap 에서 뷰모델을 가져와서 생성해주는 것을 알 수 있습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">final</span> <span class="kd">class</span> <span class="nc">HiltViewModelFactory</span> <span class="n">implements</span> <span class="nc">ViewModelProvider</span><span class="p">.</span><span class="nc">Factory</span> <span class="p">{</span>	
+
+  <span class="k">public</span> <span class="nc">HiltViewModelFactory</span><span class="p">(</span><span class="o">..</span><span class="p">.)</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">hiltViewModelFactory</span> <span class="p">=</span>
+        <span class="n">new</span> <span class="nc">AbstractSavedStateViewModelFactory</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">defaultArgs</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nd">@NonNull</span>
+          <span class="nd">@Override</span>
+          <span class="nd">@SuppressWarnings</span><span class="p">(</span><span class="s">"unchecked"</span><span class="p">)</span>
+          <span class="k">protected</span> <span class="p">&lt;</span><span class="nc">T</span> <span class="n">extends</span> <span class="nc">ViewModel</span><span class="p">&gt;</span> <span class="nc">T</span> <span class="nf">create</span><span class="p">(</span>
+              <span class="nd">@NonNull</span> <span class="nc">String</span> <span class="n">key</span><span class="p">,</span> <span class="nd">@NonNull</span> <span class="nc">Class</span><span class="p">&lt;</span><span class="nc">T</span><span class="p">&gt;</span> <span class="n">modelClass</span><span class="p">,</span> <span class="nd">@NonNull</span> <span class="nc">SavedStateHandle</span> <span class="n">handle</span><span class="p">)</span> <span class="p">{</span>
+           <span class="nc">ViewModelComponent</span> <span class="n">component</span> <span class="p">=</span>
+               <span class="n">viewModelComponentBuilder</span><span class="p">.</span><span class="nf">savedStateHandle</span><span class="p">(</span><span class="n">handle</span><span class="p">).</span><span class="nf">build</span><span class="p">();</span>
+           <span class="nc">Provider</span><span class="p">&lt;</span><span class="err">?</span> <span class="err">extends</span> <span class="nc">ViewModel</span><span class="p">&gt;</span> <span class="n">provider</span> <span class="p">=</span>
+              <span class="nc">EntryPoints</span><span class="p">.</span><span class="k">get</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="nc">ViewModelFactoriesEntryPoint</span><span class="p">.</span><span class="k">class</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nf">getHiltViewModelMap</span><span class="p">()</span>
+                  <span class="p">.</span><span class="k">get</span><span class="p">(</span><span class="n">modelClass</span><span class="p">.</span><span class="nf">getName</span><span class="p">());</span>
+           <span class="c1">// ...</span>
+           <span class="k">return</span> <span class="p">(</span><span class="nc">T</span><span class="p">)</span> <span class="n">provider</span><span class="p">.</span><span class="k">get</span><span class="p">();</span>
+         <span class="p">}</span>
+      <span class="p">};</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p>액티비티에서는 defaultViewModelProviderFactory 로 <code class="language-plaintext highlighter-rouge">HiltViewModelFactory</code> 를 가져올 수 있게 되어서 activity-ktx 라이브러리에 선언된 확장함수를 이용하여 간단하게 AAC-ViewModel 을 생성하고 사용할 수 있게 되었습니다.</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@AndroidEntryPoint</span>
+<span class="kd">class</span> <span class="nc">MainActivity</span> <span class="p">:</span> <span class="nc">AppCompatActivity</span><span class="p">()</span> <span class="p">{</span>
+
+  <span class="k">private</span> <span class="kd">val</span> <span class="py">viewModel</span> <span class="p">:</span> <span class="nc">MainViewModel</span> <span class="k">by</span> <span class="nf">viewModels</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>이번에 궁금증을 해결하기 위해 학습하면서 기존 Dagger2 의 불편함을 많이 개선했다는 것을 알 수 있었습니다. AAC-뷰모델을 생성하는 것만으로도 많은 보일러 플레이트 코드와 학습이 필요 했었는데, Dagger Hilt 에서 개발자가 직접 구현했어야 했던 모듈, 컴포넌트를 모두 미리 생성해주어서 간단하게 DI 을 할 수 있게 되었습니다. 높은 러닝커브가 개선되고 이전에 비해 편리해졌기 때문에 정식 버전이 나오면 충분히 도입할 가치가 있다고 생각됩니다. 이상으로 글을 마치겠습니다!</p>
+
+<h2 id="참고-사이트">참고 사이트</h2>
+
+<p><a href="https://medium.com/@jungil.han/%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98-%EC%BB%B4%ED%8F%AC%EB%84%8C%ED%8A%B8-viewmodel-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0-2e4d136d28d2">https://medium.com/@jungil.han/아키텍처-컴포넌트-viewmodel-이해하기-2e4d136d28d2</a></p>
+
+<p><a href="https://dagger.dev/dev-guide/">https://dagger.dev/dev-guide/</a></p>
+:ET

@@ -1,0 +1,276 @@
+I"�i<h1 id="overview">Overview</h1>
+
+<p>웹 프론트 개발을 할 때 대부분 반복적인 테스트 작업을 하고 있습니다. 하나의 기능을 개발하고 웹 브라우저에 접속하여 기능을 테스트하고 수정하고 합니다. 이러한 반복된 테스트 작업을 줄이기 위해 코드로 작성해서 자동화를 하게 되면 테스트가 누락되거나 잘못 검증하는 등의 실수도 방지할 수 있으며, 이는 곧 코드의 품질 향상으로 이어지게 됩니다.</p>
+
+<p>그래서 현재 운영중인 프로젝트들이 Vuejs로 되어있기 때문에 Vuejs에 적합한 Jest라는 프레임워크를 찾아서 적용해 보기로 했습니다. 현재 운영중인 프로젝트엔 바로 도입하기 어렵기 때문에  데모 프로젝트를 하나 생성하여 시작하기로 합니다.
+<br /><br /></p>
+
+<h2 id="설정하기">설정하기</h2>
+
+<h3 id="vue-cli-를-사용하여-project-생성">vue-cli 를 사용하여 project 생성</h3>
+
+<ul>
+  <li>Vue CLI 는 Jest를 사용해 어려운 설정 없이 유닛테스트를 진행하기 위한 옵션이 있습니다.</li>
+  <li><strong>test runner</strong> 선택시 <strong>jest</strong>를 선택합니다.</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ vue init webpack 프로젝트명
+</code></pre></div></div>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200102/01.png" alt="jest" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<ul>
+  <li>project 가 생성되었습니다. 아래는 생성된 project 폴더 구조 입니다.</li>
+  <li>Jest는 기본적으로 test.js 또는 spec.js로 끝나는 파일을 찾아 테스트를 실행합니다.</li>
+  <li>테스팅 할 파일은 <strong>test &gt; unit &gt; specs</strong> 폴더 안에 테스트할 컴포넌트와 동일한 파일명으로 생성하면 됩니다.</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200102/02.png" alt="jest" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<h2 id="간단한-예제로-vue-component-테스트">간단한 예제로 Vue Component 테스트</h2>
+
+<h3 id="1-vue-component-생성">1. Vue Component 생성</h3>
+
+<ul>
+  <li>간단한 사칙연산이 가능한 화면을 구현합니다.</li>
+  <li>component &gt; HelloWorld.vue</li>
+</ul>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"hello"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;h1&gt;</span>{{ message }}<span class="nt">&lt;/h1&gt;</span>
+    <span class="nt">&lt;ul&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">v-model=</span><span class="s">"frist"</span> <span class="nt">/&gt;&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">v-model=</span><span class="s">"second"</span> <span class="nt">/&gt;&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span> = {{ total }} <span class="nt">&lt;/li&gt;</span>
+    <span class="nt">&lt;/ul&gt;</span>
+    <span class="nt">&lt;ul&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"더하기"</span> <span class="err">@</span><span class="na">click=</span><span class="s">"plus(frist, second)"</span> <span class="nt">/&gt;&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"빼기"</span> <span class="err">@</span><span class="na">click=</span><span class="s">"minus(frist, second)"</span> <span class="nt">/&gt;&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"곱하기"</span> <span class="err">@</span><span class="na">click=</span><span class="s">"multiply(frist, second)"</span> <span class="nt">/&gt;&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"나누기(반올림)"</span> <span class="err">@</span><span class="na">click=</span><span class="s">"divide(frist, second)"</span> <span class="nt">/&gt;&lt;/li&gt;</span>
+    <span class="nt">&lt;/ul&gt;</span>
+    <span class="nt">&lt;h2&gt;&lt;/h2&gt;</span> <span class="c">&lt;!-- 결과값 --&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+
+<span class="nt">&lt;script&gt;</span>
+<span class="k">export</span> <span class="k">default</span> <span class="p">{</span>
+  <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">HelloWorld</span><span class="dl">'</span><span class="p">,</span>
+  <span class="nx">data</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="na">message</span><span class="p">:</span> <span class="dl">'</span><span class="s1">Unit Test</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">frist</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+      <span class="na">second</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+      <span class="na">total</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="na">methods</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nx">plus</span> <span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">+</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">total</span>
+    <span class="p">},</span>
+    <span class="nx">minus</span> <span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">-</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">total</span>
+    <span class="p">},</span>
+    <span class="nx">multiply</span> <span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">false</span>
+      <span class="p">}</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">*</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">total</span>
+    <span class="p">},</span>
+    <span class="nx">divide</span> <span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">false</span>
+      <span class="p">}</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">/</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">round</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">total</span><span class="p">)</span> <span class="c1">// 소스점 반올림</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">total</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="nt">&lt;/script&gt;</span>
+
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="2-테스트파일을-생성">2. 테스트파일을 생성</h3>
+
+<ul>
+  <li>테스트 코드를 작성합니다. 테스트 코드 작성시 describe()를 사용하여 그룹으로 묶어주면 테스트 코드가 늘어날 경우에도 쉽게 관리할 수 있으며, 테스트 결과도 그룹별로 정리해서 보여 줍니다.</li>
+  <li>test &gt; unit &gt; HelloWorld.spec.js</li>
+</ul>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">Vue</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">vue</span><span class="dl">'</span>
+<span class="k">import</span> <span class="nx">HelloWorld</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@/components/HelloWorld</span><span class="dl">'</span>
+
+<span class="kd">let</span> <span class="nx">Constructor</span>
+<span class="kd">let</span> <span class="nx">vm</span>
+<span class="kd">let</span> <span class="nx">frist</span>
+<span class="kd">let</span> <span class="nx">second</span>
+
+<span class="c1">// 초기화</span>
+<span class="nx">beforeEach</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">Constructor</span> <span class="o">=</span> <span class="nx">Vue</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">HelloWorld</span><span class="p">)</span>
+  <span class="nx">vm</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Constructor</span><span class="p">().</span><span class="nx">$mount</span><span class="p">()</span>
+  <span class="nx">frist</span> <span class="o">=</span> <span class="nx">vm</span><span class="p">.</span><span class="nx">_data</span><span class="p">.</span><span class="nx">frist</span>
+  <span class="nx">second</span> <span class="o">=</span> <span class="nx">vm</span><span class="p">.</span><span class="nx">_data</span><span class="p">.</span><span class="nx">second</span>
+<span class="p">})</span>
+
+<span class="nx">describe</span><span class="p">(</span><span class="dl">'</span><span class="s1">HelloWorld.vue</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">describe</span><span class="p">(</span><span class="dl">'</span><span class="s1">유효성 검사</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">숫자가 아닌 Null 또는 문자열을 입력할 경우 결과값이 에러(NaN)인지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">second</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">가</span><span class="dl">'</span>
+      <span class="c1">// NaN값인 경우</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">plus</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBeNaN</span><span class="p">()</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">minus</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBeNaN</span><span class="p">()</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">multiply</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBeNaN</span><span class="p">()</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">divide</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBeNaN</span><span class="p">()</span>
+    <span class="p">})</span>
+    <span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">0으로 곱하기 또는 나누기 하려고 하는지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">second</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="c1">// toBeFalsy : if 문의 리턴값이 false 인 경우</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">multiply</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="mi">0</span><span class="p">)).</span><span class="nx">toBeFalsy</span><span class="p">()</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">divide</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="mi">0</span><span class="p">)).</span><span class="nx">toBeFalsy</span><span class="p">()</span>
+    <span class="p">})</span>
+  <span class="p">})</span>
+  <span class="nx">describe</span><span class="p">(</span><span class="dl">'</span><span class="s1">사칙연산 테스트</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">더하기의 결과값을 비교하여 일치한지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="c1">// toBe : 기본값을 비교할때 사용</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">plus</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+    <span class="p">})</span>
+    <span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">뺴기 결과값을 비교하여 정수인지 음수인지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">minus</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="p">})</span>
+    <span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">곱하기의 결과값을 비교하여 일치한지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">multiply</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="mi">14</span><span class="p">)</span>
+    <span class="p">})</span>
+    <span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">나누기의 결과값을 비교하여 소스점 반올림이 되었는지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="c1">// toBeCloseTo : 소수점 다음에 확인할 자리 수를 제어하는데 사용</span>
+      <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">divide</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBeCloseTo</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="p">})</span>
+  <span class="p">})</span>
+<span class="p">})</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="3-테스트-결과">3. 테스트 결과</h3>
+
+<ul>
+  <li>테스트를 실행합니다.</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ npm run unit
+</code></pre></div></div>
+
+<ul>
+  <li>테스트 결과 화면 입니다.</li>
+  <li>컴포넌트 메소드의 모든 Line을 테스트 하여 Stmts, Branch, Funcs, Lines 테스트가 100% 진행완료 되었습니다.</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200102/03.png" alt="jest" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<ul>
+  <li>만약 메소드의 함수를 테스트 하지 않았거나, 함수안에 if문의 결과값을 테스트 하지 않을 경우 100% 달성을 하지 못하면 Uncovered Line에 테스트 진행하지 않은 줄수를 표시하여 줍니다.</li>
+  <li>테스트 코드에서 Vue Component &gt; Method &gt; Function &gt; IF문을 테스트 하지 않은 결과내용 입니다.</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200102/04.png" alt="jest" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<h1 id="code-coverage">Code Coverage</h1>
+
+<h3 id="statements-lines">Statements, Lines</h3>
+
+<ul>
+  <li>비슷한 성격으로 전체 코드라인 또는 명령문이 얼마나 수행되었는지를 확인합니다.</li>
+</ul>
+
+<h3 id="branches">Branches</h3>
+
+<ul>
+  <li>전체 코드중 분기문이 얼마나 수행 되었는지를 확인합니다.</li>
+  <li>아래 코드처럼 if문에 대한 테스트를 수행할 경우 100%의 결과가 나옵니다.</li>
+</ul>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">multiply</span> <span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">false</span>
+  <span class="p">}</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">*</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">total</span>
+<span class="p">},</span>
+</code></pre></div></div>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">0으로 곱하기 또는 나누기 하려고 하는지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">second</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="c1">// toBeFalsy : if 문의 리턴값이 false 인 경우</span>
+  <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">multiply</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="mi">0</span><span class="p">)).</span><span class="nx">toBeFalsy</span><span class="p">()</span>
+  <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">divide</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="mi">0</span><span class="p">)).</span><span class="nx">toBeFalsy</span><span class="p">()</span>
+<span class="p">})</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="functions">Functions</h3>
+
+<ul>
+  <li>전체 코드중 함수가 얼마나 수행 되었는지를 확인합니다.</li>
+  <li>아래 코드처럼 함수에 대한 테스트를 수행할 경우 100%의 결과가 나옵니다.</li>
+</ul>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">plus</span> <span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">frist</span><span class="p">)</span> <span class="o">+</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">second</span><span class="p">)</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">total</span>
+<span class="p">},</span>
+</code></pre></div></div>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">it</span><span class="p">(</span><span class="dl">'</span><span class="s1">더하기의 결과값을 비교하여 일치한지 확인한다.</span><span class="dl">'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="c1">// toBe : 기본값을 비교할때 사용</span>
+  <span class="nx">expect</span><span class="p">(</span><span class="nx">vm</span><span class="p">.</span><span class="nx">plus</span><span class="p">(</span><span class="nx">frist</span><span class="p">,</span> <span class="nx">second</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<h3 id="uncovered-line">Uncovered Line</h3>
+
+<ul>
+  <li>수행되지 않은 코드 라인을 알려 줍니다.
+<br /><br /></li>
+</ul>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>Jest를 사용하여 Vue Component Test를 해 보았습니다. 간단한 Unit Test로 밖에 사용하지 못하였지만 Jest에는 Snapshot이라는 UI Test, 타이머제어, 비동기 테스트등 다양한 테스트를 할수 있는 기능이 있습니다.</p>
+
+<p>간단한 예제를 통해 단위 테스트를 진행해 보았더니 브라우저 열어서 값을 입력하고 결과값을 확인하고 하는 반복적인 동작을 줄일 수 있어 편리하고, 테스트의 양이 많으면 반복적으로 하더라도 누락되는 실수를 방지할 수 있을 거라 생각됩니다!
+<br /><br /></p>
+
+<h3 id="참고">참고</h3>
+
+<p><a href="https://jestjs.io/docs/en/getting-started">https://jestjs.io/docs/en/getting-started</a><br />
+<a href="https://vuejs.org/v2/guide/unit-testing.html">https://vuejs.org/v2/guide/unit-testing.html</a><br />
+<a href="https://vue-test-utils.vuejs.org/guides/#testing-single-file-components-with-jest">https://vue-test-utils.vuejs.org/guides/#testing-single-file-components-with-jest</a><br />
+<a href="https://blog.octo.com/tdd-with-vue-js/">https://blog.octo.com/tdd-with-vue-js/</a></p>
+:ET

@@ -1,0 +1,217 @@
+I"�"<h1 id="overview">Overview</h1>
+<p>이전까지는 단일 테이블에서 INDEX를 적용하는 효과적인 방법들을 살펴봤습니다. 아직 못 본 개발자를 위해 친절히 링크도 준비했습니다. 이 글을 보기 전에 아래의 글들을 먼저 보는 것이 좋습니다. <br /><br /></p>
+
+<p><a href="http://labs.brandi.co.kr/2018/03/27/hansj.html" target="_blank">단일 TABLE을 SELECT하자!: 올바른 SELECT문 작성하기</a><br />
+<a href="http://labs.brandi.co.kr/2018/06/01/hansj.html" target="_blank">순서대로 척척, ORDER BY: ORDER BY 조건 처리 알아보기</a><br />
+<a href="http://labs.brandi.co.kr/2018/07/11/hansj.html" target="_blank">원하는 대로 뭉치는 GROUP BY: GROUP BY 조건 처리 알아보기</a><br /><br /></p>
+
+<p>이번 글에서는 테이블에서 컬럼을 추가 또는 삭제하고, 테이블을 분리하는 방법까지 알아보겠습니다. <br /><br /><br /></p>
+
+<h1 id="lets-do-it">Let’s do it</h1>
+<p>먼저 아래의 컬럼을 추가해봅시다.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ALTER TABLE test.TB_MBR_BAS ADD COLUMN AREA_NM	VARCHAR(10)	COMMENT '지역 명';
+</code></pre></div></div>
+<p><br /><br />
+그리고 테스트 자료를 넣습니다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>UPDATE test.TB_MBR_BAS
+SET
+	AREA_NM =
+		CASE FLOOR(RAND()*15)
+			WHEN 0	THEN '서울특별시'
+			WHEN 1	THEN '부산광역시'
+			WHEN 2	THEN '인천광역시'
+			WHEN 3	THEN '대전광역시'
+			WHEN 4	THEN '대구광역시'
+			WHEN 5	THEN '광주광역시'
+			WHEN 6	THEN '울산광역시'
+			WHEN 7	THEN '경기도'
+			WHEN 8	THEN '강원도'
+			WHEN 9	THEN '충청남도'
+			WHEN 10	THEN '충청북도'
+			WHEN 11	THEN '전라남도'
+			WHEN 12	THEN '전라북도'
+			WHEN 13	THEN '경상남도'
+			WHEN 14	THEN '경상북도'
+			WHEN 15	THEN '제주도'
+		END
+WHERE AREA_NM IS NULL
+;
+</code></pre></div></div>
+<p><br /><br />
+자료를 확인하면 아래와 같이 나옵니다.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+	*
+FROM test.TB_MBR_BAS
+;
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180829/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>AREA_NM 컬럼을 추가해 지역이 나오도록 했습니다. AREA_NM을 보면 중복되는 지역명이 있습니다. 이럴 때 보통 AREA_NM을 별도의 테이블을 만들어 ID OR 코드를 부여해 처리합니다. 위의 UPDATE 문을 참조하여 ID를 만들면 아래와 같이 만들 수 있습니다.
+<br /><br />
+0	: ‘서울특별시’<br />
+1	: ‘부산광역시’<br />
+2	: ‘인천광역시’<br />
+3	: ‘대전광역시’<br />
+4	: ‘대구광역시’<br />
+5	: ‘광주광역시’<br />
+6	: ‘울산광역시’<br />
+7	: ‘경기도’<br />
+8	: ‘강원도’<br />
+9	: ‘충청남도’<br />
+10	: ‘충청북도’<br />
+11	: ‘전라남도’<br />
+12	: ‘전라북도’<br />
+13	: ‘경상남도’<br />
+14	: ‘경상북도’<br />
+15	: ‘제주도’
+<br /><br />
+먼저 AREA_NM과 ID를 다룰 테이블을 만들겠습니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CREATE TABLE test.TB_AREA_BAS
+(
+	AREA_ID		TINYINT UNSIGNED	NOT NULL	COMMENT '지역 아이디 '
+	,AREA_NM	VARCHAR(10)			NOT NULL	COMMENT '지역 명'
+	,PRIMARY KEY (AREA_ID)
+)
+ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='TB 지역 기본'
+;
+
+테이블을 만들었으면 자료를 넣어줍니다.
+INSERT INTO test.TB_AREA_BAS
+(
+	AREA_ID
+	,AREA_NM
+)
+VALUES
+(0,'서울특별시')
+,(1,'부산광역시')
+,(2,'인천광역시')
+,(3,'대전광역시')
+,(4,'대구광역시')
+,(5,'광주광역시')
+,(6,'울산광역시')
+,(7,'경기도')
+,(8,'강원도')
+,(9,'충청남도')
+,(10,'충청북도')
+,(11,'전라남도')
+,(12,'전라북도')
+,(13,'경상남도')
+,(14,'경상북도')
+,(15,'제주도')
+;
+</code></pre></div></div>
+<p><br /><br />
+자료를 확인하면 아래와 같이 나옵니다.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+	*
+FROM test.TB_AREA_BAS
+;
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180829/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>테이블을 만들었다면 test.TB_MBR_BAS 테이블에 AREA_ID 를 추가하여 자료를 넣은 후 AREA_NM 컬럼을 삭제하면 됩니다.<br /><br /></p>
+
+<p>이제 AREA_ID를 추가합니다.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ALTER TABLE test.TB_MBR_BAS ADD COLUMN AREA_ID TINYINT UNSIGNED NOT NULL COMMENT '지역 아이디';
+</code></pre></div></div>
+<p><br /><br />
+AREA_NM을 참조하여 AREA_ID를 넣습니다.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>UPDATE test.TB_MBR_BAS
+SET
+	AREA_ID =
+		CASE AREA_NM
+			WHEN '서울특별시'	THEN 0
+			WHEN '부산광역시'	THEN 1
+			WHEN '인천광역시'	THEN 2
+			WHEN '대전광역시'	THEN 3
+			WHEN '대구광역시'	THEN 4
+			WHEN '광주광역시'	THEN 5
+			WHEN '울산광역시'	THEN 6
+			WHEN '경기도'	THEN 7
+			WHEN '강원도'	THEN 8
+			WHEN '충청남도'	THEN 9
+			WHEN '충청북도'	THEN 10
+			WHEN '전라남도'	THEN 11
+			WHEN '전라북도'	THEN 12
+			WHEN '경상남도'	THEN 13
+			WHEN '경상북도'	THEN 14
+			WHEN '제주도'	THEN 15
+		END
+;
+</code></pre></div></div>
+<p><br />
+자료를 확인하면 아래와 같이 나오는데요.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+	*
+FROM test.TB_MBR_BAS
+;
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180829/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>최종적으로 AREA_NM 컬럼을 삭제합시다.<br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ALTER TABLE test.TB_MBR_BAS DROP COLUMN AREA_NM;
+</code></pre></div></div>
+<p><br /><br />
+삭제했다면 자료를 확인해봅시다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+	*
+FROM test.TB_MBR_BAS
+;
+</code></pre></div></div>
+<p><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180829/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>이제 두 개의 테이블을 연결해서 조회해보겠습니다. JOIN을 사용하면 되고, Quey 문은 아래와 같습니다.<br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+	T101.MBR_ID
+	,T101.MBR_INDFY_NO
+	,T101.MBR_NM
+	,T101.AGE
+	,T101.AREA_ID
+	,T102.AREA_NM
+FROM test.TB_MBR_BAS T101
+	INNER JOIN test.TB_AREA_BAS T102
+		ON T102.AREA_ID = T101.AREA_ID
+;
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180829/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180829/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<h1 id="정리하며">정리하며</h1>
+<p>위에서 보여드린 예시는 두 가지 다른 점이 있습니다. 첫째는 TABLE 뒤에 T101, T101 과 같은 얼라이스를 준 것, 둘째는 INNER JOIN 문장이 들어간 것입니다. <br /><br /></p>
+
+<p>만약 테이블이 2개 이상이라면 사용할 테이블 컬럼을 써야 하는데 테이블명을 그대로 쓴다면 너무 길어집니다. 그래서 얼라이스로 테이블을 간단하게 표시하는 것이죠. <br /><br /></p>
+
+<p>INNER JOIN은 JOIN 중 가장 기본이 되는 문장입니다. 플랜을 보면 T101 즉 test.TB_MBR_BAS를 차례대로 전부 읽는데, 그때마다 T102인 test.TB_AREA_BAS 를 AREA_ID 를 기준으로 값을 읽습니다. T101에 해당하는 내용과 T102에 해당하는 내용을 보여주는 것이죠. 저는 Database를 쓰는 이유가 바로 JOIN 때문이라고 생각하는데요. 여러분의 생각은 어떤가요. 조금 헷갈린다면 다음에는 JOIN에 대해서 알아보도록 하겠습니다. (자연스러운 결말..!)</p>
+:ET

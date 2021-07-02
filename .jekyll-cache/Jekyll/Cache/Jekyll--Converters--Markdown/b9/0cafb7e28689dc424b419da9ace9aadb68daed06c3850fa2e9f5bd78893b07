@@ -1,0 +1,275 @@
+I"�@<p><strong>목차</strong><br />
+<a href="#h0">Overview</a><br />
+<a href="#h1">0.</a> 시작하기 전<br />
+<a href="#h2">1.</a> 테마 권장 사항<br />
+<a href="#h3">2.</a> 테마 선택 다이얼로그 만들기<br />
+<a href="#h4">3.</a> 다크 모드 테마 설정<br />
+<a href="#h5" class="indent">3-1.</a> 색상<br />
+<a href="#h6" class="indent">3-2.</a> 이미지<br />
+<a href="#h7">4.</a> 다크 모드를 적용한 브랜디<br />
+<a href="#h8">5.</a> 결론<br /><br /></p>
+
+<p><a name="h0"></a></p>
+<h2 id="overview">Overview</h2>
+
+<p>출시 이전 가칭 Android Q 버전이 2019년 9월 3일 Android 10 이란 네이밍으로 출시되었습니다.</p>
+
+<p>Android 10 의 업데이트 중 저의 가장 큰 관심사는 바로 다크 모드입니다.</p>
+
+<p>다크 모드를 활성화했을 때, 기존에는 일부 시스템에서만 테마가 변경되었는데, Android 10 으로 업데이트되며 애플리케이션에서도 다크 모드를 적용할 수 있게 되었습니다.</p>
+
+<p>다크 모드를 활성화하면 배터리 효율성이 높아지고, 어두운 주변 환경에서 눈부심을 최소화할 수 있기 때문에 다크 모드를 선호하는 유저들이 많습니다.</p>
+
+<p>자, 이제! 다크 모드를 브랜디 앱에 적용시켜 보겠습니다. 😊</p>
+
+<p><span class="annotation">🤙 다크 모드, 어두운 테마, 다크 테마 등 여러 단어를 다크 모드로 통칭</span></p>
+
+<p><br /></p>
+
+<p><a name="h1"></a></p>
+<h2 id="0-시작하기-전">0. 시작하기 전</h2>
+
+<ul>
+  <li>
+    <p>Android 10 에서 다크 모드 활성화하는 방법입니다.</p>
+
+    <p>(기기 정보는 Android 10, One UI Beta, 갤럭시s10e)</p>
+
+    <p>아래 스크린샷과 같이 알림창에서 다크 모드의 활성 상태를 변경할 수 있습니다.</p>
+  </li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/01.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><a name="h2"></a></p>
+<h2 id="1-테마-권장-사항">1. 테마 권장 사항</h2>
+
+<p>Android 공식 문서(developer.android.com)에서는 사용자가 직접 테마를 선택하는 것을 권장합니다.</p>
+
+<ul>
+  <li>밝은 테마 - Light</li>
+  <li>어두운 테마 - Dark</li>
+  <li>시스템 기본 값 (권장 기본 옵션) - Default</li>
+</ul>
+
+<p>여기서 시스템 기본 값은 Android 10 이상과 Android 9 이하에서 권장되는 옵션이 다릅니다.</p>
+
+<h3 class="indent">Android 10 이상</h3>
+
+<li class="indent">시스템 기본 값 : 다크 모드 활성화 여부</li>
+
+<h3 class="indent">Android 9 이하</h3>
+
+<li class="indent bottom-spacing">시스템 기본 값 : 절전 모드 활성화 여부</li>
+
+<p><span class="indent">Android 9 이하 버전에서는 다크 모드 활성화 여부 대신 절전 모드 활성화 여부로 테마를 변경합니다.</span></p>
+
+<p><span class="indent">(기기 정보는 Android 9, One UI 1.5, 갤럭시노트10)</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/02.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<p>밝은 테마를 선택했을 땐, 다크 모드의 활성화 여부를 판단하지 않고 밝은 테마가 적용됩니다.</p>
+
+<p><br /></p>
+
+<p><a name="h3"></a></p>
+<h2 id="2-테마-선택-다이얼로그-만들기">2. 테마 선택 다이얼로그 만들기</h2>
+
+<p>Android 공식 문서의 권장사항을 따라 사용자가 테마를 선택할 수 있도록 테마 선택 다이얼로그를 만들어 보겠습니다.</p>
+
+<p><span>1. ThemeUtil 생성</span></p>
+
+<p>테마를 전환하기 위해서는 아래 메서드를 호출해야 합니다. 이 함수는 시작된 Activity를 자동으로 다시 생성하여 테마를 전환해줍니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// ex) 나이트모드로 테마 설정</span>
+<span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">setDefaultNightMode</span><span class="o">(</span><span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">MODE_NIGHT_YES</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>위의 setDefaultNightMode() 메서드의 사용을 편하게 하기 위해 Util 클래스를 만듭니다.</p>
+
+<p>권장 사항에 따라 시스템 기본 값을 선택했을 때, Android 10 이상일 경우와 아닌 경우를 분기하여 테마를 적용할 수 있도록 합니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ThemeUtil</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LIGHT_MODE</span> <span class="o">=</span> <span class="s">"light"</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">DARK_MODE</span> <span class="o">=</span> <span class="s">"dark"</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">DEFAULT_MODE</span> <span class="o">=</span> <span class="s">"default"</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">applyTheme</span><span class="o">(</span><span class="nc">String</span> <span class="n">themeColor</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">switch</span> <span class="o">(</span><span class="n">themeColor</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">case</span> <span class="nl">LIGHT_MODE:</span>
+                <span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">setDefaultNightMode</span><span class="o">(</span><span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">MODE_NIGHT_NO</span><span class="o">);</span>
+                <span class="k">break</span><span class="o">;</span>
+
+            <span class="k">case</span> <span class="nl">DARK_MODE:</span>
+                <span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">setDefaultNightMode</span><span class="o">(</span><span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">MODE_NIGHT_YES</span><span class="o">);</span>
+                <span class="k">break</span><span class="o">;</span>
+
+            <span class="k">default</span><span class="o">:</span>
+                <span class="c1">// 안드로이드 10 이상</span>
+                <span class="k">if</span> <span class="o">(</span><span class="nc">Build</span><span class="o">.</span><span class="na">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&gt;=</span> <span class="nc">Build</span><span class="o">.</span><span class="na">VERSION_CODES</span><span class="o">.</span><span class="na">Q</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">setDefaultNightMode</span><span class="o">(</span><span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">MODE_NIGHT_FOLLOW_SYSTEM</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="c1">// 안드로이드 10 미만</span>
+                <span class="k">else</span> <span class="o">{</span>
+                    <span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">setDefaultNightMode</span><span class="o">(</span><span class="nc">AppCompatDelegate</span><span class="o">.</span><span class="na">MODE_NIGHT_AUTO_BATTERY</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="k">break</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><span>2. 다이얼로그 생성</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/03.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<p>라디오 버튼 클릭 시, 해당하는 테마 값을 SharedPreference에 저장하고 테마를 전환합니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">BrandiSession</span> <span class="n">brandiSession</span> <span class="o">=</span> <span class="no">A</span><span class="o">.</span><span class="na">getBrandiSession</span><span class="o">();</span>
+
+<span class="nc">String</span> <span class="n">themeColor</span> <span class="o">=</span> <span class="nc">ThemeUtil</span><span class="o">.</span><span class="na">LIGHT_MODE</span><span class="o">;</span>
+<span class="n">brandiSession</span><span class="o">.</span><span class="na">setThemeColor</span><span class="o">(</span><span class="n">themeColor</span><span class="o">);</span>
+<span class="nc">ThemeUtil</span><span class="o">.</span><span class="na">applyTheme</span><span class="o">(</span><span class="n">themeColor</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p><span>3. Application에서 theme 지정</span></p>
+
+<p>마지막으로, SharedPreference에 저장되어 있는 테마 값을 앱 실행 시에 확인하여 선택된 값으로 테마를 적용합니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">BrandiSession</span> <span class="n">brandiSession</span> <span class="o">=</span> <span class="no">A</span><span class="o">.</span><span class="na">getBrandiSession</span><span class="o">();</span>
+
+<span class="nc">String</span> <span class="n">themeColor</span> <span class="o">=</span> <span class="n">brandiSession</span><span class="o">.</span><span class="na">getThemeColor</span><span class="o">();</span>
+<span class="nc">ThemeUtil</span><span class="o">.</span><span class="na">applyTheme</span><span class="o">(</span><span class="n">themeColor</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p><a name="h4"></a></p>
+<h2 id="3-다크-모드-테마-설정">3. 다크 모드 테마 설정</h2>
+
+<p>이제, 다크 모드일 때의 색상과 이미지를 변경해보겠습니다 🥳</p>
+
+<p><a name="h5"></a></p>
+<h3 id="색상">색상</h3>
+
+<p>다크 모드 일 때의 색상을 변경하기 위해서는 <code class="language-plaintext highlighter-rouge">values-night/colors.xml</code> 파일을 만들어 이 파일 안에 색상 값을 지정해주면 됩니다. 주의 사항으로는 <code class="language-plaintext highlighter-rouge">values-night/colors.xml</code> 에 정의될 수 있는 name은 <code class="language-plaintext highlighter-rouge">values/colors.xml</code> 에 정의된 name이어야 합니다.</p>
+
+<ul>
+  <li>res/values/colors 의 프로젝트 구조</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/04.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<p>라이트 모드 일 때 <code class="language-plaintext highlighter-rouge">colors.xml</code> 의 정의된 컬러를 사용하고, 다크 모드 일 때는 <code class="language-plaintext highlighter-rouge">colors.xml (night)</code> 에 정의된 컬러 사용합니다.</p>
+
+<ul>
+  <li>values/colors.xml</li>
+</ul>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_000000_ffffff"</span><span class="nt">&gt;</span>#000000<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_e1e1e1_000000"</span><span class="nt">&gt;</span>#e1e1e1<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_4a4a4a_8f9097"</span><span class="nt">&gt;</span>#4a4a4a<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_4a4a4a_9e9e9e"</span><span class="nt">&gt;</span>#4a4a4a<span class="nt">&lt;/color&gt;</span>
+
+...
+</code></pre></div></div>
+
+<ul>
+  <li>values-night/colors.xml</li>
+</ul>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_000000_ffffff"</span><span class="nt">&gt;</span>#ffffff<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_e1e1e1_000000"</span><span class="nt">&gt;</span>#000000<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_4a4a4a_8f9097"</span><span class="nt">&gt;</span>#8f9097<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;color</span> <span class="na">name=</span><span class="s">"color_dark_4a4a4a_9e9e9e"</span><span class="nt">&gt;</span>#9e9e9e<span class="nt">&lt;/color&gt;</span>
+
+...
+</code></pre></div></div>
+
+<p><a name="h6"></a></p>
+<h3 id="이미지">이미지</h3>
+
+<p>색상과 마찬가지로, 라이트 모드일 때의 이미지 명과 동일하게 <code class="language-plaintext highlighter-rouge">drawable-night-xxxhdpi</code> 폴더 안에 이미지를 넣어주면 됩니다.</p>
+
+<ul>
+  <li>res/values/drawable/ic_logo_branditxt 의 프로젝트 구조</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/05.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<p>라이트 모드일 때 해상도에 따라 xxhdpi, xxxhdpi를 사용하고, 다크 모드일 때는 night-xxxhdpi를 사용합니다. 또한 다크 모드일 때에도 해상도에 따라 이미지를 넣을 수 있습니다.</p>
+
+<ul>
+  <li>ic_logo_branditxt.png (xxxhdpi)</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/06.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>ic_logo_branditxt.png (night-xxxhdpi)</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/07.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<p><a name="h7"></a></p>
+<h2 id="4-다크-모드를-적용한-브랜디">4. 다크 모드를 적용한 브랜디</h2>
+
+<ul>
+  <li>다크 모드를 적용한 브랜디 홈</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2019/20191219/08.png" alt="dark" />
+</figure>
+<figcaption></figcaption>
+
+<ul>
+  <li>Android 10 에서 다크 모드 적용한 영상</li>
+</ul>
+<video controls="" preload="auto" style="width: 47%; pointer-events: auto; background-color: rgb(247, 246, 245);"><source src="http://labs.brandi.co.kr//assets/20191219/09.mp4" /></video>
+
+<ul>
+  <li>Android 9 에서 다크 모드 적용한 영상</li>
+</ul>
+<video controls="" preload="auto" style="width: 47%; pointer-events: auto; background-color: rgb(247, 246, 245);"><source src="http://labs.brandi.co.kr//assets/20191219/10.mp4" /></video>
+
+<p><a name="h8"></a></p>
+<h2 id="5-결론">5. 결론</h2>
+
+<p>이렇게 브랜디 애플리케이션의 홈 화면에 다크 모드를 적용해 보았습니다. 👏</p>
+
+<p>브랜디에서는 유저들의 편안한 눈을 위해 열심히 다크 모드를 적용하고 있습니다. 하지만 다크 모드를 브랜디 애플리케이션 전체에 적용하기 위해서는 디자이너들의 많은 리소스가 필요하기 때문에 전체 적용까지는 시간이 걸릴 예정입니다.</p>
+
+<p>추후에 다크 모드가 적용된 브랜디 애플리케이션을 기대해 주세요 🎶</p>
+
+<p><br /></p>
+
+<h3 id="참고-사이트">참고 사이트</h3>
+
+<p><a href="https://developer.android.com/guide/topics/ui/look-and-feel/darktheme">https://developer.android.com/guide/topics/ui/look-and-feel/darktheme</a></p>
+
+<h3 id="참고-예제">참고 예제</h3>
+
+<p><a href="https://github.com/android/user-interface-samples/tree/master/DarkTheme">https://github.com/android/user-interface-samples/tree/master/DarkTheme</a></p>
+:ET

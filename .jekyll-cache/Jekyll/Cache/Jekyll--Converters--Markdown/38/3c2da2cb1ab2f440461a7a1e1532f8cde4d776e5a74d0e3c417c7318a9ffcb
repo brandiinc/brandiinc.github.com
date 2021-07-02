@@ -1,0 +1,374 @@
+I"R�<p><strong>목차</strong><br />
+<a href="#link1">1.</a> INTRO<br />
+<a href="#link2">2.</a> CHAPTER 1<br />
+<span class="indent"><a href="#link3">1.</a> The Recommendation Problem</span>
+<span class="indent"><a href="#link4">2.</a> 명시적 점수(Explicit Rating)</span>
+<span class="indent"><a href="#link5">3.</a> 암묵적 피드백(Implicit Feedback)</span>
+<span class="indent"><a href="#link6">4.</a> 브랜디 서비스 속 명시적 점수와 암묵적 피드백</span>
+<a href="#link7">3.</a> CHAPTER 2<br />
+<span class="indent"><a href="#link8">1.</a> 예제 실습</span>
+<a href="#link9">4.</a> CONCLUSION<br /></p>
+
+<hr />
+
+<p><a name="link1"></a></p>
+<h2 id="intro">INTRO</h2>
+
+<p>지난 10월, 브랜디 랩스에 ‘개발 1팀의 AWS Personalize 도전기’ 를 게재하면서 하나의 미션을 받았습니다. 바로 AWS SageMaker(이하 SageMaker)를 이용해 추천 알고리즘을 다뤄보는 것이었는데요. 데이터베이스를 모르면 AWS RDS를 사용하기 어렵듯이, 머신러닝에 대해 모르는 상태에서는 SageMaker를 다루기가 매우 어려웠습니다.</p>
+
+<p>이번 시간에는 AWS Machine Learning Blog에 올라와 있는 <a href="https://aws.amazon.com/ko/blogs/machine-learning/extending-amazon-sagemaker-factorization-machines-algorithm-to-predict-top-x-recommendations/">포스트 예제</a>를 통해 SageMaker로 추천 알고리즘을 훈련, 배포를 한 경험을 공유하고자 합니다. CHAPTER 1 에서는 머신러닝의 기본적인 개념을 간단히 정리하고, CHAPTER 2 에는 예제 실습을 해보도록 하겠습니다. 머신러닝에 대해 기본 지식이 있으신 독자분은 CHAPTER 2 로 바로 넘어가시면 됩니다.</p>
+
+<p><em>(참고. CHAPTER2 에서는 예제에 대한 간단한 설명으로 진행되며 코드 전체에 대한 설명은 진행되지 않습니다.)</em></p>
+
+<hr />
+
+<p><a name="link2"></a></p>
+<h2 id="chapter-1">CHAPTER 1.</h2>
+
+<p><a name="link3"></a></p>
+<h3 id="the-recommendation-problem">The Recommendation Problem</h3>
+
+<p>추천시스템은 사용자가 항목에 대해 평가한 과거 선호도<em>(ex. 리뷰, 찜)</em>를 기반으로 아직 사용하지 않은 항목에 대해 사용자의 평가를 예측하는 문제입니다. 사용자 u 가 항목 i 를 얼마나 좋아할 것인지 나타내는 값을 등급 Rui 라고 했을 때 등급 값은 평점 데이터처럼 1에서 5사이의 실수형 등급 값일 수도 있고, 클릭 여부를 나타내는 이진 등급 값일 수도 있습니다. 이 때 평점 데이터는 명시적 점수(Explicit Rating), 클릭 여부 데이터는 암묵적 피드백(Implicit Feedback)이라고 합니다.</p>
+
+<p>성능이 좋은 추천시스템을 구현하기 위해서는 해결하고자 하는 문제를 제대로 이해해야 하고, 명시적 점수 및 암묵적 피드백에 대한 선택을 해야 합니다.
+<br /><br /></p>
+
+<p><a name="link4"></a></p>
+<h3 id="명시적-점수explicit-rating">명시적 점수(Explicit Rating)</h3>
+
+<p>후기 평점과 같이 이미 만들어진 점수 범위 안에서 사용자가 직접적으로 점수척도에 관여하는 것입니다. 추천 시스템에 대한 초기 연구들이 명시적 점수에 기반하여 많이 진행되었습니다. 그러나 명시적 점수는 객관적으로 척도를 판단하기 어려운 변수를 가지고 있습니다.</p>
+
+<p>예를 들어 마음에 드는 옷을 구매했다고 판단했을 때 대부분의 사용자는 별4개 또는 5개의 후한 점수를 부여합니다. 그러나 그저 그런 옷이라고 판단되었을 경우 별1개도 아까워서 아예 점수를 매기지 않을 수도 있습니다. 즉, 상품에 대한 구매 데이터 대비 평가 데이터는 매우 희박합니다. 이것을 머신러닝에서 <strong><em>희소 데이터</em></strong>  또는 <strong><em>희소하다(Sparse)</em></strong> 라고 표현합니다.
+<br /><br /></p>
+
+<p><a name="link5"></a></p>
+<h3 id="암묵적-피드백implicit-feedback">암묵적 피드백(Implicit Feedback)</h3>
+
+<p>구매여부/조회여부처럼 명시적으로 표현할 수 없는 데이터들을 의미합니다. 명시적 점수에 비해 선호도를 제대로 표현할 수 없다는 단점이 있지만, 이는 암묵적 점수를 어떻게 해석하느냐에 따라 어느 정도 극복이 가능합니다.</p>
+
+<p>예를 들어 특정 상품을 찜 했으면 1, 아니면 0 으로 구분하는 것이 아니라 추천했으나 찜 하지 않았다면 -1, 추천되지 않았다면 0, 찜을 했다면 1 그리고 구매까지 했다면 2점을 부여하는 식으로 레이팅을 달리하는 것입니다. 암묵적 피드백은 명시적 점수 대비 데이터 수집이 쉬우며 이를 <strong><em>밀집 데이터</em></strong>  또는 <strong><em>밀집하다(Dense)</em></strong> 라고 표현합니다.
+<br /><br /></p>
+
+<p><a name="link6"></a></p>
+<h3 id="브랜디-서비스-속-명시적-점수와-암묵적-피드백-">브랜디 서비스 속 명시적 점수와 암묵적 피드백 🧐</h3>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200128/01.png" alt="sagemaker" />
+</figure>
+<figcaption>[그림 1] 명시적 점수 (상품에 대한 Rating 평가)</figcaption>
+<p><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200128/02.png" alt="sagemaker" />
+</figure>
+<figcaption>[그림 2] 암묵적 피드백 (찜한 상품, 최근 본 상품)</figcaption>
+
+<p><br /><br /></p>
+
+<p><a name="link7"></a><a name="link8"></a></p>
+<h2 id="chapter-2">CHAPTER 2.</h2>
+
+<p>이번 시간에 다룰 예제는 Movielens 의 영화 평점 데이터 세트를 이용하여 FM 알고리즘으로 트레이닝 후 KNN 알고리즘에 맞게 변환하여 상위 N개의 영화를 추천해주는 내용입니다. 앞서 말했듯 평점 데이터는 명시적 점수이기 때문에 Matrix Factorization 알고리즘보다 Sparse Data에 적합한 FM 알고리즘을 사용하는 것이 좋습니다.
+<br /></p>
+
+<p>그럼 실전으로 바로 들어가볼까요? 🏃‍♀️
+<br /><br /></p>
+
+<p>2-1. 먼저 필요한 모듈들을 import 합니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">sagemaker</span>
+<span class="kn">import</span> <span class="nn">sagemaker.amazon.common</span> <span class="k">as</span> <span class="n">smac</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">boto3</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">sagemaker</span> <span class="kn">import</span> <span class="n">get_execution_role</span>
+<span class="kn">from</span> <span class="nn">sagemaker.predictor</span> <span class="kn">import</span> <span class="n">json_deserializer</span>
+<span class="kn">from</span> <span class="nn">sagemaker.amazon.amazon_estimator</span> <span class="kn">import</span> <span class="n">get_image_uri</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">lil_matrix</span>
+</code></pre></div></div>
+<p><br />
+2-2. Movielens 의 영화 평점 데이터 세트를 다운로드한 후 <strong><em>데이터 셔플 [1]</em></strong> 을 진행합니다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 데이터 세트 다운로드</span>
+<span class="o">!</span>wget http://files.grouplens.org/datasets/movielens/ml-100k.zip
+<span class="o">!</span>unzip <span class="nt">-o</span> ml-100k.zip
+
+<span class="c"># 데이터 셔플</span>
+<span class="o">!</span><span class="nb">shuf </span>ml-100k/ua.base <span class="nt">-o</span> ml-100k/ua.base.shuffled
+</code></pre></div></div>
+<p><br /></p>
+
+<hr />
+
+<p><em>[1] 트레이닝 결과가 ‘심한 불균형’을 보이지 않도록 처리하는 과정입니다. 예를 들어 영화에 대해 로맨스 카테고리 → 공포 카테고리 → 추리 카테고리 순서로 학습을 시키면, 맨 처음 학습된 로맨스 카테고리에 대해서만 최적 값을 배우게 되어 그 뒤로는 효율이 없는 학습을 진행하게 됩니다. 바로 이런 현상을 막기 위해 데이터를 무작위로 섞는 것입니다.</em></p>
+
+<hr />
+<p><br /></p>
+
+<p>2-3. 트레이닝 데이터를 불러옵니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 트레이닝 데이터를 Pandas DataFrame 에 담습니다.
+</span><span class="n">user_movie_ratings_train</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span>
+  <span class="s">'ua.base.shuffled'</span><span class="p">,</span>
+  <span class="n">sep</span><span class="o">=</span><span class="s">'</span><span class="se">\t</span><span class="s">'</span><span class="p">,</span>
+  <span class="n">index_col</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+  <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s">'user_id'</span> <span class="p">,</span> <span class="s">'movie_id'</span> <span class="p">,</span> <span class="s">'rating'</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># 상위 5건 데이터를 출력시킵니다.
+</span><span class="n">user_movie_ratings_train</span><span class="p">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p>2-4. 테스트 데이터를 불러옵니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 테스트 데이터를 Pandas DataFrame 에 담습니다.
+</span><span class="n">user_movie_ratings_test</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span>
+  <span class="s">'ua.test'</span><span class="p">,</span>
+  <span class="n">sep</span><span class="o">=</span><span class="s">'</span><span class="se">\t</span><span class="s">'</span><span class="p">,</span>
+  <span class="n">index_col</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+  <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s">'user_id'</span> <span class="p">,</span> <span class="s">'movie_id'</span> <span class="p">,</span> <span class="s">'rating'</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># 상위 5건 데이터를 출력시킵니다.
+</span><span class="n">user_movie_ratings_test</span><span class="p">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p>2-5. <strong><em>FM 트레이닝 모델 [2]</em></strong> 을 준비합니다.</p>
+
+<hr />
+
+<p>[2] <em>현재 AWS SageMaker에서 FM Algorithm 입력에 대해서는 Float32 텐서가 포함된 recordIO-protobuf 형식만 지원하고 있습니다. 왠지 어려워보이지만 Amazon SageMaker SDK 에서 변환기능을 제공해주기 때문에 전혀 걱정할 필요가 없습니다.</em></p>
+
+<p><em>우리는 FM 모델로 One-hot encoded된 희소행렬(Sparse Matrix)을 만들 것이며, 4점 이상의 데이터만 고려할 것입니다.</em><br />
+<em>결과적으로는 4점 이상만 1이고 나머지는 0인 희소행렬이 만들어 집니다.</em></p>
+
+<hr />
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">loadDataset</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+    <span class="c1"># (lines, columns) 모양의 빈 희소 행렬을 만들고 float32 타입으로 변환합니다.
+</span>    <span class="n">X</span> <span class="o">=</span> <span class="n">lil_matrix</span><span class="p">((</span><span class="n">lines</span><span class="p">,</span> <span class="n">columns</span><span class="p">)).</span><span class="n">astype</span><span class="p">(</span><span class="s">'float32'</span><span class="p">)</span>
+    <span class="c1"># 레이블의 여기에 저장됩니다.
+</span>    <span class="n">Y</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">line</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="p">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">X</span><span class="p">[</span><span class="n">line</span><span class="p">,</span><span class="n">row</span><span class="p">[</span><span class="s">'user_id'</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">X</span><span class="p">[</span><span class="n">line</span><span class="p">,</span> <span class="n">nb_users</span><span class="o">+</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">'product_id'</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># 4점 이상의 데이터만 고려합니다.
+</span>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s">'rating'</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">Y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="n">Y</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">Y</span><span class="p">).</span><span class="n">astype</span><span class="p">(</span><span class="s">'float32'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">,</span><span class="n">Y</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nb_users</span> <span class="o">=</span> <span class="n">train_set</span><span class="p">[</span><span class="s">'user_id'</span><span class="p">].</span><span class="nb">max</span><span class="p">()</span>
+<span class="n">nb_products</span> <span class="o">=</span> <span class="n">train_set</span><span class="p">[</span><span class="s">'product_id'</span><span class="p">].</span><span class="nb">max</span><span class="p">()</span>
+<span class="n">nb_features</span> <span class="o">=</span> <span class="n">nb_users</span> <span class="o">+</span> <span class="n">nb_products</span>
+
+<span class="n">nb_ratings_test</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_product_ratings_test</span><span class="p">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">nb_ratings_train</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_product_ratings_train</span><span class="p">.</span><span class="n">index</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="p">(</span><span class="s">'# of users: '</span><span class="p">,</span> <span class="n">nb_users</span><span class="p">)</span>
+<span class="k">print</span> <span class="p">(</span><span class="s">'# of products: '</span><span class="p">,</span> <span class="n">nb_products</span><span class="p">)</span>
+<span class="k">print</span> <span class="p">(</span><span class="s">'Features (# of users + # of movies): '</span><span class="p">,</span> <span class="n">nb_features</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s">LoadDataset...'</span><span class="p">)</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span> <span class="o">=</span> <span class="n">loadDataset</span><span class="p">(</span><span class="n">user_product_ratings_train</span><span class="p">,</span> <span class="n">nb_ratings_train</span><span class="p">,</span> <span class="n">nb_features</span><span class="p">)</span>
+<span class="n">X_test</span><span class="p">,</span> <span class="n">Y_test</span> <span class="o">=</span> <span class="n">loadDataset</span><span class="p">(</span><span class="n">user_product_ratings_test</span><span class="p">,</span> <span class="n">nb_ratings_test</span><span class="p">,</span> <span class="n">nb_features</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="p">(</span><span class="s">'Success'</span><span class="p">)</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">assert</span> <span class="n">X_train</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">nb_ratings_train</span><span class="p">,</span> <span class="n">nb_features</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">Y_train</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">nb_ratings_train</span><span class="p">,</span> <span class="p">)</span>
+
+<span class="n">zero_labels</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">Y_train</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">"Training labels: %d zeros, %d ones"</span> <span class="o">%</span> <span class="p">(</span><span class="n">zero_labels</span><span class="p">,</span> <span class="n">nb_ratings_train</span><span class="o">-</span><span class="n">zero_labels</span><span class="p">))</span>
+
+<span class="k">assert</span> <span class="n">X_test</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">nb_ratings_test</span><span class="p">,</span> <span class="n">nb_features</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">Y_test</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">nb_ratings_test</span><span class="p">,</span> <span class="p">)</span>
+
+<span class="n">zero_labels</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">Y_test</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">"Test labels: %d zeros, %d ones"</span> <span class="o">%</span> <span class="p">(</span><span class="n">zero_labels</span><span class="p">,</span> <span class="n">nb_ratings_test</span><span class="o">-</span><span class="n">zero_labels</span><span class="p">))</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p>위 코드를 차례로 실행한 후의 결과를 보시면 zero_labels가 월등히 많은 것을 확인할 수 있습니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Training labels: 3461 zeros, 538 ones
+Test labels: 869 zeros, 133 ones
+</code></pre></div></div>
+<p><br /></p>
+
+<p>2-6. <strong><em>Protobuf 타입 [3]</em></strong> 으로 변환하여 S3로 업로드합니다.</p>
+
+<hr />
+
+<p>[3] 앞서 말했듯, SageMaker에 내장된 FM 알고리즘은 protobuf 형식의 데이터만 입력받을 수 있습니다. 우리는 SageMaker SDK에서 제공하는 메소드를 가지고 protobuf로 변환, S3로 업로드할 것입니다.</p>
+
+<hr />
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">writeDatasetToProtobuf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">d_type</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">buf</span> <span class="o">=</span> <span class="n">io</span><span class="p">.</span><span class="n">BytesIO</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">d_type</span> <span class="o">==</span> <span class="s">'sparse'</span><span class="p">:</span>
+        <span class="n">smac</span><span class="p">.</span><span class="n">write_spmatrix_to_sparse_tensor</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">Y</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">smac</span><span class="p">.</span><span class="n">write_numpy_to_dense_tensor</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">Y</span><span class="p">)</span>
+
+    <span class="n">buf</span><span class="p">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="s">'{}/{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">boto3</span><span class="p">.</span><span class="n">resource</span><span class="p">(</span><span class="s">'s3'</span><span class="p">).</span><span class="n">Bucket</span><span class="p">(</span><span class="n">bucket</span><span class="p">).</span><span class="n">Object</span><span class="p">(</span><span class="n">obj</span><span class="p">).</span><span class="n">upload_fileobj</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s">'s3://{}/{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span><span class="n">obj</span><span class="p">)</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 업로드 할 경로를 지정합니다.
+</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">'labs-fm'</span>
+
+<span class="n">train_key</span> <span class="o">=</span> <span class="s">'train.protobuf'</span>
+<span class="n">train_prefix</span> <span class="o">=</span> <span class="s">'{}/{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s">'train'</span><span class="p">)</span>
+
+<span class="n">test_key</span> <span class="o">=</span> <span class="s">'test.protobuf'</span>
+<span class="n">test_prefix</span> <span class="o">=</span> <span class="s">'{}/{}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s">'test'</span><span class="p">)</span>
+
+<span class="n">output_prefix</span> <span class="o">=</span> <span class="s">'s3://{}/{}/output'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+</code></pre></div></div>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fm_train_data_path</span> <span class="o">=</span> <span class="n">writeDatasetToProtobuf</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">train_prefix</span><span class="p">,</span> <span class="n">train_key</span><span class="p">,</span> <span class="s">'sparse'</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">)</span>
+<span class="n">fm_test_data_path</span>  <span class="o">=</span> <span class="n">writeDatasetToProtobuf</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">test_prefix</span><span class="p">,</span> <span class="n">test_key</span><span class="p">,</span> <span class="s">'sparse'</span><span class="p">,</span> <span class="n">Y_test</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="p">(</span><span class="s">'Training data S3 path: '</span><span class="p">,</span><span class="n">fm_train_data_path</span><span class="p">)</span>
+<span class="k">print</span> <span class="p">(</span><span class="s">'Test data S3 path: '</span><span class="p">,</span><span class="n">fm_test_data_path</span><span class="p">)</span>
+<span class="k">print</span> <span class="p">(</span><span class="s">'FM model output S3 path: {}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">output_prefix</span><span class="p">))</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p>위 코드를 차례로 실행한 후 출력된 S3경로에 접근하면 아래와 같은 protobuf 파일이 생성된 것을 확인할 수 있습니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200128/03.png" alt="sagemaker" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>2-7. 준비된 모델을 트레이닝합니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 트레이닝에 사용할 수 있는 인스턴스 타입은 정해져 있으며, 그 외 타입을 지정할 경우 ValidationException 가 발생합니다.
+# 인스턴스 타입이 너무 작을 경우에는 OutOfMemoryError 가 발생하므로 준비된 모델의 크기를 고려하여 지정합니다.
+</span><span class="n">instance_type</span><span class="o">=</span><span class="s">'ml.m5.large'</span>
+
+<span class="n">fm</span> <span class="o">=</span> <span class="n">sagemaker</span><span class="p">.</span><span class="n">estimator</span><span class="p">.</span><span class="n">Estimator</span><span class="p">(</span>
+  <span class="n">get_image_uri</span><span class="p">(</span><span class="n">boto3</span><span class="p">.</span><span class="n">Session</span><span class="p">().</span><span class="n">region_name</span><span class="p">,</span> <span class="s">'factorization-machines'</span><span class="p">),</span>
+  <span class="n">get_execution_role</span><span class="p">(),</span>
+  <span class="n">train_instance_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+  <span class="n">train_instance_type</span><span class="o">=</span><span class="n">instance_type</span><span class="p">,</span>
+  <span class="n">output_path</span><span class="o">=</span><span class="n">output_prefix</span><span class="p">,</span>
+  <span class="n">sagemaker_session</span><span class="o">=</span><span class="n">sagemaker</span><span class="p">.</span><span class="n">Session</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="c1"># 필수로 적용해주어야 하는 하이퍼파라미터를 지정합니다.
+</span><span class="n">fm</span><span class="p">.</span><span class="n">set_hyperparameters</span><span class="p">(</span>
+  <span class="n">feature_dim</span><span class="o">=</span><span class="n">nb_features</span><span class="p">,</span>
+  <span class="n">predictor_type</span><span class="o">=</span><span class="s">'binary_classifier'</span><span class="p">,</span>
+  <span class="n">num_factors</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 훈련을 시작합니다!
+</span><span class="n">fm</span><span class="p">.</span><span class="n">fit</span><span class="p">(</span>
+  <span class="p">{</span>
+    <span class="s">'train'</span><span class="p">:</span> <span class="n">fm_train_data_path</span><span class="p">,</span>
+    <span class="s">'test'</span><span class="p">:</span> <span class="n">fm_test_data_path</span>
+  <span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div></div>
+<p><br /></p>
+
+<p>2-8. 이제 KNN 알고리즘에 맞춰 모델을 리패키징합니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 모듈이 없을 경우에는 pip install 과정을 추가합니다.
+</span><span class="kn">import</span> <span class="nn">mxnet</span> <span class="k">as</span> <span class="n">mx</span>
+
+<span class="n">model_file_name</span> <span class="o">=</span> <span class="s">'model.tar.gz'</span>
+<span class="n">model_full_path</span> <span class="o">=</span> <span class="n">fm</span><span class="p">.</span><span class="n">output_path</span> <span class="o">+</span><span class="s">'/'</span><span class="o">+</span> <span class="n">fm</span><span class="p">.</span><span class="n">latest_training_job</span><span class="p">.</span><span class="n">job_name</span> <span class="o">+</span><span class="s">'/output/'</span><span class="o">+</span><span class="n">model_file_name</span>
+
+<span class="k">print</span> <span class="s">'Model Path: '</span><span class="p">,</span> <span class="n">model_full_path</span>
+
+<span class="c1"># S3 버킷으로부터 FM 모델을 다운로드 합니다.
+</span><span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">'aws s3 cp '</span><span class="o">+</span><span class="n">model_full_path</span><span class="o">+</span> <span class="s">' .'</span><span class="p">)</span>
+
+<span class="c1"># 모델을 추출하여 MXNet 으로 불러옵니다.
+</span><span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">'tar xzvf '</span><span class="o">+</span><span class="n">model_file_name</span><span class="p">)</span>
+<span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">'unzip -o model_algo-1'</span><span class="p">)</span>
+<span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">'mv symbol.json model-symbol.json'</span><span class="p">)</span>
+<span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">'mv params model-0000.params'</span><span class="p">)</span>
+
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">mx</span><span class="p">.</span><span class="n">module</span><span class="p">.</span><span class="n">Module</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="s">'./model'</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">label_names</span><span class="o">=</span><span class="p">[</span><span class="s">'out_label'</span><span class="p">])</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">m</span><span class="p">.</span><span class="n">_arg_params</span><span class="p">[</span><span class="s">'v'</span><span class="p">].</span><span class="n">asnumpy</span><span class="p">()</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">m</span><span class="p">.</span><span class="n">_arg_params</span><span class="p">[</span><span class="s">'w1_weight'</span><span class="p">].</span><span class="n">asnumpy</span><span class="p">()</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">m</span><span class="p">.</span><span class="n">_arg_params</span><span class="p">[</span><span class="s">'w0_weight'</span><span class="p">].</span><span class="n">asnumpy</span><span class="p">()</span>
+
+<span class="c1"># 아이템 잠재 매트릭스를 생성합니다.
+</span><span class="n">knn_item_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">V</span><span class="p">[</span><span class="n">nb_users</span><span class="p">:],</span> <span class="n">w</span><span class="p">[</span><span class="n">nb_users</span><span class="p">:]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">knn_train_label</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">nb_movies</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># 사용자 잠재 매트릭스를 생성합니다.
+</span><span class="n">ones</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nb_users</span><span class="p">).</span><span class="n">reshape</span><span class="p">((</span><span class="n">nb_users</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">knn_user_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">V</span><span class="p">[:</span><span class="n">nb_users</span><span class="p">],</span> <span class="n">ones</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+<p><br /><br /></p>
+
+<p>2-9. KNN 모델을 준비,배포한 후 배치 변환을 통해 추론 결과를 확인합니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200128/04.png" alt="sagemaker" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p><a name="link9"></a></p>
+<h2 id="conclusion">CONCLUSION</h2>
+
+<p>SageMaker는 내장형 Jupyter Notebook 인스턴스를 제공해주기 때문에 서버 관리를 할 필요없이 쉽게 데이터를 분석할 수 있습니다. 뿐만 아니라 AWS SDK를 통해 모델을 쉽게 변환, 학습, 배포할 수 있으며 예제에서는 다루지 않았지만 예측 결과는 데이터베이스에 저장하여 캐싱할 수도 있습니다.</p>
+
+<p>개인적으로 본 글을 준비하면서 머신러닝에 대한 기본적인 지식과 알고리즘에 대한 이해를 충분히 하지 못한 아쉬움이 있습니다. Movielens의 예제 샘플 데이터가 아닌 브랜디의 상품 리뷰 데이터를 다뤄보고 싶었지만, 트레이닝 모델이 MXnet 모듈에서 읽혀지지 않거나 원-핫 인코딩 과정에서 에러가 발생하는 부분을 해결하지 못하였습니다. 모델을 훈련, 배포하는 과정 또한 시간과 큰 비용이 발생하기 때문에 원인을 찾아가는 과정은 쉽지 않았습니다.</p>
+
+<p>하지만 이번 시간을 통해 머신러닝에 조금 가까워진 것 같아 뿌듯합니다!<br />
+저는 앞으로 시간을 들여 기본기를 좀 더 다진 후 재도전 해보겠습니다. 🤛 화이팅!</p>
+
+<hr />
+
+<h3 id="참고-2019년-12월-기준">참고 (2019년 12월 기준)</h3>
+
+<ul>
+  <li>호스팅 서비스에서 모델을 배포할 때 인스턴스 타입을 ‘ml.t2.medium’ 이 아닌 다른 타입으로 설정하는 경우 자원 초과 에러가 발생하였다. ‘ml.t2.medium’ 으로는 자원이 부족하여 배포를 진행할 수 없었으며, AWS Support 로 문의해야 하는 것으로 확인하였다.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ResourceLimitExceeded</span><span class="p">:</span> <span class="n">An</span> <span class="n">error</span> <span class="n">occurred</span> <span class="p">(</span><span class="n">ResourceLimitExceeded</span><span class="p">)</span> <span class="n">when</span> <span class="n">calling</span> <span class="n">the</span> <span class="n">CreateEndpoint</span> <span class="n">operation</span><span class="p">:</span> <span class="n">The</span> <span class="n">account</span><span class="o">-</span><span class="n">level</span> <span class="n">service</span> <span class="n">limit</span> <span class="s">'ml.m5.2xlarge for endpoint usage'</span> <span class="ow">is</span> <span class="mi">0</span> <span class="n">Instances</span><span class="p">,</span> <span class="k">with</span> <span class="n">current</span> <span class="n">utilization</span> <span class="n">of</span> <span class="mi">0</span> <span class="n">Instances</span> <span class="ow">and</span> <span class="n">a</span> <span class="n">request</span> <span class="n">delta</span> <span class="n">of</span> <span class="mi">1</span> <span class="n">Instances</span><span class="p">.</span> <span class="n">Please</span> <span class="n">contact</span> <span class="n">AWS</span> <span class="n">support</span> <span class="n">to</span> <span class="n">request</span> <span class="n">an</span> <span class="n">increase</span> <span class="k">for</span> <span class="n">this</span> <span class="n">limit</span><span class="p">.</span>
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p>참고문헌</p>
+
+    <p>[1] <a href="https://aws.amazon.com/ko/blogs/machine-learning/extending-amazon-sagemaker-factorization-machines-algorithm-to-predict-top-x-recommendations/">https://aws.amazon.com/ko/blogs/machine-learning/extending-amazon-sagemaker-factorization-machines-algorithm-to-predict-top-x-recommendations/</a></p>
+
+    <p>[2] <a href="https://docs.aws.amazon.com/ko_kr/sagemaker/latest/dg/whatis.html">https://docs.aws.amazon.com/ko_kr/sagemaker/latest/dg/whatis.html</a></p>
+
+    <p>[3] <a href="https://zzaebok.github.io/machine_learning/factorization_machines/">https://zzaebok.github.io/machine_learning/factorization_machines/</a></p>
+  </li>
+</ul>
+:ET

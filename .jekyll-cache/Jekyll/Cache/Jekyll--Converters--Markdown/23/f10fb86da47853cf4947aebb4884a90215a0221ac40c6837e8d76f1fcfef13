@@ -1,0 +1,237 @@
+I"�;<h2 id="overview">Overview</h2>
+
+<p>최근 e-commerce 시장은, 데이터 기반의 개인화 추천 서비스에 많은 관심을 갖고 적극적으로 도입하고 있습니다.  브랜디 서비스도 AWS Personalize 알고리즘을 활용한 실시간 개인화 추천 서비스를 제공하고 있습니다.<br />
+(이전 글 : <a href="http://labs.brandi.co.kr/2019/10/04/dev1team.html">개발1팀의 AWS Personalize 도전기</a>)</p>
+
+<p>개인(고객)에게 맞는 상품을 추천하는 데 있어 데이터 수집은 무엇보다 중요합니다.  현재 AWS Personalize에서 제공하는 데이터 수집 방법은 2가지로 구성되어 있습니다.</p>
+
+<ol>
+  <li>Datasets을 이용한 과거 데이터 수집</li>
+  <li>Event trackers를 이용한 실시간 데이터 수집</li>
+</ol>
+
+<p>Dataset 생성 이후에 등록된 신규 상품을 실시간으로 추천하기 위해서는 Event trackers 수집만으로는 추천 항목을 얻을 수 없습니다.  Datasets Interactions 교육 데이터에 포함된 상품만 추천되기 때문에 주기적인 과거 데이터 갱신이 필요합니다.</p>
+
+<p>본 글에서는 주기적으로 AWS Personalize 과거 데이터를 갱신하는 프로세스를 자동화하는 내용을 정리해 보겠습니다.
+<br /><br /></p>
+
+<h3 id="step-1-과거-데이터-갱신-프로세스-정리">Step 1. 과거 데이터 갱신 프로세스 정리</h3>
+
+<ol>
+  <li>Dataset import job 생성</li>
+  <li>Solution version 생성</li>
+  <li>Campaign 업데이트</li>
+</ol>
+
+<div class="annotation">
+Dataset import job 생성 시 데이터를 완전히 새로 고칩니다.  증분식 업데이트를 추가할 수 없으므로 데이터를 업데이트해야 하는 경우 업데이트된 파일이 포함된 전체 파일을 추가해야 합니다.
+</div>
+<p><br /></p>
+
+<h3 id="step-2-과거-데이터-갱신-프로세스-자동화">Step 2. 과거 데이터 갱신 프로세스 자동화</h3>
+
+<p>현재 브랜디에서는 일주일에 한번 AWS Glue 서비스를 이용하여 고객 행동 이력을 추출, 변환하여 S3에 업로드합니다.</p>
+
+<ol>
+  <li>Dataset import job 생성</li>
+</ol>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201006/01.png" alt="personalize" />
+</figure>
+<figcaption>[그림 1] 시스템 구성도</figcaption>
+
+<p><br /></p>
+
+<p>1-1. 행동 이력 데이터 업로드 완료 시점에 이벤트 발생시켜 과거 데이터 갱신 프로세스를 실행합니다.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"source"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="s2">"aws.glue"</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"detail-type"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="s2">"Glue Job State Change"</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"detail"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"state"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="s2">"SUCCEEDED"</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"jobName"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="s2">"Job-Brandi-Commerce-API"</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<figcaption>CloudWatch Event pattern</figcaption>
+<p><br /></p>
+
+<p>1-2. Personalize SDK를 이용하여 Dataset import job을 생성합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>personalize_response <span class="o">=</span> aws_client.create_dataset_import_job<span class="o">(</span>
+    <span class="c"># Job Name에 실행날짜 추가하여 구분</span>
+    <span class="nv">jobName</span><span class="o">=</span><span class="s1">'Brandi Dataset Job Name'</span> + base_date,
+    <span class="nv">datasetArn</span><span class="o">=</span><span class="s1">'Brandi Dataset Arn'</span>,
+    <span class="nv">dataSource</span><span class="o">={</span><span class="s1">'dataLocation'</span>: <span class="s1">'Brandi Data Location'</span><span class="o">}</span>,
+    <span class="nv">roleArn</span><span class="o">=</span>constants.PERSONALIZE_DATASET_ROLE_ARN,
+<span class="o">)</span>
+</code></pre></div></div>
+
+<figcaption>AWS Python SDK</figcaption>
+<p><br /></p>
+
+<p>1-3. AWS Personalize 콘솔 확인</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201006/02.png" alt="personalize" />
+</figure>
+<figcaption>[그림 2] Dataset import job 생성중</figcaption>
+
+<p><br /></p>
+
+<p>2. Solution version 생성 및 Campaign 업데이트</p>
+
+<p>Dataset import job 생성 완료(ACTIVE)로 변경된 후에 Solution version 생성 및 Campaign 업데이트를 순차적으로 진행해야 합니다.  AWS Personalize는 Dataset 생성 완료 시 트리거를 지원하지 않으므로 Personalize Dataset를 조회하여 이전 단계 생성 여부를 판단하고 다음 단계를 실행해 주어야 합니다.</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201006/03.png" alt="personalize" />
+</figure>
+<figcaption>[그림 3] 시스템 구성도</figcaption>
+
+<p><br /></p>
+
+<p>2-1. Personalize 과거 데이터 갱신 프로세스는 단계별로 전부 갱신되어야 업데이트 되기 때문에 각각 이전 단계 확인이 필요합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 퍼스널라이즈 데이터셋 생성 여부 확인</span>
+description <span class="o">=</span> personalize_client.describe_dataset_import_job<span class="o">(</span>
+    <span class="nv">datasetImportJobArn</span><span class="o">=</span><span class="s1">'Dataset Import Job Arn'</span>
+<span class="o">)[</span><span class="s1">'datasetImportJob'</span><span class="o">]</span>
+
+<span class="c"># 퍼스널라이즈 솔루션 버전 생성 여부 확인</span>
+description <span class="o">=</span> personalize_client.describe_solution_version<span class="o">(</span>
+    <span class="nv">solutionVersionArn</span><span class="o">=</span><span class="s1">'Solution Version Arn'</span>
+<span class="o">)[</span><span class="s1">'solutionVersion'</span><span class="o">]</span>
+</code></pre></div></div>
+
+<figcaption>AWS Python SDK</figcaption>
+<p><br /></p>
+
+<p>2-2. DynamoDB를 이용하여 플래그로 Personalize 다음 단계 실행 여부를 확인합니다.</p>
+
+<div class="indent">2-2-1. DynamoDB 설계</div>
+
+<p><span class="indent2">- Table Name : PROD_PERSONALIZE_DATA_PROCESS</span>
+<span class="indent2">- Provisioned capacity</span>
+<span class="indent3">- Read capacity units : 1 (Auto Scaling Disabled)</span>
+<span class="indent3">- Write capacity units : 1 (Auto Scaling Enabled)</span>
+<span class="indent2">- campaign_name (partition key)</span>
+<span class="indent3">- String</span>
+<span class="indent3">- 캠페인 이름</span>
+<span class="indent2">- base_date (sort Key)</span>
+<span class="indent3">- Number</span>
+<span class="indent3">- 기준 날짜</span>
+<span class="indent2">- dataset_import_job_arn</span>
+<span class="indent3">- String</span>
+<span class="indent3">- 생성된 Dataset import job 리소스 이름</span>
+<span class="indent2">- dataset_import_job_status</span>
+<span class="indent3">- String</span>
+<span class="indent3">- Dataset import job 생성 상태</span>
+<span class="indent2">- dataset_import_job_datetime</span>
+<span class="indent3">- Number</span>
+<span class="indent3">- Dataset import job 생성 시간</span>
+<span class="indent2">- solution_name</span>
+<span class="indent3">- String</span>
+<span class="indent3">- 솔루션 이름</span>
+<span class="indent2">- solution_version_arn</span>
+<span class="indent3">- String</span>
+<span class="indent3">- 생성된 솔루션 버전 리소스 이름</span>
+<span class="indent2">- solution_version_status</span>
+<span class="indent3">- String</span>
+<span class="indent3">- 솔루션 버전 생성 상태</span>
+<span class="indent2">- solution_version_datetime</span>
+<span class="indent3">- Number</span>
+<span class="indent3">- 솔루션 버전 생성 시간</span>
+<span class="indent2">- ex)</span></p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"base_date"</span><span class="p">:</span><span class="w"> </span><span class="mi">20200928</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"campaign_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"brandi-hrnn-campaign-v2"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dataset_import_job_arn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:personalize:ap-northeast-1:439438562359:dataset-import-job/brandi-dataset-interaction-prod-job-20200928"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dataset_import_job_datetime"</span><span class="p">:</span><span class="w"> </span><span class="mi">1601257517</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dataset_import_job_status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ACTIVE"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"solution_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"brandi-hrnn-solution"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"solution_version_arn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:personalize:ap-northeast-1:439438562359:solution/brandi-hrnn-solution/648d42c6"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"solution_version_datetime"</span><span class="p">:</span><span class="w"> </span><span class="mi">1601265645</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"solution_version_status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ACTIVE"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+<p><br /></p>
+
+<p>2-3. Personalize 과거 데이터 갱신 프로세스는 단계별로 전부 갱신되어야 업데이트 되기 때문에 각각 다음 단계 실행이 필요합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 퍼스널라이즈 솔루션 버전업 생성</span>
+response <span class="o">=</span> personalize_client.create_solution_version<span class="o">(</span>
+    <span class="nv">solutionArn</span><span class="o">=</span><span class="s1">'Solution Arn'</span>
+<span class="o">)</span>
+
+<span class="c"># 퍼스널라이즈 캠페인 업데이트</span>
+response <span class="o">=</span> personalize_client.update_campaign<span class="o">(</span>
+    <span class="nv">campaignArn</span><span class="o">=</span><span class="s1">'Campaign Arn'</span>,
+    <span class="nv">solutionVersionArn</span><span class="o">=</span><span class="s1">'Solution Version Arn'</span>,
+<span class="o">)</span>
+</code></pre></div></div>
+
+<figcaption>AWS Python SDK</figcaption>
+<p><br /></p>
+
+<p>2-4. Personalize 다음 단계 실행시 DynamoDB에 플래그를 변경합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 솔루션 버전 생성</span>
+dynamodb_table.update_item<span class="o">(</span>
+    <span class="nv">Key</span><span class="o">={</span>
+        <span class="s1">'campaign_name'</span>: dict_item.get<span class="o">(</span><span class="s1">'campaign_name'</span><span class="o">)</span>,
+        <span class="s1">'base_date'</span>: int<span class="o">(</span>dict_item.get<span class="o">(</span><span class="s1">'base_date'</span><span class="o">))</span>,
+    <span class="o">}</span>,
+    <span class="nv">UpdateExpression</span><span class="o">=</span><span class="s1">'set solution_version_arn = :solution_version_arn'</span>
+                      <span class="s1">',solution_version_status = :solution_version_status'</span>
+                      <span class="s1">',solution_version_datetime = :solution_version_datetime'</span>
+                      <span class="s1">',dataset_import_job_status = :dataset_import_job_status'</span>,
+    <span class="nv">ExpressionAttributeValues</span><span class="o">={</span>
+        <span class="s1">':solution_version_arn'</span>: <span class="s1">'Solution Version Arn'</span>,
+        <span class="s1">':solution_version_status'</span>: <span class="s1">'IN_PROGRESS'</span>,
+        <span class="s1">':solution_version_datetime'</span>: int<span class="o">(</span>time.time<span class="o">())</span>,
+        <span class="s1">':dataset_import_job_status'</span>: <span class="s1">'ACTIVE'</span>,
+    <span class="o">}</span>,
+<span class="o">)</span>
+
+<span class="c"># 캠페인 업데이트</span>
+dynamodb_table.update_item<span class="o">(</span>
+    <span class="nv">Key</span><span class="o">={</span>
+        <span class="s1">'campaign_name'</span>: dict_item.get<span class="o">(</span><span class="s1">'campaign_name'</span><span class="o">)</span>,
+        <span class="s1">'base_date'</span>: int<span class="o">(</span>dict_item.get<span class="o">(</span><span class="s1">'base_date'</span><span class="o">))</span>,
+    <span class="o">}</span>,
+    <span class="nv">UpdateExpression</span><span class="o">=</span><span class="s1">'set solution_version_status = :solution_version_status'</span>,
+    <span class="nv">ExpressionAttributeValues</span><span class="o">={</span>
+        <span class="s1">':solution_version_status'</span>: <span class="s1">'ACTIVE'</span>,
+    <span class="o">}</span>,
+<span class="o">)</span>
+</code></pre></div></div>
+
+<figcaption>AWS Python SDK</figcaption>
+<p><br /></p>
+
+<p>2-5. AWS Personalize 콘솔 확인</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201006/04.png" alt="personalize" />
+</figure>
+<figcaption>[그림 4] Solution version 생성중</figcaption>
+
+<p><br /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>이제 과거 데이터 갱신 시 자동으로 모델을 교육할 수 있게 되었고, 특별한 관리이슈 없이 잘 운영되고 있습니다.</p>
+
+<p>증분식 업데이트를 아직 지원하지 않아 전체 데이터 대상으로 모델을 교육하기 때문에 비용과 시간이 많이 소요되는 아쉬운 점은 있었으나 추후 지원되길 기대하며 글을 마칩니다.</p>
+:ET

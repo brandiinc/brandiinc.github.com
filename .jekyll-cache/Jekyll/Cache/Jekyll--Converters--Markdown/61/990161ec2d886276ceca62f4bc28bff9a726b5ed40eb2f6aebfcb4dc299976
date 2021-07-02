@@ -1,0 +1,515 @@
+I"n�<h2 id="overview">Overview</h2>
+
+<p>저희 브랜디와 하이버의 웹서비스를 담당하고 있는 팀은 멋진 화면을 담당하는 퍼블리싱팀과 그 외 전반적인 부분을 담당하고 있는 프론트 개발팀이 협업을 하여 서비스를 개발 및 운영을 하고 있습니다.<br />
+그래서 서비스의 품질도 중요한 요소지만 한 소스에 여러명의 개발자와 서로 다른 팀이 붙어서 개발을 진행하고 있기 때문에 개발문화를 만드는 것도 중요한 문제로 다가왔습니다.</p>
+
+<p>개발문화에 대한 애자일, Scrum, CI/CD, Git-Flow 등의 기술이나 방법론들은 개발문화를 만들기 위하여 나온 수단들이기에, 이번 글은 위에 언급한 기술들에 대한 설명글은 아닙니다. 저희 웹서비스팀이 위의 수단들을 이용하여 만들어가고 있는 ‘개발문화’에 대해 공유하고자 하는 목적으로 작성된 글입니다.</p>
+
+<ul>
+  <li>모든 푸쉬는 코드리뷰 및 승인을 받아야 한다.</li>
+  <li>모든 기능은 hotfix브랜치에서 QA한 후에 배포가 가능하다.</li>
+  <li>모든 기능에 대해서 테스트 코드를 작성하여 코드 커버리지 100%를 달성해야 한다.</li>
+</ul>
+
+<p>그럼 위의 의견들을 무조건 시행하는 것이 과연 좋은 개발문화일까요?
+필자는 좋은 개발문화란, 정답이란 게 없으며 어떤 수단이나 기술을 이용하든 그 회사와 상황에 맞게끔 필요한 부분들을 이용하여 만들어 나가는 게 좋은 문화라고 생각합니다.
+<br /><br /></p>
+
+<h2 id="git-flow">Git-Flow</h2>
+
+<p>Git-flow에 대하여 간단히 알고 넘어가겠습니다.<br />
+Git-flow는 브랜치를 효율적으로 사용하기 위한 브랜치 전략이며 아래 그림이<br />
+Git-flow를 가장 잘 표현한다고 생각합니다.</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/01.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>각 브랜치에 대해 알아보자면,</p>
+
+<ul>
+  <li>master : 현재 제품으로 출시된 버전의 브랜치</li>
+  <li>develop : 다음 제품 출시버전을 개발하는 브랜치</li>
+  <li>feature : 각 기능을 개발하는 브랜치</li>
+  <li>release : 이번 출시버전을 개발하는 브랜치</li>
+  <li>hotfix : 버그를 수정하는 브랜치
+<br /><br /></li>
+</ul>
+
+<h3 id="그럼-브랜디에서는-git-flow를-어떻게-사용중일까요">그럼 브랜디에서는 Git-flow를 어떻게 사용중일까요?</h3>
+
+<p>실은 브랜디에서는 이미 애자일과 Git-flow가 비슷하게 적용되어 있습니다.😅</p>
+
+<p><strong>브랜디 웹서비스팀 Git 브랜치 전략</strong></p>
+
+<ul>
+  <li>master : 제품 출시버전의 브랜치로 자동 배포환경이 구성되어 있습니다.</li>
+  <li>staging : 제품 출시 전 QA를 진행하는 브랜치로 자동 배포환경이 구성되어 있습니다.</li>
+  <li>feature branches : 각 기능별 개발 브랜치로 개발 완료 후 staging으로 합쳐서 QA진행</li>
+  <li>hotfix branches : 각 버그를 수정하는 브랜치로 staging으로 합쳐서 QA진행</li>
+</ul>
+
+<p><strong>브랜디 웹서비스팀 업무 방식</strong></p>
+
+<ol>
+  <li>각 요청부서에서 업무요청 백로그에 등록
+    <ul>
+      <li>스프린트, 상시요청등 노션 업무카드를 생성하여 등록</li>
+    </ul>
+  </li>
+  <li>기능 단위로 분석 및 일정 산정</li>
+  <li>개발 진행 및 완료된 기능별로 서버에서 QA진행</li>
+  <li>QA완료 후 기능별 서비스 배포</li>
+</ol>
+
+<p>현재 브랜치 전략으로도 개발은 진행할 수 있었지만 업무요청이 n주 단위의 스프린트 개발과, 상시요청, 버그 수정 건 등 다양하게 있다 보니까 QA를 진행할 수 있는 환경은 staging 브랜치 하나인데 다양한 기능들이 섞여 제대로 된 QA가 어려울 뿐더러 상용으로 올라가지 말아야 될 소스가 올라갈 위험성도 다분히 높았습니다.</p>
+
+<p>그래서 브랜치 전략을 전체적으로 수정을 진행하고 자동 배포환경을 추가로 구성하게 되었습니다.
+아래는 변경된 브랜치 전략입니다.</p>
+
+<ol>
+  <li>master
+    <ul>
+      <li>제품 출시버전의 브랜치로 자동 배포환경이 구성되어 있습니다.</li>
+    </ul>
+  </li>
+  <li>staging
+    <ul>
+      <li>제품 출시버전 기준으로 소스가 반영되어 있으며 자동 배포환경이 구성되어 있습니다.</li>
+      <li>상용과 별도의 테스트 가능한 도메인이 연결되어 있습니다.</li>
+    </ul>
+  </li>
+  <li>feture branches
+    <ul>
+      <li>작은 상시 업무 단위의 기능을 개발합니다.</li>
+      <li>개발 완료 후 스테이징으로 푸쉬합니다.</li>
+    </ul>
+  </li>
+  <li>hotfix
+    <ul>
+      <li>제품 출시버전 기준으로 소스가 반영되어 있으며 자동 배포환경이 구성되어 있습니다.</li>
+      <li>스테이징, 스프린트와 별도의 테스트 가능한 도메인이 연결되어 있습니다.</li>
+    </ul>
+  </li>
+  <li>hotfix branches
+    <ul>
+      <li>버그 수정 건을 개발합니다.</li>
+      <li>개발 완료 후 핫픽스로 푸쉬합니다.</li>
+    </ul>
+  </li>
+  <li>sprint
+    <ul>
+      <li>스프린트 개발 기준으로 소스가 반영되어 있으며 자동 배포환경이 구성되어 있습니다.</li>
+      <li>스테이징, 핫픽스와 별도의 테스트 가능한 도메인이 연결되어 있습니다.</li>
+    </ul>
+  </li>
+  <li>release branches
+    <ul>
+      <li>스프린트 단위의 기능들을 개발합니다.</li>
+      <li>개발 완료 후 스프린트로 푸쉬합니다.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>업무의 성격에 맞게 테스트할 수 있는 환경과 브랜치들을 나누어 개발하니까 각 업무를 기능별로 유연하게 대응이 가능해져 이전보다 수월하게 업무를 진행할 수 있게 되었습니다.😁
+<br /><br /></p>
+
+<h2 id="pull-request">Pull Request</h2>
+
+<p>이 내용은 크게 보면 Git-flow에 들어가야 되지만 PR을 쓰게 된 이유와 도입하기까지의 과정을 소개하고자 별도의 스텝으로 분리하였습니다.</p>
+
+<p>앞서 브랜디 웹서비스팀은 프론트 개발팀과 퍼블리싱 팀이 협업하여 서비스를 개발중이라고 말씀드렸습니다.<br />
+위에 설명드린 브랜치 전략과 업무방식으로 인하여 각 팀이 진행할 업무 영역은 명확해졌으나 저희 팀 자체가 만들어진지 얼마 안 되었고, 이전에도 퍼블리싱팀과 협력하여 개발한 사례가 있던 팀이 없다 보니 왜 있는지도 모르는 소스가 어느새 올라와 있었습니다. 저도 모르는 사이에 버그가 계속 발생해서 팀의 초창기에는 총체적 난국이었습니다.😥</p>
+
+<p>그렇다고 다짜고짜 모든 푸쉬에 대해서 코드리뷰를 진행할 수 있는 상황도 아니었고, 코드리뷰를 한다 해도 서로 다른 기술을 중점으로 개발하기에는 90% 의미 없는 코드리뷰가 되는 상황이었습니다.</p>
+
+<p>이 상황을 해결하기 위해 다양한 시도를 했고, 최종적으로는 PR을 쓰게 되었는데 아래는 그 과정을 간단하게 보여드리고자 합니다.
+<br /><br /></p>
+
+<h3 id="step-1-슬랙을-통한-공유">STEP 1. 슬랙을 통한 공유</h3>
+
+<p>슬랙을 통한 공유는 너무나도 단점이 명확했습니다.
+확인이 잘 안될 뿐더러 어떤 업무로 인하여 수정을 했는지 확인하려면 스크롤을 계속 올려봐야 합니다.</p>
+
+<ul>
+  <li>히스토리 관리가 안된다.</li>
+  <li>어떤 소스를 수정했는지 알 수 없다.</li>
+  <li>한눈에 안들어 온다.</li>
+  <li>자주 확인하지 않는 이상 놓칠 수 있다.</li>
+</ul>
+
+<p>너무나도 명확한 단점들로 인해서 빠르게 다음 방법을 모색했습니다.
+<br /><br /></p>
+
+<h3 id="step-2-노션을-통한-공유">STEP 2. 노션을 통한 공유</h3>
+
+<p>노션에 작성하게 되면 히스토리 관리 문제도 해결되며 한눈에 들어오게 되고 슬랙과 연동이 간편하여 업데이트되면 슬랙으로 알림을 쉽게 받을 수 있는 장점이 있었습니다.</p>
+
+<p>1. 공유할 노션페이지 생성</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/02.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>2. Updates를 클릭하여 슬랙과 연동</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/03.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>3. 연동할 슬랙 채널을 선택</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/04.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>4. 내용 수정 후 슬랙 알림 받기</p>
+
+<figure class="percent60">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/05.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>이전보다 내용 공유가 잘 되었지만 여전히 문제점은 남아있었습니다.</p>
+
+<ul>
+  <li>소스 변경에 대해서 알 수 없다.</li>
+  <li>공유된 업무내용이 어떤 소스를 수정한 내용인지 커밋 내역과 매칭이 불가능하다.</li>
+</ul>
+
+<p>아직 많은 부족함을 느끼고 다른 방법을 모색 중 대망의 PR이 등장하게 됩니다.
+<br /><br /></p>
+
+<h3 id="step-3-pull-request를-통한-공유">STEP 3. Pull Request를 통한 공유</h3>
+
+<p>먼저 PR을 선택하게 된 이유는</p>
+
+<ol>
+  <li>설명을 통해서 간단한 업무 공유</li>
+  <li>변경사항을 통해 소스의 변경내역을 확인</li>
+  <li>업무내역과 커밋내역의 매칭</li>
+  <li>히스토리 관리가 가능함.</li>
+</ol>
+
+<p>으로 위에 말한 단점들을 전부 보완이 가능했습니다.</p>
+
+<p>다만, 이런 장점들을 최대한 활용하기 위해서는 몇 가지 규칙과 설정이 필요했습니다.<br />
+(필자는 AWS CodeCommit을 이용하여 형상관리를 하고 있습니다.)</p>
+
+<p><strong>1. PR의 범위와 승인규칙 정하기</strong></p>
+
+<p>여러 상황이 있을 수 있는 만큼 모든 커밋에 대해서 PR을 할 수 없을 뿐더러 본인이 올리고 병합하는 일이 자꾸 발생하면 PR을 쓰는 이유가 없어져서, 먼저 규칙과 범위를 정하는 부분이 가장 컸습니다.</p>
+
+<ol>
+  <li>각 주요 브랜치에 Push하는 경우만 PR을 요청한다. (master, staging, hotfix, sprint)</li>
+  <li>급하게 반영해야 하거나 승인해 줄 사람이 없는 경우 PR 없이 진행하고 내용은 공유한다.
+(추후 이력 확인을 위해 커밋내역에 자세히 기재한다.)</li>
+  <li>AWS CodeCommit의 승인규칙을 이용하여 PR에는 승인자가 2명 이상이어야 한다.
+(본인 제외 퍼블리싱팀 1명, 프론트팀 1명)</li>
+</ol>
+
+<p><strong>2. 승인규칙 템플릿 생성</strong></p>
+
+<p>AWS Codecommit의 승인규칙 템플릿이란, 기능을 사용하면 내가 원하는 저장소에 원하는 브랜치만 별도로 승인규칙을 적용할 수 있으며 규칙의 조건이 만족하지 않으면 병합을 할 수 없습니다.</p>
+
+<p>1. 승인규칙 템플릿 메뉴 클릭</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/06.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>2. 간단한 정보, 멤버 수, 레파지토리, 브랜치 입력</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/07.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/08.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>3. Pull Request 요청 생성</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/09.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>4. 승인 규칙 적용 확인</p>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/10.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fullwidth">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/11.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p><strong>3. Pull Request알림 기능 생성</strong></p>
+
+<p>PR을 생성하게 되면 매번 슬랙으로 공유해서 확인해 달라고 하는 게 여간 번거로운 작업이 아니었습니다.
+좀더 수월하게 하기 위해 상태가 변화되면 자동으로 알림을 받을 수 있게 진행할 필요가 있었습니다.</p>
+
+<p>각 알림 구현방식에 대한 장단점을 간단하게 알려드리며 알림의 설정에 관한 방법은, 이번 글 하단의 <strong>Reference</strong>에 정섭님의 글을 참고할 수 있도록 링크를 남겨두도록 하겠습니다.</p>
+
+<p><strong>1. AWS Chatbot + CloudWatch Event을 통한 알림</strong></p>
+
+<ul>
+  <li>구현이 간단합니다.</li>
+  <li>알림 메세지를 내가 원하는 형식으로 구현할 수 없습니다.</li>
+  <li>아래는 AWS Chatbot을 통해 구현한 알림입니다.</li>
+</ul>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/12.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p><strong>2. Slack Bot + Lambda + CloudWatch Event을 통한 알림</strong></p>
+
+<ul>
+  <li>구현이 복잡합니다.</li>
+  <li>알림 메세지를 내가 원하는 형식으로 구현할 수 있습니다.</li>
+  <li><a href="https://docs.aws.amazon.com/codecommit/latest/userguide/monitoring-events.html">CloudWatch Events</a>의 포맷을 원하는 형식으로 수정하여 구현이 가능합니다.</li>
+  <li>아래는 Lambda를 통해 구현한 간단한 소스와 알림입니다.
+    <ul>
+      <li>람다 소스</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: utf-8 -*-
+</span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">'/opt'</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span><span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="n">pullRequestEventNameList</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'pullRequestCreated'</span> <span class="p">:</span> <span class="s">'풀 요청 생성'</span><span class="p">,</span>
+    <span class="s">'pullRequestSourceBranchUpdated'</span> <span class="p">:</span> <span class="s">'요청 브랜치 소스 변경(재승인 필요)'</span><span class="p">,</span>
+    <span class="s">'pullRequestStatusChanged'</span> <span class="p">:</span> <span class="s">'풀 요청 닫음'</span><span class="p">,</span>
+    <span class="s">'pullRequestMergeStatusUpdated'</span> <span class="p">:</span> <span class="s">'풀 요청 병합 완료'</span><span class="p">,</span>
+    <span class="s">'pullRequestApprovalRuleCreated'</span> <span class="p">:</span> <span class="s">'승인규칙 생성'</span><span class="p">,</span>
+    <span class="s">'pullRequestApprovalRuleDeleted'</span> <span class="p">:</span> <span class="s">'승인규칙 삭제'</span><span class="p">,</span>
+    <span class="s">'pullRequestApprovalStateChanged'</span> <span class="p">:</span> <span class="s">'승인'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">codecommitNameList</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'lsh_test'</span> <span class="p">:</span> <span class="s">'Test WEB'</span><span class="p">,</span>
+    <span class="s">'lsh_test2'</span> <span class="p">:</span> <span class="s">'Test2 WEB'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">mergeNameList</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'True'</span> <span class="p">:</span> <span class="s">'완료'</span><span class="p">,</span>
+    <span class="s">'False'</span> <span class="p">:</span> <span class="s">'대기'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">approveNameList</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'APPROVE'</span> <span class="p">:</span> <span class="s">'완료'</span><span class="p">,</span>
+    <span class="s">'REVOKE'</span> <span class="p">:</span> <span class="s">'취소'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">pullRequestNameList</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'Open'</span> <span class="p">:</span> <span class="s">'열림'</span><span class="p">,</span>
+    <span class="s">'Closed'</span> <span class="p">:</span> <span class="s">'닫힘'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">userNameList</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'dev-leesh4'</span> <span class="p">:</span> <span class="s">'이성현'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">send_slack_by_webhook</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># "text":message,
+</span>        <span class="s">"attachments"</span><span class="p">:[</span>
+            <span class="p">{</span>
+                <span class="s">"color"</span><span class="p">:</span><span class="n">color</span><span class="p">,</span>
+                <span class="s">"fields"</span><span class="p">:[</span>
+                    <span class="p">{</span>
+                    <span class="s">"title"</span><span class="p">:</span><span class="s">"[Pull Request 알림]"</span><span class="p">,</span>
+                    <span class="s">"value"</span><span class="p">:</span><span class="n">message</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">webhook_url</span><span class="o">=</span> <span class="s">"webhook_url"</span>
+
+    <span class="n">requests</span><span class="p">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">webhook_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s">'Content-Type'</span><span class="p">:</span><span class="s">'application/json'</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="c1"># 이벤트 상세 정보
+</span>    <span class="n">detailType</span> <span class="o">=</span> <span class="n">event</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'detail-type'</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">detailType</span> <span class="o">==</span> <span class="s">'CodeCommit Pull Request State Change'</span><span class="p">:</span>
+        <span class="n">pullRequestEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">pullRequestEvent</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="n">codecommitName</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">repositoryName</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">requestUser</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">approveUser</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">eventState</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">approveState</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">isShowApprvoeUser</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">isChangeColor</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="s">'#33CC66'</span>
+
+    <span class="n">eventDetailInfo</span> <span class="o">=</span> <span class="n">event</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'detail'</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+    <span class="c1"># 실행된 시간
+</span>    <span class="n">time</span> <span class="o">=</span> <span class="n">event</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'time'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'Z'</span><span class="p">,</span> <span class="s">''</span><span class="p">).</span><span class="n">replace</span><span class="p">(</span><span class="s">'T'</span><span class="p">,</span> <span class="s">' '</span><span class="p">)</span>
+
+
+    <span class="c1"># time을 +9시간 해줌
+</span>    <span class="n">gmt_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">)</span>
+    <span class="n">gmt_time</span> <span class="o">+=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">gmt_time</span><span class="p">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"%Y-%m-%d %H:%M:%S"</span><span class="p">)</span>
+
+
+    <span class="c1"># codecommitName 이름
+</span>    <span class="n">codecommitName</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">[</span><span class="s">'repositoryNames'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">repositoryName</span> <span class="o">=</span> <span class="n">codecommitName</span>
+    <span class="n">codecommitName</span> <span class="o">=</span> <span class="n">codecommitNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">codecommitName</span><span class="p">,</span> <span class="n">codecommitName</span><span class="p">)</span>
+
+
+    <span class="c1"># 타이틀
+</span>    <span class="n">title</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'title'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+
+
+    <span class="c1"># 상세내용
+</span>    <span class="n">description</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'description'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+
+
+    <span class="c1"># 타겟
+</span>    <span class="n">destinationReference</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'destinationReference'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">destinationReference</span> <span class="o">=</span> <span class="n">destinationReference</span><span class="p">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'refs/heads/'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">sourceReference</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'sourceReference'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">sourceReference</span> <span class="o">=</span> <span class="n">sourceReference</span><span class="p">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'refs/heads/'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+
+    <span class="n">target</span> <span class="o">=</span> <span class="s">'타겟브랜치({}) &lt; 요청브랜치({})'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">destinationReference</span><span class="p">,</span> <span class="n">sourceReference</span><span class="p">)</span>
+
+
+    <span class="c1"># 상태
+</span>    <span class="n">mergeStateName</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">pullStateName</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">approveStateName</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">eventStateName</span> <span class="o">=</span> <span class="s">''</span>
+    <span class="n">pullState</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'pullRequestStatus'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">pullStateName</span> <span class="o">=</span> <span class="n">pullRequestNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">pullState</span><span class="p">,</span> <span class="n">pullState</span><span class="p">)</span>
+    <span class="n">mergeState</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'isMerged'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">mergeStateName</span> <span class="o">=</span> <span class="n">mergeNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">mergeState</span><span class="p">,</span> <span class="n">mergeState</span><span class="p">)</span>
+    <span class="n">approveState</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'approvalStatus'</span><span class="p">,</span><span class="s">''</span><span class="p">)</span>
+    <span class="n">approveStateName</span> <span class="o">=</span> <span class="n">approveNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">approveState</span><span class="p">,</span> <span class="n">approveState</span><span class="p">)</span>
+
+    <span class="n">eventState</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'event'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>
+    <span class="n">eventStateName</span> <span class="o">=</span> <span class="n">pullRequestEventNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">eventState</span><span class="p">,</span> <span class="n">eventState</span><span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="s">'{}{}, (병합상태: {}, 요청상태: {})'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">eventStateName</span><span class="p">,</span> <span class="n">approveStateName</span><span class="p">,</span> <span class="n">mergeStateName</span><span class="p">,</span> <span class="n">pullStateName</span><span class="p">)</span>
+
+
+    <span class="c1">#요청자
+</span>    <span class="n">requestUser</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'author'</span><span class="p">,</span><span class="s">''</span><span class="p">).</span><span class="n">split</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requestUser</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">requestUser</span> <span class="o">=</span> <span class="n">requestUser</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">requestUser</span> <span class="o">=</span> <span class="n">userNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">requestUser</span><span class="p">,</span><span class="n">requestUser</span><span class="p">)</span>
+
+
+    <span class="c1">#콘솔
+</span>    <span class="n">console</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'notificationBody'</span><span class="p">,</span> <span class="s">''</span><span class="p">).</span><span class="n">split</span><span class="p">(</span><span class="s">' AWS CodeCommit console '</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">console</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">console</span> <span class="o">=</span> <span class="n">console</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">console</span> <span class="o">=</span> <span class="n">console</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># 색깔변경 여부
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">eventState</span> <span class="o">==</span> <span class="s">'pullRequestApprovalStateChanged'</span> <span class="ow">and</span> <span class="n">approveState</span> <span class="o">==</span> <span class="s">'REVOKE'</span><span class="p">)</span> \
+        <span class="ow">or</span> <span class="p">(</span><span class="n">eventState</span> <span class="o">==</span> <span class="s">'pullRequestCreated'</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">eventState</span> <span class="o">==</span> <span class="s">'pullRequestSourceBranchUpdated'</span><span class="p">):</span>
+        <span class="n">isChangeColor</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">if</span> <span class="n">isChangeColor</span><span class="p">:</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="s">'#FF3333'</span>
+
+
+    <span class="c1"># 승인자 노출 여부
+</span>    <span class="n">approveUserName</span> <span class="o">=</span> <span class="s">''</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">eventState</span> <span class="o">==</span> <span class="s">'pullRequestApprovalStateChanged'</span> <span class="ow">and</span> <span class="n">approveState</span> <span class="o">==</span> <span class="s">'APPROVE'</span><span class="p">):</span>
+        <span class="n">isShowApprvoeUser</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">approveUser</span> <span class="o">=</span> <span class="n">eventDetailInfo</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">'callerUserArn'</span><span class="p">,</span><span class="s">''</span><span class="p">).</span><span class="n">split</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">approveUser</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">approveUser</span> <span class="o">=</span> <span class="n">approveUser</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">approveUser</span> <span class="o">=</span> <span class="n">userNameList</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">approveUser</span><span class="p">,</span><span class="n">approveUser</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">isShowApprvoeUser</span><span class="p">:</span>
+        <span class="n">approveUserName</span> <span class="o">=</span> <span class="s">', 승인자({})'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">approveUser</span><span class="p">)</span>
+
+
+    <span class="c1"># 전송 메시지 포맷
+</span>    <span class="n">sendMessage</span> <span class="o">=</span> <span class="s">'발생시각 : {}</span><span class="se">\n</span><span class="s"> 레파지토리 : {}({})</span><span class="se">\n</span><span class="s"> 요청자 : {}{}</span><span class="se">\n</span><span class="s"> 타겟 : {}</span><span class="se">\n</span><span class="s"> 상태 : {}</span><span class="se">\n</span><span class="s"> 제목 : {}</span><span class="se">\n</span><span class="s"> 상세내용 : {}</span><span class="se">\n</span><span class="s"> 콘솔 : {}</span><span class="se">\n</span><span class="s"> ----------------------------------'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">codecommitName</span><span class="p">,</span> <span class="n">repositoryName</span><span class="p">,</span> <span class="n">requestUser</span><span class="p">,</span> <span class="n">approveUserName</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">console</span><span class="p">)</span>
+
+    <span class="c1"># 개발2팀
+</span>    <span class="n">send_slack_by_webhook</span><span class="p">(</span><span class="n">sendMessage</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s">'statusCode'</span><span class="p">:</span> <span class="mi">200</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>람다 알림</li>
+</ul>
+
+<figure class="percent80">
+  <img src="http://labs.brandi.co.kr///assets/2020/20201202/13.png" alt="serviceteam" />
+</figure>
+<figcaption></figcaption>
+
+<p>이로써 PR을 최대한 효율적으로 사용할 수 있게 되었습니다!!😍
+<br /><br /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>간단해 보이는 몇 가지의 약속들로 인하여 웹서비스팀은 이전보다 훨씬 더 효율적으로 일할 수 있었습니다.</p>
+
+<p>여러 가지 시도해보면서 분명 귀찮은 점들이 많았을 텐데 빠르게 바꿀 수 있도록 적극적으로 참여하고 피드백을 준 저희 팀에게 감사하다는 생각이 듭니다. 아무리 좋은 문화라도 구성원들이 참여하지 않으면 의미가 없다는 점을 깨달았습니다.</p>
+
+<p>이번에 개발문화를 만들면서 개인적으로 개발문화에는 정답은 없었단 점을 느낍니다. 가장 좋은 문화는 개발자들이 편하고 회사의 업무와 잘 어울려질 수 있는 문화라고 생각합니다.</p>
+
+<p>끝난 것 같아 보이나 아직 코딩 컨벤션, TDD, 코드리뷰등 숙제가 많이 남아 있어서 다음에 다룰 기회가 있기를 바라며 이만 글을 마칩니다.
+<br /><br /></p>
+
+<h2 id="reference">Reference</h2>
+
+<p><a href="https://nvie.com/posts/a-successful-git-branching-model/">A successful Git branching model</a><br />
+<a href="https://docs.aws.amazon.com/codecommit/latest/userguide/monitoring-events.html">Monitoring CodeCommit events in Amazon EventBridge and Amazon CloudWatch Events</a><br />
+<a href="http://labs.brandi.co.kr/2020/03/31/kwakjs.html">AWS Chatbot으로 손쉬운 리소스 관리?!!</a><br />
+<a href="http://labs.brandi.co.kr/2019/01/30/kwakjs.html">Node 서버로 Slack 메신저 자동화하기</a></p>
+:ET

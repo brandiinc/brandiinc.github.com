@@ -1,0 +1,3 @@
+I"�<h1 id="overview">Overview</h1>
+<p>서비스되는 프로젝트에 첫 커밋(Commit)했던 순간이 아직도 생생합니다. 직원이 10명 남짓이던 시절, 특정 데이터를 삭제할 때나 쓰던 관리자 페이지였는데요. 당시엔 MVC Pattern, Transaction 등 아무것도 몰랐기 때문에 실수를 반복했습니다. (<a href="http://labs.brandi.co.kr/authors/leesg" target="_blank">팀장님</a>으로부터 피드백도 많이 받았죠.) 어떤 실수였는지 궁금하시죠? 오늘은 두 번 다시 겪고 싶지 않은 실수들과 깨달은 몇 가지 이야기와 <strong>개발자가 꼭 지켜야할 것</strong>을 소개하겠습니다. <br /><br /><br /></p>
+:ET

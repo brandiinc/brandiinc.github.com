@@ -1,0 +1,240 @@
+I"R+<h1 id="overview">Overview</h1>
+
+<p>필자는 요즘 AWS Lambda와 API Gateway, SNS, SQS 를 사용하여 백엔드 개발을 하고 있습니다.</p>
+
+<p>백엔드는 웹, 앱 등 프론트엔드(클라이언트)에서 필요한 정보 조회나, 데이터 등록, 수정, 배치 등 사용자 눈에 보이지 않는 부분에서 비지니스 로직과 함께, 데이터베이스가 필요하면 데이터베이스를 사용하여 처리 한 후 요청한 프론트엔드(클라이언트)에게 응답 및 처리을 해 줌으로써 그 역할이 종료됩니다.
+<br /><br /></p>
+
+<p>예전 개발방법과는 다르게, 서버가 없는 형태로 구현을 해야 하기 때문에 AWS에서 제공하는 Lambda 서비스(API Gateway, SNS, SQS 등등)로 구성하여 Lambda에 트리거를 연결 시켜 처리하는 방법으로 진행하고 있습니다.
+<br /><br /></p>
+
+<p>API Gateway, SNS, SQS 등에서 제공해야 할 기능들은 많습니다.</p>
+
+<p>주기적인 스케쥴링, api, 대용량 처리 등 그 기능에 따라 관리하는 Lambda 함수도 늘어나게 됩니다.</p>
+
+<p>많은 Lambda와 트리거의 매칭을 어떻게 체계적으로 관리하고 유지보수를 쉽게 할 수 있을지 이번 글을 통해 간단하게 코드 작성 및 샘플을 만들어보기로 합니다.
+<br /><br /></p>
+
+<p><strong>이전 글 확인하기</strong></p>
+
+<ul>
+  <li><a href="http://labs.brandi.co.kr/2018/07/31/kwakjs.html">AWS Lambda + API Gateway로 API 만들어보자</a></li>
+  <li><a href="http://labs.brandi.co.kr/2018/02/16/leesg.html">SQS + Lambda</a></li>
+</ul>
+
+<p>이 글에서는 Lambda에 SNS 트리거를 연결하여 해보겠습니다.</p>
+
+<ol>
+  <li>Lambda 함수를 생성해줍니다.</li>
+</ol>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/01.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>2. 트리거를 추가합니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/02.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>3. 2번과 동일한 방법으로 SNS 트리거를 3~4개 연결해 줍니다.</p>
+
+<p>4. 최종 트리거 모습입니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/03.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>이제 사전 준비는 모두 끝났습니다. 트리거를 받아서 처리하는 Lambda의 코드를 작성하겠습니다.</p>
+
+<ol>
+  <li>기본 코드를 작성합니다.  SNS 트리거로 Lambda가 실행이 되면 아래와 같은 코드를 실행합니다.</li>
+</ol>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/04.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>2. 작성된 코드에서는 모든 처리가 공통으로 되기 때문에 트리거로 추가한 SNS 이벤트에 따라서 분기 처리를
+<span class="indent">할 수가 없습니다.</span>
+<span class="indent">그럼 SNS 1개당 1개의 Lambda를 생성하여 트리거를 추가해줘야 합니다. 하지만 저는 Lambda가 많이 생기는 걸 원하지 않습니다. Lambda 1개의 파일로 많은 SNS 트리거 처리를 하고 싶습니다.</span>
+<span class="indent">그래서 아래와 같은 코드로 SNS 별로 분기 처리를 하게 되었습니다.</span></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/05.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>이런 식으로 분기 처리를 해서 1개의 Lambda 핸들러로 손쉽게 관리를 할 수 있게 되었습니다.</p>
+
+<p>트리거가 몇 개 없을 때는 위와 같은 코드가 직관적이기도 하고, 개발 시간도 단축할 수 가 있을 거 같습니다.
+하지만 API일 경우는 어떻게 될까요? 이전에 개발 하던 프로젝트의 특정 메뉴 핸들러 소스 입니다.</p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/06.png" alt="decorator" />
+</figure>
+<figcaption>(분기 처리만 봐도 가독성도 상당히 안좋습니다.)</figcaption>
+
+<p><br /></p>
+
+<p>위와 같은 문제로 저는 Python의 데코레이터 패턴을 이용하여 AWS 에서 서비스하고 있는 Lambda 트리거들에 대한 라우팅을 하기로 생각을 합니다.
+<br /><br /></p>
+
+<p>우선 라우팅을 어떻게 할 것인가를 고민을 하였습니다. 고민결과 아래와 같이 하기로 결정을 합니다.</p>
+
+<ul>
+  <li>Lambda 실행하여 처리를 어떤식으로 진행할지 프로세스를 먼저 결정합니다.</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/07.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<ul>
+  <li>라우터 &amp; 데코레이터 UML 일부 발췌</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/08.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<ul>
+  <li>라우터가 컨트롤러를 로드 후 url_map의 트리거 정보와 컨트롤러 정보</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/09.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<ul>
+  <li>라우터 일부 코드 ( 컨트롤러 클래스 로드)</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/10.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<ul>
+  <li>SNS 데코레이터 일부코드</li>
+</ul>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/11.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/12.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2020/20200427/13.png" alt="decorator" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /></p>
+
+<p>현재 코드는 손 볼 곳은 많이 있지만 대략 검증을 할 수는 있을 것 같습니다.</p>
+
+<p>작업한 코드를 토대로 SNS 데코레이터를 사용하여 컨트롤러 코드를 작성해봅니다.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># -*- coding: utf-8 -*-
+</span>
+<span class="kn">import</span> <span class="nn">brandi</span>
+
+<span class="k">class</span> <span class="nc">TestController</span><span class="p">():</span>
+    <span class="s">""" 컨트롤러
+
+    """</span>
+
+    <span class="o">@</span><span class="n">brandi</span><span class="p">.</span><span class="n">aws</span><span class="p">.</span><span class="n">sns</span><span class="p">([</span><span class="s">'testTopic1'</span><span class="p">,</span> <span class="s">'testTopic2'</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">test1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""
+        """</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'hello test function'</span><span class="p">)</span>
+
+    <span class="o">@</span><span class="n">brandi</span><span class="p">.</span><span class="n">aws</span><span class="p">.</span><span class="n">sns</span><span class="p">(</span><span class="s">'testTopic3'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""
+        """</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'hello test2 function'</span><span class="p">)</span>
+
+    <span class="o">@</span><span class="n">brandi</span><span class="p">.</span><span class="n">aws</span><span class="p">.</span><span class="n">sns</span><span class="p">(</span><span class="s">'testTopic4'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test4</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""
+        """</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'시작.'</span><span class="p">)</span>
+
+        <span class="n">db</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+
+          <span class="c1"># 디비 연결
+</span>
+          <span class="c1"># 디비 조회
+</span>
+          <span class="p">...</span>
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">db</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">db</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+             <span class="p">...</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>처음 if로 분기 처리 한 것보다 훨씬 깔끔 해졌습니다.</p>
+
+<p>이로써 Lambda 1개로 여러 SNS(그 외 다른 트리거)를 쉽게 관리할 수 있게 되었습니다.</p>
+
+<p>다음 편에서는 1개의 Lambda 핸들러에서 어떻게 유기적으로 컨트롤러의 메소드를 호출할 수 있는지, 라우터와 데코레이터 라우팅으로 핸들러와 컨트롤러 사이를 어떻게 연결을 시켜줄 수 있는지 연구하도록 하겠습니다.</p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>지금까지 파이썬 데코레이터를 활용해 Lambda 트리거에 대한 라우팅 처리를 하는 방법에 대해 알아보았습니다.</p>
+
+<p>현재는 글 작성 때보다 대규모 업데이트가 되면서 더 많은 기능을 할 수 있게 되었습니다.</p>
+
+<p>글로는 전부 소개 못해드린 게 너무 아쉽지만, 타 언어에서 쓰는 방법에도 있듯이 라우터 설정을 파이썬 코드로 관리 할 수 있게 파일관리를 하거나 컨피그 파일로 관리 하는 방법 등 다양한 방법론이 있습니다.</p>
+
+<p>따라서 개개인들이 추구하는 방법대로 라우팅 설계를 해보시는 걸 추천드리며 글을 마칩니다.
+<br /><br /></p>
+
+<h2 id="참고사이트">참고사이트</h2>
+
+<ul>
+  <li><a href="https://www.python.org/dev/peps/pep-0318/">PEP 318</a></li>
+  <li><a href="https://docs.python.org/3.7/tutorial/classes.html">Python 3.7 classes</a></li>
+</ul>
+:ET

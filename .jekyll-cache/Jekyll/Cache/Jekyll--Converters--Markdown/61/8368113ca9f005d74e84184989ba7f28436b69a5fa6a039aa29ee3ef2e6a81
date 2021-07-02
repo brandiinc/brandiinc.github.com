@@ -1,0 +1,396 @@
+I"�Q<h1 id="overview">Overview</h1>
+<p>이번에는 PHP Codeigniter 기반의 서비스에 VUE를 적용시키려고 고민했던 것들을 나누려고 합니다.  <br /><br /></p>
+
+<p>VUE JS는 가상 DOM을 활용하여 실시간으로 반응 컴포넌트를 제작할 수 있는 프레임워크입니다. 또한, VUE-ROUTER 및 VUEX라는 컴페니언 라이브러리를 통해 url 라우팅 및 전역상태를 관리하기에도 탁월하죠. VUE와 다른 프레임워크와의 비교 부분은 <a href="https://kr.vuejs.org/v2/guide/comparison.html" target="_blank">여기</a>를 참고해주세요. <br /><br /></p>
+
+<p>브랜디의 관리자 서비스는 PHP Codeigniter 프레임워크로 제작되었습니다. 하지만 관리자 서비스의 규모가 점점 커지고 기능이 다양해지면서 “자주 사용하는 기능을 묶어 컴포넌트화하자!”라는 숙제가 남아 있었죠. <br /><br /></p>
+
+<p>요즘 잠깐의 여유가 생겨 이때다 싶었습니다. 관리자 서비스에 VUE를 도입하기 위한 시도를 시작했는데요. 얼마 지나지 않아 문제점에 봉착했습니다. 바로 IE9.0…. 개발자의 숙적 IE가 또 한 번 발목을 잡았습니다. 임포트가 되지 않아….<br /><br /></p>
+
+<p>VUE를 좀 더 편리하게 사용하려면 JS의 모듈화가 필요했지만, ES2015에서는 import 혹은 require 구문을 지원하지 않아 불편하고, arrow 함수 또한 사용할 수 없습니다. 게다가 VUE의 JAX 탬플릿 구문을 사용할 수도 없었죠!! 뭔가 배보다 배꼽이 더 커질 것 같은 조짐이 보였습니다.<br /><br /></p>
+
+<p>결국 Webpack의 도움 없이 VUE를 적용하려던 시도는 여러 가지 난관을 만났고, Codeigniter 프로젝트 내부에서 Webpack을 사용하는 방법을 연구하기 시작했습니다.  <br /><br /></p>
+
+<p>Webpack은 모듈 번들러입니다. Webpack의 메인 페이지를 방문하면 아래 네 개의 슬로건이 빙글빙글 돕니다.<br /><br /></p>
+
+<p>Bundle your scripts<br />
+Bundle your images<br />
+Bundle your styles<br />
+Bundle your assets<br /><br /></p>
+
+<p>아래의 이미지는 Webpack이 무엇을 하는 녀석인지 잘 설명해줍니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>Webpack은 실제로 번들러라고 광고하는것 처럼  Only Webpack 빌드만으로는 소스 파일들을 모아줍니다. 만약 webpack-dev-server로 실행하면 websocket을 통해 소스가 변경됐을 때 실시간으로 화면을 갱신해주는 개발 툴 제공 정도의 역할 밖에 없습니다. (…충분히 훌륭하잖아?)<br /><br /></p>
+
+<p>대부분의 기능은 엄청난 확장성을 가진 webpack의 설정으로 모듈로서 작동할 수 있죠. 예를 들면 Babel은 우리의 발목을 잡았던 IE를 위해 ES6로 작성된 js 문법을 IE에서 사용할 수 있는 ES5문법으로 너무나 쉽게 트랜스컴파일할 수 있습니다.<br /><br /></p>
+
+<p>하지만… 관리자 서비스는 위에서 언급했듯이 Codeigniter 기반입니다. 따라서 완벽히 VUE와 API서버를 분리하려면 로그인, 메뉴구성, 헤더, 푸터 등 PHP 기반으로 제작된 모든 기능들과 인증 등 기존 방식을 전부 새로 만들어야만 VUE를 온전히 사용할 수 있습니다.<br /><br /></p>
+
+<p>문제점들을 모두 해결하고 넘어가기엔 여유가 부족하기 때문에 조금씩 적용하자고 생각했습니다. 덕분에 webpack-dev-server의 실시간 소스 반영 기능을 포기해야만 했죠.(눈물) 우리의 서버는 node기반이 아닌 apache-php 기반이었기 때문입니다.<br /><br /></p>
+
+<p>자, 그럼 Codeigniter 프로잭트 하위에 웹팩을 포함시켜 Hello World까지 가는 짧은(?)여정을 시작해봅시다.<br /><br /><br /></p>
+
+<h1 id="hello-world로-가는-여정">Hello world로 가는 여정</h1>
+<h3 id="node-npm-설치">Node, npm 설치</h3>
+<p>맥에서도 유사한 명령어로 제작할 수 있도록 CMD 위주로 진행하겠습니다. 먼저, <a href="https://nodejs.org/en/" target="_blank">여기</a>를 클릭해 Node를 설치합시다.  <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/02.PNG" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>8.11.3 LTS버전으로 진행했습니다.</figcaption>
+<p><br /></p>
+
+<p>맥에서는 Homebrew를 통해 간편하게~<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew install node
+</code></pre></div></div>
+<p><br /><br /><br /></p>
+
+<h3 id="설치-확인">설치 확인</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/03.PNG" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>잘 설치되었네요.</figcaption>
+
+<p><br /><br /></p>
+<h3 id="web-pack-폴더-생성-및-이동">web pack 폴더 생성 및 이동</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir webpack
+cd webpack
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/04.PNG" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<h3 id="nom-init으로-초기화">nom init으로 초기화</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm init
+</code></pre></div></div>
+<p><br /><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/06.PNG" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /><br /></p>
+
+<h3 id="webpack-vue-babel-설치">webpack, vue, babel 설치</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm install -D webpack webpack-cli webpack-dev-server
+npm install -D vue-loader vue-template-compiler
+npm install -D babel-core babel-loader babel-preset-es2015
+</code></pre></div></div>
+<p><br /><br />
+여기서 VUE는 설치하지 않습니다! 왜냐하면 VUE.js는 로딩만 하면 되고 필요하지 않습니다! (읭?) VUE는 Codeigniter view에서도 사용해야 하기 때문에 해당 view에서 import 해줍니다. 따라서 VUE 컴포넌트가 들어가는 시점에는 이미 전역에 vue.js 가 있습니다. 따라서 굳이 각 모듈마다 VUE를 import 했다가 webpack 설정에서 다시 vue.js를 제외할 필요는 없습니다.<br /><br /></p>
+
+<p>VUE와 template 태그를 로딩할 수 있는 로더도 설치하고, 트랜스컴파일을 위한 바벨, IE9를 지원하기 위한 es2015프리셋도 함께 설치합니다.<br /><br /><br /></p>
+
+<h3 id="webpack-빌드명령어-packagejson의-script부분에-추가">webpack 빌드명령어 package.json의 script부분에 추가</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"scripts": {
+"build": "webpack --mode production",
+"build-dev": "webpack --mode development",
+  }
+</code></pre></div></div>
+<p><br /><br />
+이제 VUE를 빌드할 명령어를 작성합니다. 위처럼 두 가지 명령어를 제작해두면, 추후 env를 통해 webpack.config.js를 분기시켜 원하는 환경으로 빌드할 수 있습니다. 또한 production 모드로 빌드할 땐 자동으로 옵티마이저 - uglify 내장 플러그인이 적용되어 익숙한 min.js형태로 빌드되며 development를 빌드할 땐 사람이 알아볼 수 있는 형태로 빌드되고, debugger 코드 또한 살아있습니다.<br /><br /><br /></p>
+
+<h3 id="weboackconfigjs-작성">weboack.config.js 작성</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const { VueLoaderPlugin } = require('vue-loader');
+
+module.exports = {
+  entry: {
+    HelloWorld: './src/main.js'
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader',
+      },
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+      }
+    ]
+  },
+
+  resolve: {
+    alias: {
+      'vue$':'vue/dist/vue.esm.js'
+    }
+  },
+
+  plugins: [
+    new VueLoaderPlugin()
+  ]
+}
+</code></pre></div></div>
+<p><br /><br />
+webpack.config.js 가 없다면 생성한 후 위와 같이 작성합니다.
+<br /><br /><br /></p>
+
+<h3 id="babelrc-작성">.babelrc 작성</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    "presets": ["es2015"]
+}
+</code></pre></div></div>
+<p><br /><br /><br /></p>
+
+<h3 id="테스트용-파일-작성">테스트용 파일 작성</h3>
+<p><strong>1)main.js 작성</strong><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import HelloWorld from './HelloWorld.vue'
+
+Vue.component('hello-world', HelloWorld);
+</code></pre></div></div>
+<p><br /><br />
+<strong>2)HelloWorld.vue 작성</strong><br /></p>
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"helloworld"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;span&gt;</span>{{word1+' Vue '+word2+' !!'}}<span class="nt">&lt;/span&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+
+<span class="nt">&lt;script&gt;</span>
+<span class="k">export</span> <span class="k">default</span> <span class="p">{</span>
+  <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">app</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">data</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="na">word1</span><span class="p">:</span> <span class="dl">'</span><span class="s1">Hello</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">word2</span><span class="p">:</span> <span class="dl">'</span><span class="s1">World</span><span class="dl">'</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="nt">&lt;/script&gt;</span>
+
+</code></pre></div></div>
+<p><br /><br /><br /></p>
+
+<h3 id="테스트-빌드">테스트 빌드</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm run build-dev
+</code></pre></div></div>
+<p><br />
+빌드를 할 땐 기본적으로  ‘/dist/’ 하위에 소스코드가 떨어집니다. 자, 여기까지 진행하셨다면 폴더 구조는 다음과 같을 것입니다.<br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/05.PNG" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>지금까지 진행한 파일 모습입니다.</figcaption>
+
+<p>뷰 컴포넌트가 잘 제작되고 등록되는지 확인하려면 기본 빌드 폴더인 dist 폴더에  Test.html을 작성해 브라우저로 열어봅시다.<br /><br /><br /></p>
+
+<h3 id="확인용-html-파일-작성">확인용 html 파일 작성</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;VUE Test&lt;/title&gt;
+    &lt;!-- VUE 플러그인 --&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/vue"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="vue"&gt;
+        &lt;hello-world&gt;&lt;/hello-world&gt;
+    &lt;/div&gt;
+    &lt;script src="HelloWorld.js"&gt;&lt;/script&gt;
+    &lt;script&gt;
+        new Vue({
+            el: '#vue'
+        })
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+<p><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/07.PNG" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>잘 나옵니다.</figcaption>
+<p><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/08.PNG" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/09.PNG" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>정상적으로 VUE가 적용된 것을 확인합니다.</figcaption>
+<p><br /><br /></p>
+
+<h3 id="코드이그나이터-설치">코드이그나이터 설치</h3>
+<p>이제 코드이그나이터 프로젝트 내부에서 VUE 컴포넌트를 출력해보기 위해 코드이그나이터 프로젝트를 생성합시다. 먼저 Codeigniter와 XAMPP를 다운로드 받습니다.<br /><br /></p>
+
+<p><a href="https://www.codeigniter.com/" target="_blank">Codeigniter 받으러 가기</a><br />
+<a href="https://www.apachefriends.org/index.html" target="_blank">XAMPP 받으러 가기</a><br /><br /></p>
+
+<p>프로젝트 폴더 하위에 Codeigniter 프로젝트용 폴더를 생성합니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir codeigniter-with-vue-webpack
+cd codeigniter-with-vue-webpack
+</code></pre></div></div>
+<p><br /></p>
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/10.PNG" alt="10" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>다운받은 Codeigniter를 해당 폴더에 압축 해제하면 Codeigniter 설치가 끝납니다.<br /><br /><br /></p>
+
+<h3 id="xampp-설치-및-documentroot-변경">XAMPP 설치 및 DocumentRoot 변경</h3>
+<p>XAMPP를 설치하고 DocumentRoot를 테스트 프로젝트 폴더로 설정한 뒤 아파치를 실행합니다.<br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/11.png" alt="11" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/12.png" alt="12" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/13.png" alt="13" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>Codeigniter 프로젝트가 생성되었고, 서버 실행이 완료되었습니다.
+<br /><br /><br /></p>
+
+<h3 id="webpack-폴더를-codeigniter-프로젝트-하위로-이동">webpack 폴더를 Codeigniter 프로젝트 하위로 이동</h3>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/14.png" alt="14" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>node-modules는 너무 크기 때문에 기본 파일만 복사하고, npm install로 설치합니다.<br /><br /></p>
+
+<h3 id="codeigniter에서-vue를-사용하기-위한-webpack-dist설정">Codeigniter에서 VUE를 사용하기 위한 webpack dist설정</h3>
+<p>기존의 프로젝트에서 스크립트를 모아두는 폴더 하위로 빌드 결과 파일을 보내기 위하여 webpack 빌드 시 dist 폴더가 아닌 /application/scripts/vue/hello_world 하위로 빌드 결과 파일이 생성되도록 설정합니다.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// 기존
+module.exports = {
+  entry: {
+    HelloWorld: './src/main.js'
+  },
+
+  //... 생략
+}
+
+// 변경후
+module.exports = {
+  entry: {
+    '../../application/scripts/vue/hello_world/HelloWorld.js': './src/main.js'
+  },
+
+  //... 생략
+}
+</code></pre></div></div>
+<p><br /><br /><br /></p>
+
+<h3 id="codeigniter의-load-view-기능을-활용하여-파일-작성">Codeigniter의 load-&gt;view 기능을 활용하여 파일 작성</h3>
+<p><strong>1)header.php</strong><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// application/views/common/header.php
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;VUE Test&lt;/title&gt;
+    &lt;!-- VUE 플러그인 --&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/vue"&gt;&lt;/script&gt;
+&lt;/head&gt;
+</code></pre></div></div>
+<p><br /><br />
+<strong>2)실제 view</strong><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// application/views/vue/hello_world/vueTestPage.php
+
+&lt;?php $this-&gt;load-&gt;view( 'common/header' ); ?&gt;
+
+&lt;body&gt;
+    &lt;div id="vue"&gt;
+        &lt;hello-world&gt;&lt;/hello-world&gt;
+    &lt;/div&gt;
+
+    &lt;script src="/includes/scripts/vue/hello_world/HelloWorld.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script&gt;
+        new Vue({
+            el: '#vue'
+        })
+    &lt;/script&gt;
+&lt;/body&gt;
+
+&lt;?php $this-&gt;load-&gt;view( 'common/footer' ); ?&gt;
+</code></pre></div></div>
+<p><br /><br />
+<strong>3)footer.php</strong><br /></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// application/views/common/footer.php
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>실제 프로젝트 구성과 유사하게 header, body, footer로 나누어 파일을 작성해봅니다. 실제로는 더 복잡하지만 이 정도만 나누겠습니다.</p>
+
+<p><br /><br /><br /></p>
+<h3 id="codeigniter-테스트용-컨트롤러-작성">Codeigniter 테스트용 컨트롤러 작성</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// application/controllers/Vue.php
+&lt;?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class Vue extends CI_Controller {
+
+    public function index()
+    {
+        $this-&gt;load-&gt;view('vue/vueTestPage');
+    }
+}
+</code></pre></div></div>
+<p><br /><br />
+정말 심플(?)한 테스트용 파일 작성이 모두 끝났습니다! 이제 잘 작동하는지 확인해볼까요?<br /><br /><br /></p>
+
+<h3 id="코드이그나이터에서-helloworld-출력">코드이그나이터에서 helloworld 출력</h3>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/15.png" alt="15" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>짜잔</figcaption>
+
+<p>이번엔 문제의 IE에서 확인해봅시다.
+<br /><br /><br /></p>
+
+<h3 id="ie90-환경에서-확인">IE9.0 환경에서 확인</h3>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/16.png" alt="16" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p>IE에서도 무사히 출력되는군요. 이제 코드이그나이터 환경의 프로젝트에서도 IE까지 지원하며 무사히 VUE를 사용할 수 있게 되었습니다! (시간이 없어서 가상머신에 IE9가 설치된 윈도우7까지 테스트하진 못했습니다!) 모든 작업이 완료한 후, 파일 폴더 구조는 아래와 같습니다.<br /><br /></p>
+
+<figure class="fitcontent">
+  <img src="http://labs.brandi.co.kr///assets/2018/20180807/17.png" alt="17" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>붉은 네모 부분이 실제로 제작하거나 수정한 파일들입니다.</figcaption>
+<p><br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>여기까지가 Codeigniter 프래임워크 환경에서 webpack + vue를 사용하기 위한 웹팩의 설정 과정 및 테스트 결과였습니다. php 서버를 사용해야 하기 때문에 webpack-dev-server의 핫리로드 기능을 사용하지 못하는 건 매우 안타까운 일입니다.  하지만 짧은 시간에 신기술을 도입하면서도 수많은 리스크를 회피할 수 있다는 건  나쁘지 않은 선택이라 생각합니다.<br /><br /></p>
+
+<p>위의 웹팩설정을 조금만 활용한다면 다른 프레임워크 프로젝트에서도 무리없이 VUE를 사용할 수 있을 겁니다! 비슷한 고민을 하셨던 개발자님들… 집에 가기 전 말고 오전에 Webpack을 설치해보세요. 안 그러면 저처럼 집에 못갈 수도 있으니까요!<br /><br /><br /></p>
+
+<p><strong>참고</strong><br />
+.gitignore 작성, index.php 제거 등은 내용에 포함하지 않았으며, 아래의 링크로 자세히 알 수 있음.<br /><br /></p>
+
+<p><a href="http://www.codeigniter-kr.org/bbs/view/lecture?idx=7073" target="_blank">Codeigniter index.php 없애기</a><br /><br /></p>
+:ET

@@ -1,0 +1,454 @@
+I"V]<h1 id="overview">Overview</h1>
+<p>브랜디 랩스를 사랑해주시는 여러분, 안녕하세요. 개발자 오-연주입니다. 지난 4월, Brandi Back-end 개발자 분들과 코엑스에서 열렸던 AWS Summit(04.18 - 04.19)에 다녀왔습니다! <br /><br /></p>
+
+<p>여러 세션을 듣는 와중에 우연히 AI machine learning 를 쉽게 도와주는 Cloud Machine learning Flatform인 Amazon SageMaker에 대해 들었습니다. 듣던 중 머닝러닝에서 학습을 시켜 그 데이터로 ‘Brandi 서비스와 연관지으면 어떨까’ 라는 생각을 했는데요. 그래서 오늘은 많은 분들의 관심사인 머신러닝 학습관련 Amazon Amazon SageMaker에 대한 글을 쓰려고 합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/01.png" alt="01" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>sage는 마법사, 현자라는 의미입니다.</figcaption>
+
+<p><br /><br /><br /><br /></p>
+
+<h1 id="sagemaker를-create하자">sageMaker를 create하자!</h1>
+<p>“자, 퐈이팅 넘치게 신나게 sagemaker를 create해볼까요!” 했는데…<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/02.png" alt="02" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Seoul Region이 없다!</figcaption>
+
+<p><br /></p>
+
+<p>현재 지원되는 리전은 아직 네 군데입니다. 저는 제일 있어 보이는 미국 동부의 버지니아를 선택하겠습니다. <br /><br /></p>
+
+<p>1] EU (Iceland) 2] US West (Oregon) <strong>3] USEast (N. Virginia)</strong> 4] US East (Ohio) <br /><br /></p>
+
+<p>SageMaker를 create하기 전에는 학습할 데이터와 학습 모델을 저장할 S3 Bucket이 필요합니다. <br /><br /><br /></p>
+
+<h2 id="1-default-값으로-s3를-만드세요">1. Default 값으로 S3를 만드세요.</h2>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/03.png" alt="03" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+중요한 점은, bucket 이름이 “sagemaker-” 로 시작되어야 한다는 것입니다. 그래야 나중에 notebook instance가 어느 곳에 데이터를 저장할지 알 수 있습니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/04.png" alt="04" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/05.png" alt="05" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>Next, Create bucket 버튼을 누르다 보니, S3 Bucket이 생성되었습니다.</figcaption>
+<p><br /><br /><br /></p>
+
+<h2 id="2-create-notebook-instance-버튼을-눌러-sagemaker를-만들어-봅시다">2. Create notebook instance 버튼을 눌러 SageMaker를 만들어 봅시다!</h2>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/06.png" alt="06" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/07.png" alt="07" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+원하는 이름을 지어줍니다. 저는 <code class="language-plaintext highlighter-rouge">machineLearningTest</code> 라고 지었어요. IAM role 선택하는 부분에서 None을 눌러 Default 값으로 sageMaker를 만듭니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/08.png" alt="08" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>인고의 Pending 시간
+</figcaption>
+<p><br /><br /><br /></p>
+
+<h2 id="3-pending이-끝나고-open-action을-선택하면-jupyter가-열립니다">3. Pending이 끝나고 “open” action을 선택하면 Jupyter가 열립니다.</h2>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/09.png" alt="09" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>Jupyter(Jupyter Notebook)는 오픈 소스로 라이브 코드, 등식, 코드에 대한 시각화를 위해 사용됩니다. 또한 description을 위한 텍스트 문서(마크다운 등)를 지원하는 웹 어플리케이션입니다. 이렇게 하면 코드에 대한 문서화가 가능합니다.  이 글에서는 Jupyter Notebook을 통해 데이터를 학습하고, 그 데이터를 테스트하겠습니다. 제가 진행한 전체 코드 스크립트(entire script)는 이 글의 마지막 부분에 기술있으니 참고해 주세요.<br /><br /></p>
+
+<p>자, 이제 드디어 머신러닝 학습을 시킬 차례입니다. 머신러닝 학습에 꼭 필요한 키워드 두 가지를 뽑아봤는데요.<br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    - Dataset: 정제된 데이터와 그 데이터에 대한 label을 정리해 놓은 데이터 모음
+    - Machine learning Algorithm: 기계학습 알고리즘
+</code></pre></div></div>
+
+<p>우리는 MNIST 데이터셋을 k-means 알고리즘으로 학습시킬 겁니다. <br /><br /></p>
+
+<p><strong>1)MNIST Dataset</strong><br />
+기계학습 알고리즘을 사용할 때 가장 기본적으로 테스트하는 데이터셋으로 MNIST 데이터셋이 있습니다. 이것은 사람이 0부터 9까지 숫자 중 하나를 손글씨로 쓴 이미지 데이터와, 해당 이미지에 대한 레이블(0 - 9)이 6만 개 들어있는 학습 데이터셋입니다. 각 이미지는 가로와 세로가 각각 28 픽셀로서, 각 픽셀은 0부터 255 사이의 숫자가 있습니다. 다시 말해, 하나의 이미지는 28 x 28 = 784개의 숫자로 이루어진 데이터입니다. 하나의 이미지를 나타내는 데이터의 array &gt; length가 784라고 표현할 수 있겠네요. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/10.png" alt="10" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>MNIST dataset</figcaption>
+<p><br /></p>
+
+<p><strong>2)k-means</strong><br />
+지금 만든 SageMaker 학습 알고리즘은 AWS 튜토리얼에서 제시한 K-means를 사용할 예정입니다. k-means는 label 없이, 즉 정답을 모르는 상태로 학습을 하는 비지도 학습 (unsupervised learning) 알고리즘 중 가장 쉽고 많이 쓰입니다. 정답을 모르니, ‘비슷한 애들끼리 뭉쳐봐’ 라고 하고, 알고리즘은 비슷한 친구들끼리 뭉쳐 놓습니다. k-means에서 k는 ‘k개 덩어리로 뭉쳐주세요’라고 제시하는 숫자입니다. 우리는 0부터 9까지 비슷한 친구들끼리 모이게 하고 싶으니 k=10을 쓸 겁니다. <br /><br /></p>
+
+<p><strong>지금부터 해야 할 TO DO!</strong><br />
+	1. MNIST 데이터셋을 다운로드받고, 우리가 학습시키기 좋도록 정제하기(preprocessing) <br />
+	2. Amazon SageMaker를 통하여 데이터 학습시키기(training job) <br />
+	3. Amazon SageMaker를 통하여 학습된 데이터를 배포하기(Deploy the model)  <br />
+	4. 배포된 모델에 요청을 보내 테스트 데이터에 대한 예측값을 받아오기(inference)
+<br /><br /><br /></p>
+
+<h2 id="4-jupyter-노트북-인스턴스-생성하기">4. Jupyter 노트북 인스턴스 생성하기</h2>
+<p>Jupyter에 New Notebook(conda_python3)을 선택해 새로운 노트북을 생성합니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/11.png" alt="11" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /><br /></p>
+
+<h2 id="5-학습시키기-위한-기본-셋팅">5. 학습시키기 위한 기본 셋팅</h2>
+<p>드디어 코딩 시작입니다! (의욕활활) 초기 설정해두었던 IAM role, S3 Bucket, MNIST 다운로드, 다운받은 데이터 등을 확인하세요. 글보다 코드로 주석을 보는 게 가독성이 더 좋습니다. 아래 노트북을 통해 마크다운, 주석처리를 통해 description을 해두었으니 참고 바랍니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/12.png" alt="12" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>외부에서 MNIST 다운로드가 쉽도록 한 url로 MNIST를 다운받는데 성공했습니다. MNIST 데이터셋 내용물 중 하나를 jupyter notebook에 그려서 제대로 다운 받았는지 <code class="language-plaintext highlighter-rouge">show_digit()</code>  함수를 작성해 확인하겠습니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/13.png" alt="13" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>서른 번째 데이터는 누군가 3을 손글씨로 쓴 이미지입니다.</figcaption>
+<p><br /><br /><br /></p>
+
+<h2 id="6-머신러닝-학습하기">6. 머신러닝 학습하기</h2>
+<p>이 세션에서는 기계학습 알고리즘 설정, 학습할 데이터 경로를 지정하겠습니다. 그 후 MNIST 학습 데이터를 S3 버킷에 옮겨 저장합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/14.png" alt="14" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<code class="language-plaintext highlighter-rouge">kmeans.fit()</code> 함수를 호출해 직접 학습을 시켜볼까요? 학습 과정은 상당히 오래 걸린다고 했는데 다행히 4분 만에 학습이 끝났습니다. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/15.png" alt="15" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<strong>여기서 잠깐!</strong> <br />
+여기서 <code class="language-plaintext highlighter-rouge">k = 10</code>에 대해서 조금 더 알아보도록 할게요. cluster란 한 지점에 점을 찍고 데이터 분석을 한 뒤, 비슷한 데이터들의 군집을 만들어 주는 것입니다. k-means가 진행되면서 각 cluster의 중심이 서로가 잘 뭉치는 방향으로 이동합니다. 직접 그려봤어요(부끄).<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/16.png" alt="16" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /><br /></p>
+
+<h2 id="7-학습된-모델을-배포하기">7. 학습된 모델을 배포하기</h2>
+<p>학습을 시키면 테스트를 하거나 사용할 수 있어야겠죠? 학습된 모델을 배포해 주세요.
+<br /><br /></p>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/17.png" alt="17" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /><br /></p>
+
+<h2 id="8-배포된-모델-테스트-진행하기">8. 배포된 모델 테스트 진행하기</h2>
+<p>배포된 모델에 valid_set 데이터로 검증 데이터를 진행합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/18.png" alt="18" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+<code class="language-plaintext highlighter-rouge">.predict()</code>  함수를 호출하면 새로운 이미지가 어떤 cluster에 속했는지 예측 결과를 알려줍니다. 가장 가까운 cluster가 0번이라고 예측 결과를 반환했네요. 또한 cluster 중심과의 거리는 5.85라고 알려줍니다. 여기서 중요한 점은 cluster 번호와 실제 숫자는 일치하지 않는다는 겁니다. 알고리즘은 임의로 cluster 중심에 번호를 매기는데, 꼭 0번 클러스터가 숫자 ’0’을 뭉쳐놓은 건 아니에요!
+<br /><br /><br /></p>
+
+<h2 id="9-데이터-예측해보기">9. 데이터 예측해보기</h2>
+<p>더 많은 데이터를 예측해볼까요? valid set에 있는 100개 데이터를 예측해봅시다! 각 cluster에 가까운 데이터들이 쭉 선정되었습니다. 정확하지는 않지만 비슷한 숫자 모양들이 서로 군집되어 나타납니다. 0과 2같은 숫자들은 잘 표현되지만, 알고리즘이 9랑 4를 헷갈리거나 5와 3을 헷갈리는 듯 하네요. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/19.png" alt="19" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/20.png" alt="20" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br /><br /><br /><br /></p>
+
+<h1 id="fashion-mnist로-sagemaker-머신러닝-학습-및-예측해보기">FASHION MNIST로 SageMaker 머신러닝 학습 및 예측해보기</h1>
+<p>자, 이제 몸도 풀었으니 제가 하고 싶었던 패션 관련 머신러닝 학습 및 예측을 진행해볼게요. 마침 옷 그림으로 MNIST와 매우 비슷한 데이터를 만들어 놓은 fashion-MNIST라는 데이터셋을 발견했어요!<br /><br /></p>
+
+<h2 id="1-패션-관련-mnist-다운로드-받기">1. 패션 관련 MNIST 다운로드 받기</h2>
+<p>패션 MNIST 데이터셋을 우선 다운받아 볼게요! 다운로드는 <a href="https://github.com/zalandoresearch/fashion-mnist">여기</a>에서 받을 수 있습니다. 총 네 개의 파일을 다운로드 받으세요. <br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- train-images-idx3-ubyte.gz : train set 이미지
+- train-labels-idx1-ubyte.gz : train set 레이블
+- t10k-images-idx3-ubyte.gz : test set 이미지
+- t10k-labels-idx1-ubyte.gz : test set 레이블 &lt;br&gt;&lt;br&gt;
+</code></pre></div></div>
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/21.jpg" alt="21" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+<p><br /></p>
+
+<p>다운로드 받은 패션 Mnist의 label은 아래와 같이 되어 있습니다. 숫자 0부터 9 대신에 각 이미지가 어떤 이미지인지 텍스트로 표현되어 있어요.
+<br /><br /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Label</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>T-shirt/top</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>Trouser</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Pullover</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Dress</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Coat</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Sandal</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Shirt</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Sneaker</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Bag</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Ankle boot</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /><br /><br /></p>
+
+<h2 id="2-fashion-mnist-데이터셋을-이전에-사용했던-mnistpklgz-와-같은-형태로-변환해주는-스크립트-작성해주기">2. Fashion-MNIST 데이터셋을 이전에 사용했던 <code class="language-plaintext highlighter-rouge">mnist.pkl.gz</code> 와 같은 형태로 변환해주는 스크립트 작성해주기</h2>
+<p>위에서 연습할 때는 <code class="language-plaintext highlighter-rouge">mnist.pkl.gz</code> 한 개 파일만 사용했는데요!?! 그래서 다운로드 받은 네 개의 파일을 똑같은 형식의 파일 하나로 만들어주는 파이썬 스크립트를 작성해 <code class="language-plaintext highlighter-rouge">fashion-mnist.pkl.gz</code> 파일로 만들었어요. <br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import gzip
+import pickle
+import numpy as np
+
+# MNIST 데이터셋은 train, test 셋이 각각 image, label로 나누어 저장되어있는 4개의 파일로 구성
+test_image_path = 't10k-images-idx3-ubyte.gz'
+test_label_path = 't10k-labels-idx1-ubyte.gz'
+train_label_path = 'train-labels-idx1-ubyte.gz'
+train_image_path = 'train-images-idx3-ubyte.gz'
+out_file_name = 'fashion-mnist.pkl.gz'
+
+# train label / images 추출
+with gzip.open(train_label_path, 'rb') as train_label_f:
+    train_label = np.frombuffer(
+            train_label_f.read(), dtype=np.uint8, offset=8).astype(np.int64)
+
+with gzip.open(train_image_path, 'rb') as train_image_f:
+    train_imgs = np.frombuffer(
+            train_image_f.read(), dtype=np.uint8, offset=16).reshape(-1, 784).astype(np.float32)
+
+# test label / images 추출
+with gzip.open(test_label_path, 'rb') as test_label_f:
+    test_label = np.frombuffer(test_label_f.read(), dtype=np.uint8, offset=8).astype(np.int64)
+
+with gzip.open(test_image_path, 'rb') as test_image_f:
+    test_imgs = np.frombuffer(
+            test_image_f.read(), dtype=np.uint8, offset=16).reshape(-1, 784).astype(np.float32)
+
+# 기존 60000개 training set에서 50000개는 train set으로 사용하고, 10000개는 valid set으로 활용
+train_label, valid_label = train_label[:50000], train_label[50000:]
+train_imgs, valid_imgs = train_imgs[:50000], train_imgs[50000:]
+
+# train set, validati on set, test set을 튜플 자료형으로 저장
+out_data = ((train_imgs, train_label),
+            (valid_imgs, valid_label),
+            (test_imgs, test_label))
+
+# pickle file로 dataset 데이터 포맷 맞춰주기
+with gzip.open(out_file_name, 'wb') as out_f:
+    pickle.dump(out_data, out_f)
+</code></pre></div></div>
+<p><br />
+이 과정을 통해 나온 결과물, <code class="language-plaintext highlighter-rouge">fashion-mnist.pkl.gz</code> 를 Jupyter Notebook이 있는 경로에 업로드합니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/22.png" alt="22" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>fashion-mnist.pkl.gz가 업로드 되었습니다!</figcaption>
+<p><br /><br /><br /></p>
+
+<h2 id="3-머신러닝-학습하기">3. 머신러닝 학습하기</h2>
+<p>아까 사용했던 활용했던 숫자 MNIST 스크립트를 그대로 사용하겠습니다.  <code class="language-plaintext highlighter-rouge">show_digit()</code>을 이름만 바꾼 <code class="language-plaintext highlighter-rouge">show_fashion()</code>으로 데이터를 살펴보니 드레스가 보입니다.<br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/23.png" alt="23" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+조금 전에 했던 숫자 MNIST와 똑같은 과정을 SageMaker를 이용해, 학습 → 테스트 → 예측해보니 아래와 같은 예측 결과를 얻을 수 있었습니다. 신발은 신발끼리, 바지는 바지끼리, 가방은 가방끼리 분류된 게 너무나 신기합니다. (아까 진행한 숫자보다 더 학습이 잘 된 것 같은건 기분 탓일까요…?) <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/24.png" alt="24" style="border:1px solid #ccc;" />
+</figure>
+<figcaption></figcaption>
+
+<p><br />
+머신러닝이라고 겁내지 않아도 됩니다! 유저들에게 더 좋은 서비스 제공할 수 있으니까요. 지금까지 브랜디 개발2팀의 단아한 개발자 오연ㅈ…. <br /><br /></p>
+
+<figure>
+  <img src="http://labs.brandi.co.kr///assets/2018/20180517/25.png" alt="25" style="border:1px solid #ccc;" />
+</figure>
+<figcaption>참사를 막아주세요.</figcaption>
+
+<p><br />
+<strong>앗, 잠시만요!! 중요한 것을 놓칠 뻔 했네요.</strong><br />
+저처럼 테스트를 하면 그냥 지나치지 마세요. 자동 결제로 출금되는 뼈 아픈 경험을 할 수도 있습니다. 반드시 이용했던 서비스들을 stop 하거나 terminate 해주세요. (Clean-up단계) 자세한 내용은 <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/ex1-cleanup.html">여기</a>를 클릭하세요.<br /><br /></p>
+
+<p>지금까지 Brandi 개발 2팀, 단아한 개발자 오연주였습니다!<br /><br /><br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># entire script (숫자 Mnist)
+
+# 오호 드디어 coding start!
+# 이제부터 Brandi의 단아한 개발자, 저를 따라오시면 됩니다 :)
+# 노트북 Block을 실행하는 방법은 Shift + Enter 입니다
+
+from sagemaker import get_execution_role
+role = get_execution_role()  # 초기에 설정해 뒀던 IAM role 가져오기
+bucket = 'sagemaker-julie-test'  # 초기 단계에 만들었던 S3 Bucket 이름 적기
+
+%%time
+import pickle, gzip, numpy, urllib.request, json
+
+# 여기서 잠깐, 생소한 라이브러리 설명을 드릴게요!
+# pickle: python식 데이터 압축 포맷
+# numpy: 수치 계산을 하기 위한 python package
+
+# Load the dataset
+urllib.request.urlretrieve("http://deeplearning.net/data/mnist/mnist.pkl.gz", "mnist.pkl.gz")
+with gzip.open('mnist.pkl.gz', 'rb') as f:
+    train_set, valid_set, test_set = pickle.load(f, encoding="latin1")
+
+# matplotlib로 그리는 그림이 jupyter 노트북에 바로 보여줄 수 있도록 설정
+%matplotlib inline
+import matplotlib.pyplot as plt  # 도표나 그림을 그릴 수 있게 해주는 라이브러리
+plt.rcParams["figure.figsize"] = (2, 10)  # 그림의 크기 지정
+
+def show_digit(img, caption='', subplot=None):
+    if subplot is None:
+        _,(subplot) = plt.subplots(1,1)
+
+    imgr = img.reshape((28, 28))
+    subplot.axis('off')
+    subplot.imshow(imgr, cmap='gray')
+    plt.title(caption)
+
+# train_set의 그림과[0] 데이터 이름[1]을 예시로 보여준다
+show_digit(train_set[0][30], 'This is a {}'.format(train_set[1][30]))
+
+# 학습을 하기 위해 학습 알고리즘 및 데이터 경로 설정!
+from sagemaker import KMeans
+
+data_location = 's3://{}/kmeans_highlevel_example/data'.format(bucket)
+output_location = 's3://{}/kmeans_example/output'.format(bucket)
+
+print('training data will be uploaded to: {}'.format(data_location))
+print('training artifacts will be uploaded to: {}'.format(output_location))
+
+kmeans = KMeans(role=role,
+                train_instance_count=2,  # 장비 2대를 사용하여 학습하겠어요!
+                train_instance_type='ml.c4.8xlarge',
+                output_path=output_location,
+                k=10,  # 아래 그림을 참고해 주세요!
+                data_location=data_location)
+
+%%time
+
+# 학습 시작!
+kmeans.fit(kmeans.record_set(train_set[0]))
+
+%%time
+
+# 모델을 만든 후 사용하기 위하여 배포하기
+kmeans_predictor = kmeans.deploy(initial_instance_count=1,
+                                instance_type='ml.m4.xlarge')
+
+# valid_set에 30번째 sample을 테스트 해보기
+
+result = kmeans_predictor.predict(valid_set[0][30:31])
+print(result)
+
+%%time
+
+# vaild_set에 있는 0번부터 99번까지의 데이터로 cluster를 예측 해보자
+result = kmeans_predictor.predict(valid_set[0][0:100])
+
+# 예측 결과에 대한 cluster 정보를 수집
+clusters = [r.label['closest_cluster'].float32_tensor.values[0] for r in result]
+
+# 각 cluster별 예측된 이미지 출력
+for cluster in range(10):
+    print('\n\n\nCluster {}:'.format(int(cluster)))
+    digits = [ img for l, img in zip(clusters, valid_set[0]) if int(l) == cluster ]
+    height = ((len(digits)-1)//5)+1
+    width = 5
+    plt.rcParams["figure.figsize"] = (width,height)
+    _, subplots = plt.subplots(height, width)
+    subplots = numpy.ndarray.flatten(subplots)
+    for subplot, image in zip(subplots, digits):
+        show_digit(image, subplot=subplot)
+    for subplot in subplots[len(digits):]:
+        subplot.axis('off')
+
+    plt.show()
+</code></pre></div></div>
+
+<p><br /><br />
+<strong>출처</strong><br />
+<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/gs.html">Getting Started - Amazon SageMaker</a> <br />
+<a href="https://codeonweb.com/entry/12045839-0aa9-4bad-8c7e-336b89401e10">CodeOnWeb  - 머신러닝 초보를 위한 MNIST</a> <br />
+<a href="https://github.com/zalandoresearch/fashion-mnist">fashion-mnist</a> <br /></p>
+:ET

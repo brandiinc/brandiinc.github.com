@@ -1,0 +1,51 @@
+I"�<h1 id="개발자들이-database-프로그램을-선택한-이유">개발자들이 Database 프로그램을 선택한 이유</h1>
+<p>Database(이하 DB) 프로그램을 처음 접한 건 Dos에서 사용하는 Database III plus였습니다. 이때는 학생이었기 때문에 프로그램 개발에 관심이 많았지만 대량의 데이터를 다룰 일은 없었습니다. <br /><br /></p>
+
+<p>다음으로 접한 건 clipper였습니다. 과거 C언어를 하던 사람이면 자료 처리를 위해 한 번쯤은 접해봤을 겁니다. 이때까지는 Dos를 주로 사용했고, 간단한 자료를 다루었기 때문에 File 처리만으로도 충분한 결과를 얻을 수 있었죠.<br /><br /></p>
+
+<p>그렇다면 DB는 다중 사용자 환경이 되고 바로 사용하게 되었을까요? 예전에 다중 사용자들이 사용했던 걸 꼽자면 PC 통신과 Web이 있을 것입니다. 초창기의 Web은 PHP, ASP가 개발되기 전이었고 Java는 C보다 성능이 낮아 CGI를 C로 구현했으니 게시판이나 자료실 등도 C로 개발했습니다.<br /><br /></p>
+
+<p>규모가 큰 PC 통신은 DB를 사용했지만 사설 BBS나 01410 등에 들어가는 외부 업체는  File로 처리했습니다. 이 시기에 사설 BBS나 01410 서비스를 제공하는 업체들은 Workstation을 구입하거나 x86 계열을 구입해 운영체제 (SCO UNIX, Free BSD, Linux 등)를 사용했지만 이때 역시 C로 개발을 했었습니다. 이런 환경에서 점점 File 처리의 한계가 나타나기 시작했던 것이죠.<br /></p>
+
+<p><b>C File lock 예)</b></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int iFd, iResult;
+iFd = open(“LockTest”,O_RDWR);
+iResult = lockf(iFd, F_LOCK,10L);
+/* 필요한 작업 처리 */
+close(iFd);
+</code></pre></div></div>
+
+<p><br /><br />
+유저가 늘어나고 운영 체제 내부적으로 동시에 처리하는 프로세스가 증가하면서 자료가 깨지는 현상이 나타납니다. 개발자들은 어쩔 수없이 DB를 선택하기 시작했습니다. <br /><br /><br /></p>
+
+<h1 id="db의-장점들">DB의 장점들</h1>
+<p>DB를 도입하면 여러 가지 장점이 생깁니다. SQL 문장만 익히면 프로그램으로 일일이 구현해야 했던 것들을 명령어만으로 수행할 수 있고 자료의 무결성 또한 보장해 주며, 개발의 생산성까지 높입니다. <br /><br /></p>
+
+<p>만약 특정 날짜의 자료들을 읽어와서 제목 순으로 보여줘야 할 경우, 프로그램으로 개발한 자료를 날짜 별로 읽어 배열에 담고 Quick sort 알고리즘을 적용해 정렬한 후 자료를 보여줘야 합니다. 하지만 DB에서 SQL 문장을 사용하면 간단하게 완성할 수 있습니다. <br /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+*
+FROM TABLE
+WHERE DATETIME = 날짜
+ORDER BY TITLE
+;
+</code></pre></div></div>
+<p><br /><br /><br /></p>
+
+<h1 id="조심-또-조심">조심 또 조심!</h1>
+<p>하지만 DB 역시 만능은 아니기 때문에 모든 자료를 처리할 수는 없습니다. 예를 들어 문서(pdf, doc, hwp등) , 이미지(jpg, gif 등), 압축(zip,rar 등) 등의 바이너리 파일입니다. (물론 DB에서 BLOB 자료형을 지원하므로 하드웨어 자원과 성능만 받쳐준다면 불가능한 것은 아닙니다.) 하드웨어 자원과 성능에는 한계가 있기 때문에 DB로 해야 할 일과 하지 말아야 할 일을 구분해야 합니다. 만약 이를 생각하지 않고 DB에 모든 자료를 넣는다면 어떤 문제가 생길까요? 크게 두 가지가 있습니다.<br /><br /></p>
+
+<p>첫 번째는 바이너리를 파일을 읽고 쓸 때 발생하는 시간이 문제가 될 수 있습니다. 그 이유는 DB가 Connection Pool로 접속을 관장하는데, 이는 한정된 자원으로 최소한의 시간을 사용해야 많은 유저가 사용할 수 있기 때문입니다. 만약 바이너리 파일을 DB에 올리면서 오랜 시간 접속을 유지한다면 그만큼 다른 유저가 사용할 수 없을 테고, 결국은 DB에서 감당할 수 있는 유저의 수가 줄어들 것입니다.<br /><br /></p>
+
+<p>두 번째는 백업의 문제가 있습니다. 우리는 DB에 장애가 발생할 때를 대비해 DB 전체 백업을 합니다. 그런데 DB에 바이너리 파일이 들어가면 백업 시간이 많이 늘어나 원하는 시간 안에 백업을 하지 못하는 일이 발생할 수도 있습니다. 따라서 DB에 바이너리 파일을 넣을 때는 아주 적은 용량의 파일만 넣어야 합니다. <br /><br /><br /></p>
+
+<h1 id="배치에-대하여-oltp-olap">배치에 대하여: OLTP, OLAP</h1>
+<p>DB 용량이 커지면 Query를 수행해도 원하는 결과를 볼 수 없고 DB에 부담을 많이 주는 Query가 발생합니다. 그래서 주기적으로 Query를 돌려 결과를 테이블에 넣고 필요할 때마다 이를 볼 수 있게 배치 처리를 하며 해결합니다. 일, 월, 년 단위의 집계 자료를 구축하면서 시스템에 부하를 줄 수 있기 때문에 보통 야간에 처리를 하죠. 그런데 만약 DB 용량이 너무 커져서 전일자 집계를 배치로 처리하지 못하는 일이 발생하면 어떻게 할까요?<br /><br /></p>
+
+<p>여기서 사용할 수 있는 것이 OLAP(OnLine Analytical Processing) DB입니다. 일반적으로 유저가 사용하는 건 OLTP(OnLine Transaction Processing) 입니다. 대표적으로 Oracle, MySQL PostgreSQL 등이 있습니다. 여기서 MySQL 을 제외하고 Oracle과 PostgreSQL 은 Partition, HASH 조인, Parallel을 지원하여 OLAP 환경에서도 어느 정도 사용 가능합니다.<br /><br /></p>
+
+<p>OLAP DB는 주로 DW 환경에서 사용하며 대표적으로 Teradata와 Oracle Exadata 등이 있습니다. OLAP DB 와 비교가 안 될 정도를 빠르게 배치 작업을 처리할 수 있습니다. (자세한 내용은 다음 글에서 설명하겠습니다.)<br /><br /><br /></p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>지금까지의 이야기를 정리하면 ‘여러 유저가 동시에 안정적으로 자료 처리를 하려면 DB를 사용하고, 자료의 양과 처리 형태(OLAP, OLTP) 에 따라 DB를 선택하면 된다’는 것이었습니다. 자세한 설명을 하자면 각 DB별 특성을 기술해야 하기 때문에 오늘은 전체적인 내용부터 살펴봤습니다. 다음 글에서는 유저가 사용하는 OLTP에 대해 살펴보겠습니다. <br /><br /></p>
+:ET
