@@ -1,3 +1,0 @@
-I"F<h1 id="overview">Overview</h1>
-<p>There are several different ways to appear when apps present data to users. Presents it as a list like the settings app, or as a grid like the photos app. The most commonly used view for displaying data is the UITableView or UICollectionView. Depending on the app, you should use the appropriate view because each view has its own characteristics. Because the UI of displaying data could be changeable, you can save the effort to reinvent the app by using the appropriate view. In this article, we will briefly explore each view. <br /><br /></p>
-:ET

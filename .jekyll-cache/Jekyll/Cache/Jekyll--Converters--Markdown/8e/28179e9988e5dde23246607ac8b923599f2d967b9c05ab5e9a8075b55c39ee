@@ -1,3 +1,0 @@
-I"<h1 id="overview">Overview</h1>
-<p>브랜디는 현재 2.0 기반 Android 버전입니다. Main Thread와 Sub Thread 사이의 ANR를 방지하려고 Volley, Otto Bus Library를 사용해서 백엔드 서비스(back-end Service)를 연동하고 있습니다. <br /><br /></p>
-:ET

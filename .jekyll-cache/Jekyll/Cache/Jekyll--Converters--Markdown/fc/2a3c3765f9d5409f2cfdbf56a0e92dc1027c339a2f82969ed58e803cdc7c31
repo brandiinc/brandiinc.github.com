@@ -1,3 +1,0 @@
-I"7<h1 id="overview">Overview</h1>
-<p>마이크로 서비스 사이의 결합도를 낮추고 비동기적인 문제들을 처리할 때는 Event-driven 아키텍쳐가 유용합니다. 이번 글에서는 AWS에서 제공하는 SNS Topic을 이용해 Event-Driven을 알아보겠습니다. <br /><br /><br /></p>
-:ET

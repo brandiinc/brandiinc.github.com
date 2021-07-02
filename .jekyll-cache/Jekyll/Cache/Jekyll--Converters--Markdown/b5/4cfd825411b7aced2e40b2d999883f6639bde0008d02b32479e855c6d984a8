@@ -1,2 +1,0 @@
-I"E<p>Activity는 화면의 기본 구성단위 입니다. 예전엔 하나의 Activity를 SubActivity 단위로 사용하려고 ActivityGroup으로 여러 Activity를 하나의 Activity로 묶어 사용했습니다. 이 방법은 장점보다 유지 관리 및 Lifecycle 관리 등의 이슈가 더 많았죠. <br /><br /></p>
-:ET
